@@ -1,0 +1,72 @@
+{
+  "name": "@vaneui/md",
+  "version": "0.1.0",
+  "description": "Markdown component for VaneUI - A React component that renders markdown using @vaneui/ui components",
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://vaneui.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vaneui/md.git"
+  },
+  "keywords": [
+    "react",
+    "markdown",
+    "md",
+    "vane",
+    "vaneui",
+    "typescript",
+    "component"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "type-check": "tsc --noEmit",
+    "build:js": "npm run type-check && npm run clean && rollup -c --bundleConfigAsCjs",
+    "build": "npm run clean && npm run build:js",
+    "test": "node node_modules/jest/bin/jest.js"
+  },
+  "peerDependencies": {
+    "@vaneui/ui": "^0.1.0",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@markdoc/markdoc": "^0.5.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vaneui/ui": "^0.1.9-alpha",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.0.4",
+    "jsdom": "^26.1.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.34.9",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "ts-jest": "^29.3.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2"
+  }
+}
