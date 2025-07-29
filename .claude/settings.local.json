@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm test)",
+      "Bash(rm:*)",
+      "Bash(npm test:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

@@ -1,6 +1,6 @@
 {
   "name": "@vaneui/md",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Markdown component for VaneUI - A React component that renders markdown using @vaneui/ui components",
   "author": "",
   "license": "ISC",
@@ -25,6 +25,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.esm.js",
