@@ -43,7 +43,7 @@
     "test": "npm run type-check && node node_modules/jest/bin/jest.js"
   },
   "peerDependencies": {
-    "@vaneui/ui": "^0.1.0",
+    "@vaneui/ui": "^0.2.0",
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
     "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
