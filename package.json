@@ -1,6 +1,6 @@
 {
   "name": "@vaneui/md",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Markdown component for VaneUI - A React component that renders markdown using @vaneui/ui components",
   "author": "",
   "license": "ISC",
