@@ -1,0 +1,83 @@
+name: Publish Alpha Release to npm
+
+# Run on pushes to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Type Check
+        run: npm run type-check
+
+      - name: Run Tests
+        run: npm test
+        env:
+          CI: true
+
+      - name: Check Test Results
+        if: failure()
+        run: |
+          echo "❌ Tests failed! Cannot proceed with alpha publication."
+          echo "Please fix the failing tests before merging to main branch."
+          exit 1
+
+      # Generate pre-release version with timestamp and commit SHA
+      - name: Generate Alpha Version
+        id: version
+        run: |
+          BASE_VERSION=$(node -p "require('./package.json').version")
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          ALPHA_VERSION="${BASE_VERSION}-alpha.${TIMESTAMP}.${SHORT_SHA}"
+          echo "Alpha version: $ALPHA_VERSION"
+          echo "version=$ALPHA_VERSION" >> $GITHUB_OUTPUT
+          # Update package.json with alpha version
+          npm version $ALPHA_VERSION --no-git-tag-version
+
+      - name: Build Package
+        run: npm run build
+
+      - name: Run Tests on Built Package
+        run: npm test
+        env:
+          CI: true
+
+      - name: Check Build and Test Results
+        if: failure()
+        run: |
+          echo "❌ Build or post-build tests failed!"
+          echo "Cannot proceed with alpha publication."
+          exit 1
+
+      # Verify what will be in the package before publishing
+      - name: Verify Package Contents
+        run: npm pack --dry-run
+
+      - name: Publish Alpha to npm
+        run: npm publish --access public --tag alpha
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Report Success
+        run: |
+          echo "✅ Alpha release published successfully!"
+          echo "📦 Version: ${{ steps.version.outputs.version }}"
+          echo "🏷️  Tag: alpha"
+          echo "📥 Install with: npm install @vaneui/md@alpha"
