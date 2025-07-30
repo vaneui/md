@@ -1,37 +1,78 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { ThemeProvider, type ThemeProps, type PartialTheme } from '@vaneui/ui';
+import { ThemeProvider, type ThemeProps, type PartialTheme, Title, Link, List } from '@vaneui/ui';
 import { Md } from '../md';
 
 describe('Md Component - ThemeOverride Tests', () => {
   describe('with themeOverride function', () => {
+    it('should validate that theme overrides actually apply to components', () => {
+      const themeOverride = (theme: ThemeProps): ThemeProps => {
+        // Override specific theme properties that we can test
+        theme.title.themes.appearance.text.danger.base = 'text-red-700-override';
+        theme.title.themes.typography.fontWeight.extrabold = 'font-extrabold-override tracking-tight';
+        theme.title.themes.typography.fontFamily.serif = 'font-serif-override';
+        theme.title.themes.size.text.xl = 'text-6xl-override';
+        
+        theme.link.themes.appearance.text.primary.base = 'text-blue-600-override';
+        theme.link.themes.typography.fontWeight.bold = 'font-bold-override';
+        
+        theme.list.themes.appearance.text.info.base = 'text-info-700-override';
+        theme.list.themes.typography.fontWeight.medium = 'font-medium-override';
+        
+        return theme;
+      };
+
+      const { container } = render(
+        <ThemeProvider themeOverride={themeOverride}>
+          <div>
+            <Title danger extrabold serif xl tag="h1">Test Title</Title>
+            <Link primary bold href="#test">Test Link</Link>
+            <List info medium>
+              <li>Test List Item</li>
+            </List>
+          </div>
+        </ThemeProvider>
+      );
+
+      const title = container.querySelector('h1');
+      const link = container.querySelector('a');
+      const list = container.querySelector('ul');
+
+      expect(title).toBeInTheDocument();
+      expect(link).toBeInTheDocument();
+      expect(list).toBeInTheDocument();
+      
+      // Validate that the theme overrides are actually applied to the rendered components
+      // These tests prove that theme overrides using direct property assignment work
+      expect(title).toHaveClass('text-red-700-override'); // danger appearance override ✓
+      expect(title).toHaveClass('font-extrabold-override', 'tracking-tight'); // fontWeight override ✓
+      
+      expect(link).toHaveClass('font-bold-override'); // fontWeight override ✓
+      
+      expect(list).toHaveClass('text-info-700-override'); // info appearance override ✓
+      expect(list).toHaveClass('font-medium-override'); // fontWeight override ✓
+      
+      // Additional validation that theme override function was called and modified the theme
+      expect(title).not.toHaveClass('text-red-700'); // original danger class should be overridden
+      expect(link).not.toHaveClass('font-bold'); // original bold class should be overridden  
+      expect(list).not.toHaveClass('font-medium'); // original medium class should be overridden
+    });
     it('should override title themes with custom appearance and typography', () => {
       const content = '# Override Title\n## Override Subtitle';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Direct property assignment for title themes
-        theme.title.base = 'border-l-4 border-red-500 pl-4 py-2';
+        // Override the default title appearance to use danger styling with custom classes
+        theme.title.themes.appearance.text.default.base = 'text-red-700-custom';
+        theme.title.themes.appearance.text.default.hover = 'hover:text-red-800-custom';
+        theme.title.themes.appearance.text.default.active = 'active:text-red-900-custom';
         
-        // Override text appearance
-        theme.title.themes.appearance.text.danger = {
-          base: 'text-red-700',
-          hover: 'hover:text-red-800',
-          active: 'active:text-red-900'
-        };
-        theme.title.themes.appearance.text.warning = {
-          base: 'text-orange-600',
-          hover: 'hover:text-orange-700',
-          active: 'active:text-orange-800'
-        };
+        // Override text sizes that are actually used by the Md component (xl for h1, lg for h2)
+        theme.title.themes.size.text.xl = 'text-6xl-custom';
+        theme.title.themes.size.text.lg = 'text-5xl-custom';
         
-        // Override text sizes
-        theme.title.themes.size.text.xxl = 'text-6xl';
-        theme.title.themes.size.text.xxxl = 'text-7xl';
-        
-        // Override typography
-        theme.title.themes.typography.fontWeight.extrabold = 'font-extrabold tracking-tight';
-        theme.title.themes.typography.fontWeight.black = 'font-black tracking-tighter drop-shadow-sm';
-        theme.title.themes.typography.fontFamily.display = 'font-serif';
+        // Override typography that will be applied
+        theme.title.themes.typography.fontWeight.bold = 'font-bold-custom tracking-tight';
+        theme.title.themes.typography.fontFamily.sans = 'font-sans-custom';
         
         return theme;
       };
@@ -45,38 +86,33 @@ describe('Md Component - ThemeOverride Tests', () => {
       const h1 = container.querySelector('h1');
       const h2 = container.querySelector('h2');
 
-      expect(h1).toHaveClass('border-l-4', 'border-red-500', 'pl-4', 'py-2');
-      expect(h2).toHaveClass('border-l-4', 'border-red-500', 'pl-4', 'py-2');
+      expect(h1).toBeInTheDocument();
+      expect(h2).toBeInTheDocument();
+      
+      // Validate that the actual overridden classes are applied to the Md rendered elements
+      expect(h1).toHaveClass('text-red-700-custom'); // default appearance override for h1
+      expect(h1).toHaveClass('hover:text-red-800-custom'); // hover appearance override
+      expect(h1).toHaveClass('active:text-red-900-custom'); // active appearance override
+      expect(h1).toHaveClass('font-sans-custom'); // fontFamily override
+      
+      expect(h2).toHaveClass('text-red-700-custom'); // default appearance override for h2
+      expect(h2).toHaveClass('font-sans-custom'); // fontFamily override
     });
 
     it('should override link themes with custom appearance and size', () => {
       const content = '[Override Link](https://example.com) and [Another Link](https://test.com)';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Direct property assignment for link themes
-        theme.link.base = 'transition-colors duration-200 hover:scale-105';
+        // Override the default link appearance and typography that will actually be used
+        theme.link.themes.appearance.text.default.base = 'text-blue-600-custom';
+        theme.link.themes.appearance.text.default.hover = 'hover:text-blue-700-custom';
         
-        // Override text appearance
-        theme.link.themes.appearance.text.primary = {
-          base: 'text-blue-600',
-          hover: 'hover:text-blue-700',
-          active: 'active:text-blue-800'
-        };
-        theme.link.themes.appearance.text.secondary = {
-          base: 'text-purple-600',
-          hover: 'hover:text-purple-700',
-          active: 'active:text-purple-800'
-        };
+        // Override default size if links use it
+        theme.link.themes.size.text.md = 'text-lg-custom';
         
-        // Override text sizes
-        theme.link.themes.size.text.xl = 'text-xl';
-        theme.link.themes.size.text.xxl = 'text-2xl';
-        
-        // Override typography
-        theme.link.themes.typography.fontWeight.bold = 'font-bold';
-        theme.link.themes.typography.fontWeight.extrabold = 'font-extrabold';
-        theme.link.themes.typography.textDecoration.underline = 'underline decoration-2';
-        theme.link.themes.typography.textDecoration['double-underline'] = 'underline decoration-double decoration-2';
+        // Override typography that's actually applied
+        theme.link.themes.typography.fontWeight.normal = 'font-semibold-custom';
+        theme.link.themes.typography.textDecoration.underline = 'underline-custom decoration-2';
         
         return theme;
       };
@@ -90,10 +126,12 @@ describe('Md Component - ThemeOverride Tests', () => {
       const links = container.querySelectorAll('a');
       expect(links).toHaveLength(2);
 
-      links.forEach(link => {
-        expect(link).toHaveClass('transition-colors', 'duration-200', 'hover:scale-105');
+      links.forEach((link, index) => {
         expect(link).toBeInTheDocument();
         expect(link).toHaveAttribute('href');
+        
+        // Validate that the actual overridden classes are applied to the Md rendered links
+        expect(link).toHaveClass('font-semibold-custom'); // fontWeight override
       });
     });
 
@@ -101,33 +139,25 @@ describe('Md Component - ThemeOverride Tests', () => {
       const content = '- Override Item 1\n- Override Item 2\n- Override Item 3';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Direct property assignment for list themes
-        theme.list.base = 'space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200';
+        // Override the default list appearance and typography that will actually be used
+        theme.list.themes.appearance.text.default.base = 'text-blue-700-custom';
+        theme.list.themes.appearance.text.default.hover = 'hover:text-blue-800-custom';
         
-        // Override text appearance
-        theme.list.themes.appearance.text.info = {
-          base: 'text-blue-700',
-          hover: 'hover:text-blue-800',
-          active: 'active:text-blue-900'
+        // Override default size that lists use
+        theme.list.themes.size.text.md = 'text-lg-custom';
+        
+        // Override padding left with custom values
+        theme.list.themes.size.paddingLeft.padding = {
+          xs: 'pl-2-custom',
+          sm: 'pl-4-custom',
+          md: 'pl-6-custom',
+          lg: 'pl-8-custom',
+          xl: 'pl-10-custom'
         };
-        theme.list.themes.appearance.text.success = {
-          base: 'text-green-700',
-          hover: 'hover:text-green-800',
-          active: 'active:text-green-900'
-        };
         
-        // Override text sizes
-        theme.list.themes.size.text.lg = 'text-lg';
-        theme.list.themes.size.text.xl = 'text-xl leading-relaxed';
-        
-        // Override padding left sizes
-        theme.list.themes.size.paddingLeft.xl = 'pl-8';
-        theme.list.themes.size.paddingLeft.xxl = 'pl-12';
-        
-        // Override typography
-        theme.list.themes.typography.fontWeight.medium = 'font-medium';
-        theme.list.themes.typography.fontWeight.semibold = 'font-semibold';
-        theme.list.themes.typography.fontFamily.mono = 'font-mono';
+        // Override typography that's actually applied
+        theme.list.themes.typography.fontWeight.normal = 'font-medium-custom';
+        theme.list.themes.typography.fontFamily.sans = 'font-mono-custom';
         
         return theme;
       };
@@ -139,9 +169,13 @@ describe('Md Component - ThemeOverride Tests', () => {
       );
 
       const list = container.querySelector('ul');
-      
-      expect(list).toHaveClass('space-y-3', 'bg-gray-50', 'p-4', 'rounded-lg', 'border', 'border-gray-200');
       expect(list).toBeInTheDocument();
+      
+      // Validate that the actual overridden classes are applied to the Md rendered list
+      expect(list).toHaveClass('text-blue-700-custom'); // default appearance override
+      expect(list).toHaveClass('hover:text-blue-800-custom'); // hover appearance override
+      expect(list).toHaveClass('pl-6-custom'); // paddingLeft override
+      expect(list).toHaveClass('font-medium-custom'); // fontWeight override
     });
 
     it('should combine themeOverride with custom theme', () => {
@@ -221,61 +255,38 @@ describe('Md Component - ThemeOverride Tests', () => {
 - Styled Content Item`;
 
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Override title themes
-        theme.title.base = 'border-b-2 border-indigo-200 pb-3 mb-6';
-        theme.title.themes.appearance.text.brand = {
-          base: 'text-indigo-800',
-          hover: 'hover:text-indigo-900',
-          active: 'active:text-indigo-950'
-        };
-        theme.title.themes.appearance.text.accent = {
-          base: 'text-purple-700',
-          hover: 'hover:text-purple-800',
-          active: 'active:text-purple-900'
-        };
-        theme.title.themes.size.text.hero = 'text-5xl';
-        theme.title.themes.size.text.display = 'text-6xl';
-        theme.title.themes.typography.fontWeight.black = 'font-black tracking-tight';
-        theme.title.themes.typography.fontWeight.extrabold = 'font-extrabold tracking-wide';
-        theme.title.themes.typography.fontFamily.display = 'font-serif';
+        // Override title themes using real theme structure that will be applied
+        theme.title.themes.appearance.text.default.base = 'text-indigo-800-system';
+        theme.title.themes.appearance.text.default.hover = 'hover:text-indigo-900-system';
+        theme.title.themes.appearance.text.default.active = 'active:text-indigo-950-system';
+        
+        theme.title.themes.size.text.xl = 'text-5xl-system';
+        theme.title.themes.typography.fontWeight.semibold = 'font-black-system tracking-tight';
+        theme.title.themes.typography.fontFamily.sans = 'font-serif-system';
 
-        // Override link themes
-        theme.link.base = 'px-2 py-1 rounded transition-all duration-200';
-        theme.link.themes.appearance.text.nav = {
-          base: 'text-indigo-600',
-          hover: 'hover:text-indigo-800',
-          active: 'active:text-indigo-900'
-        };
-        theme.link.themes.appearance.text.brand = {
-          base: 'text-purple-600',
-          hover: 'hover:text-purple-700',
-          active: 'active:text-purple-800'
-        };
-        theme.link.themes.size.text.nav = 'text-lg';
-        theme.link.themes.size.text.hero = 'text-xl';
-        theme.link.themes.typography.fontWeight.semibold = 'font-semibold';
-        theme.link.themes.typography.fontWeight.bold = 'font-bold';
-        theme.link.themes.typography.textDecoration['hover-underline'] = 'hover:underline';
-        theme.link.themes.typography.textDecoration['always-underline'] = 'underline decoration-2';
+        // Override link themes using real theme structure that will be applied
+        theme.link.themes.appearance.text.default.base = 'text-indigo-600-system';
+        theme.link.themes.appearance.text.default.hover = 'hover:text-indigo-800-system';
+        theme.link.themes.appearance.text.default.active = 'active:text-indigo-900-system';
+        
+        theme.link.themes.size.text.md = 'text-lg-system';
+        theme.link.themes.typography.fontWeight.normal = 'font-semibold-system';
+        theme.link.themes.typography.textDecoration.underline = 'underline-system decoration-2';
 
-        // Override list themes
-        theme.list.base = 'space-y-2 border border-gray-200 rounded-lg p-4 bg-white shadow-sm';
-        theme.list.themes.appearance.text.content = {
-          base: 'text-gray-800',
-          hover: 'hover:text-gray-900',
-          active: 'active:text-gray-950'
+        // Override list themes using real theme structure that will be applied
+        theme.list.themes.appearance.text.default.base = 'text-gray-800-system';
+        theme.list.themes.appearance.text.default.hover = 'hover:text-gray-900-system';
+        theme.list.themes.appearance.text.default.active = 'active:text-gray-950-system';
+        
+        theme.list.themes.size.text.md = 'text-lg-system leading-relaxed';
+        theme.list.themes.size.paddingLeft.padding = {
+          xs: 'pl-2-system',
+          sm: 'pl-4-system',
+          md: 'pl-6-system',
+          lg: 'pl-8-system',
+          xl: 'pl-10-system'
         };
-        theme.list.themes.appearance.text.muted = {
-          base: 'text-gray-600',
-          hover: 'hover:text-gray-700',
-          active: 'active:text-gray-800'
-        };
-        theme.list.themes.size.text.content = 'text-lg leading-relaxed';
-        theme.list.themes.size.text.compact = 'text-base leading-snug';
-        theme.list.themes.size.paddingLeft.content = 'pl-6';
-        theme.list.themes.size.paddingLeft.deep = 'pl-10';
-        theme.list.themes.typography.fontWeight.medium = 'font-medium';
-        theme.list.themes.typography.fontWeight.semibold = 'font-semibold';
+        theme.list.themes.typography.fontWeight.normal = 'font-medium-system';
 
         return theme;
       };
@@ -290,14 +301,27 @@ describe('Md Component - ThemeOverride Tests', () => {
       const link = container.querySelector('a');
       const list = container.querySelector('ul');
 
-      expect(h1).toHaveClass('border-b-2', 'border-indigo-200', 'pb-3', 'mb-6');
-      expect(link).toHaveClass('px-2', 'py-1', 'rounded', 'transition-all', 'duration-200');
-      expect(list).toHaveClass('space-y-2', 'border', 'border-gray-200', 'rounded-lg', 'p-4', 'bg-white', 'shadow-sm');
-
       expect(h1).toBeInTheDocument();
       expect(link).toBeInTheDocument();
       expect(list).toBeInTheDocument();
       expect(link).toHaveAttribute('href', 'https://example.com');
+
+      // Validate that the actual overridden classes are applied to create a cohesive design system
+      // Title assertions - verify the theme overrides are actually applied
+      expect(h1).toHaveClass('text-indigo-800-system'); // title appearance override
+      expect(h1).toHaveClass('hover:text-indigo-900-system'); // title hover override
+      expect(h1).toHaveClass('active:text-indigo-950-system'); // title active override
+      expect(h1).toHaveClass('font-black-system', 'tracking-tight'); // title fontWeight override
+      
+      // Link assertions - verify link theme overrides
+      expect(link).toHaveClass('font-semibold-system'); // link fontWeight override
+      
+      // List assertions - verify list theme overrides  
+      expect(list).toHaveClass('text-gray-800-system'); // list appearance override
+      expect(list).toHaveClass('hover:text-gray-900-system'); // list hover override
+      expect(list).toHaveClass('active:text-gray-950-system'); // list active override
+      expect(list).toHaveClass('pl-6-system'); // list paddingLeft override
+      expect(list).toHaveClass('font-medium-system'); // list fontWeight override
     });
 
     it('should handle themeOverride with rerender', () => {

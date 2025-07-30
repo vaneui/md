@@ -40,7 +40,7 @@
     "type-check": "tsc --noEmit",
     "build:js": "npm run type-check && npm run clean && rollup -c --bundleConfigAsCjs",
     "build": "npm run clean && npm run build:js",
-    "test": "node node_modules/jest/bin/jest.js"
+    "test": "npm run type-check && node node_modules/jest/bin/jest.js"
   },
   "peerDependencies": {
     "@vaneui/ui": "^0.1.0",
