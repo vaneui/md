@@ -6,7 +6,7 @@ This document demonstrates all the markdown nodes supported by @vaneui/md.
 
 # Heading 1
 ## Heading 2
-### Heading 3
+### Heading 3 with [link](https://example.com)
 #### Heading 4
 ##### Heading 5
 ###### Heading 6
@@ -15,7 +15,7 @@ This document demonstrates all the markdown nodes supported by @vaneui/md.
 
 This is a regular paragraph with various inline elements. You can use **bold text** (strong), *italic text* (emphasis), ~~strikethrough text~~, and \`inline code\`. You can also combine them: ***bold and italic***, **_bold and italic_**, or ~~**strikethrough and bold**~~.
 
-This is another paragraph separated by a blank line. It demonstrates that paragraphs are properly spaced.
+This is another paragraph separated by a blank line. It demonstrates that paragraphs are properly spaced. And here is [inline link](https://example.com)
 
 ## Links
 
@@ -29,9 +29,9 @@ Here are different types of links:
 
 ## Images
 
-![Sample Image](https://via.placeholder.com/600x300/646cff/ffffff?text=Sample+Image "Image Title")
+![Sample Image](https://placehold.co/600x400 "Image Title")
 
-![Another Image](https://via.placeholder.com/400x200/4ecdc4/ffffff?text=Another+Image)
+![Another Image](https://placehold.co/300x200)
 
 ## Lists
 

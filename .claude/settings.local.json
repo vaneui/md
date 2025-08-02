@@ -13,7 +13,8 @@
       "WebFetch(domain:markdoc.dev)",
       "Bash(npm run build:*)",
       "Bash(npm install)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": []
   }

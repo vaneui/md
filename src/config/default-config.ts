@@ -31,7 +31,6 @@ export const defaultNodesConfig: MdNodesConfig = {
     attributes: {
       content: { type: String },
       language: { type: String },
-      process: { type: Boolean, default: true },
     },
   },
   blockquote: {
@@ -70,9 +69,6 @@ export const defaultNodesConfig: MdNodesConfig = {
       width: { type: String },
     },
   },
-  inline: {
-    render: "MdInline",
-  },
   strong: {
     render: "MdStrong",
   },
@@ -91,9 +87,9 @@ export const defaultNodesConfig: MdNodesConfig = {
   },
   code: {
     render: "MdCode",
-  },
-  text: {
-    render: "MdText",
+    attributes: {
+      content: { type: String }
+    }
   },
   hardbreak: {
     render: "MdHardbreak",
@@ -123,13 +119,11 @@ export const defaultComponents: MdComponents = {
   MdTr: Components.MdTr,
   MdTd: Components.MdTd,
   MdTh: Components.MdTh,
-  MdInline: Components.MdInline,
   MdStrong: Components.MdStrong,
   MdEm: Components.MdEm,
   MdS: Components.MdS,
   MdLink: Components.MdLink,
   MdCode: Components.MdCode,
-  MdText: Components.MdText,
   MdHardbreak: Components.MdHardbreak,
   MdSoftbreak: Components.MdSoftbreak,
   MdError: Components.MdError,

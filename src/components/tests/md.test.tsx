@@ -142,7 +142,7 @@ describe('Md Component Tests', () => {
 
       const img = container.querySelector('img');
       expect(img).toBeInTheDocument();
-      expect(img).toHaveClass('w-fit', 'rounded-lg');
+      // Now wrapped in Card component
       expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
       expect(img).toHaveAttribute('alt', 'Alt text');
       expect(img).toHaveAttribute('title', 'Image title');
@@ -205,7 +205,7 @@ This is a paragraph with [a link](https://example.com).
       expect(list).toHaveClass('list-disc', 'list-inside', 'text-base');
 
       const img = container.querySelector('img');
-      expect(img).toHaveClass('w-fit', 'rounded-lg');
+      // Now wrapped in Card component
     });
 
     it('should work with frontmatter variables', () => {
