@@ -30,17 +30,22 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+      "require": "./dist/index.js"
+    },
+    "./styles": "./dist/styles/index.css"
   },
   "scripts": {
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit",
     "build:js": "npm run type-check && npm run clean && rollup -c --bundleConfigAsCjs",
-    "build": "npm run clean && npm run build:js",
-    "test": "npm run type-check && node node_modules/jest/bin/jest.js"
+    "build:css": "postcss src/styles/index.css -o dist/styles/index.css --no-map",
+    "build": "npm run clean && npm run build:js && npm run build:css",
+    "test": "npm run type-check && node node_modules/jest/bin/jest.js",
+    "playground:install": "cd playground && npm install",
+    "playground:dev": "cd playground && npm run dev",
+    "playground": "npm run playground:install && npm run playground:dev"
   },
   "peerDependencies": {
     "@vaneui/ui": "*",
@@ -70,6 +75,9 @@
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-jest": "^29.3.1",
     "tslib": "^2.8.1",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "postcss": "^8.4.47",
+    "postcss-cli": "^11.0.0",
+    "postcss-import": "^16.1.0"
   }
 }

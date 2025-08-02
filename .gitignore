@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Playground dependencies (not part of npm package)
+playground/node_modules/
+playground/dist/

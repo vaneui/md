@@ -1,92 +1,45 @@
-import { Link, Title, List } from "@vaneui/ui";
 import Markdoc from "@markdoc/markdoc";
 import React from "react";
-import { Col } from "@vaneui/ui";
+import { MdProps, MdConfig, MdNodesConfig, MdComponents } from "../types";
+import { defaultNodesConfig, defaultComponents } from "../config/default-config";
 
-const MdHeading: React.FC<unknown> = (props) => {
-  const {level, ...rest} = props as { level: number; } & Record<string, unknown>;
-  const tag = `h${level}`;
-  let size: { xs?: boolean; sm?: boolean; md?: boolean; lg?: boolean; xl?: boolean } = {};
-  switch (level) {
-    case 1:
-      size = {xl: true};
-      break;
-    case 2:
-      size = {lg: true};
-      break;
-    case 3:
-      size = {md: true};
-      break;
-    case 4:
-      size = {sm: true};
-      break;
-    case 5:
-      size = {xs: true};
-      break;
-  }
-  return <Title {...rest} {...size} tag={tag}/>;
-};
+// Helper function to merge configurations
+function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
+  if (!userConfig) return defaultConfig;
+  
+  return {
+    nodes: { ...defaultConfig.nodes, ...userConfig.nodes },
+    components: { ...defaultConfig.components, ...userConfig.components },
+    variables: { ...defaultConfig.variables, ...userConfig.variables },
+    tags: { ...defaultConfig.tags, ...userConfig.tags },
+    functions: { ...defaultConfig.functions, ...userConfig.functions },
+  };
+}
 
-const MdLink: React.FC<unknown> = (props) => {
-  const {href, title, ...rest} = props as { href: string; title: string; } & Record<string, unknown>;
-  return <Link link {...rest} href={href} title={title} tag={Link}/>;
-};
-
-const MdImg: React.FC<unknown> = (props) => {
-  const {src, alt, title, ...rest} = props as { src: string; alt: string; title: string; } & Record<string, unknown>;
-  return (
-    <img {...rest} title={title} src={src} alt={alt} className="w-fit rounded-lg"/>
-  );
-};
-
-const MdContainer: React.FC<unknown> = (props) => <Col {...(props as Record<string, unknown>)} />;
-
-const MdList: React.FC<unknown> = (props) => <List {...(props as Record<string, unknown>)} />;
-
-export const Md: React.FC<{ content: string, frontmatter?: { [key: string]: unknown } }> = ({content, frontmatter}) => {
+export const Md: React.FC<MdProps> = ({ content, frontmatter, config: userConfig }) => {
   const ast = Markdoc.parse(content);
-  const config = {
-    nodes: {
-      document: {
-        render: "MdContainer",
-      },
-      heading: {
-        render: "MdHeading",
-        attributes: {
-          level: {type: Number},
-        },
-      },
-      link: {
-        render: "MdLink",
-        attributes: {
-          href: {type: String},
-          title: {type: String},
-        },
-      },
-      list: {
-        render: "MdList",
-      },
-      image: {
-        render: "MdImg",
-        attributes: {
-          src: {type: String},
-          alt: {type: String},
-          title: {type: String},
-        },
-      },
+  
+  // Merge user config with defaults
+  const mergedConfig = mergeConfig(
+    {
+      nodes: defaultNodesConfig,
+      components: defaultComponents,
+      variables: { markdoc: { frontmatter } },
     },
-    variables: {markdoc: {frontmatter}}
-  }
-
-  const transformed = Markdoc.transform(ast, config);
-
+    userConfig
+  );
+  
+  // Create Markdoc config
+  const markdocConfig = {
+    nodes: mergedConfig.nodes,
+    tags: mergedConfig.tags,
+    functions: mergedConfig.functions,
+    variables: mergedConfig.variables,
+  };
+  
+  const transformed = Markdoc.transform(ast, markdocConfig);
+  
   return Markdoc.renderers.react(transformed, React, {
-    components: {
-      MdHeading: MdHeading,
-      MdContainer: MdContainer,
-      MdLink: MdLink,
-      MdList: MdList,
-      MdImg: MdImg,
-    },
+    components: mergedConfig.components as any,
   });
 };

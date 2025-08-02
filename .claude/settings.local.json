@@ -9,7 +9,11 @@
       "Bash(git checkout:*)",
       "Bash(npx tsc:*)",
       "Bash(find:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebFetch(domain:markdoc.dev)",
+      "Bash(npm run build:*)",
+      "Bash(npm install)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
