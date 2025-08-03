@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { ThemeProvider, type PartialTheme, type ThemeDefaults } from '@vaneui/ui';
-import { Md } from '../md';
+import { Md } from '../components/md';
 
 describe('Md Component - ThemeDefaults Tests', () => {
   describe('with themeDefaults configuration', () => {

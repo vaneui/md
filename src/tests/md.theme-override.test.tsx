@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { ThemeProvider, type ThemeProps, type PartialTheme, Title, Link, List } from '@vaneui/ui';
-import { Md } from '../md';
+import { Md } from '../components/md';
 
 describe('Md Component - ThemeOverride Tests', () => {
   describe('with themeOverride function', () => {

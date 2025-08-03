@@ -38,6 +38,9 @@ export const defaultNodesConfig: MdNodesConfig = {
   },
   list: {
     render: "MdList",
+    attributes: {
+      ordered: { type: Boolean },
+    },
   },
   item: {
     render: "MdItem",
@@ -119,6 +122,8 @@ export const defaultComponents: MdComponents = {
   MdTr: Components.MdTr,
   MdTd: Components.MdTd,
   MdTh: Components.MdTh,
+  MdInline: Components.MdInline,
+  MdText: Components.MdText,
   MdStrong: Components.MdStrong,
   MdEm: Components.MdEm,
   MdS: Components.MdS,

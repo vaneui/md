@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider, defaultTheme, type PartialTheme } from '@vaneui/ui';
-import { Md } from '../md';
+import { Md } from '../components/md';
 
 describe('Md Component Tests', () => {
   it('renders basic text content', () => {
@@ -102,7 +102,7 @@ describe('Md Component Tests', () => {
       const link = container.querySelector('a');
       expect(link).toBeInTheDocument();
       expect(link).toHaveClass('hover:underline', 'w-fit');
-      expect(link).toHaveClass('text-base'); // md size
+      expect(link).toHaveClass('cursor-pointer'); // link behavior
       expect(link).toHaveClass('text-(--text-color-link)'); // link appearance
       expect(link).toHaveClass('font-sans', 'font-normal');
       expect(link).toHaveAttribute('href', 'https://example.com');

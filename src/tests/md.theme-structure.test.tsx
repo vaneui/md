@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { ThemeProvider, type PartialTheme } from '@vaneui/ui';
-import { Md } from '../md';
+import { Md } from '../components/md';
 
 describe('Md Component - Theme Structure Tests', () => {
   describe('with nested themes customization', () => {
@@ -211,7 +211,7 @@ describe('Md Component - Theme Structure Tests', () => {
       expect(h1).toHaveClass('text-(--text-color-default)'); // Default appearance maintained
 
       // Link should maintain all default properties
-      expect(link).toHaveClass('hover:underline', 'w-fit', 'text-base', 'text-(--text-color-link)', 'font-sans', 'font-normal');
+      expect(link).toHaveClass('hover:underline', 'w-fit', 'cursor-pointer', 'text-(--text-color-link)', 'font-sans', 'font-normal');
     });
   });
 

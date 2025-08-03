@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Md } from '../md';
+import { Md } from '../components/md';
 
 describe('Md Component - Node Rendering Tests', () => {
   describe('Text and Paragraph Nodes', () => {
@@ -275,11 +275,9 @@ describe('Md Component - Node Rendering Tests', () => {
 
     test('renders soft break as space', () => {
       const content = 'Word one\nWord two';
-      render(<Md content={content} />);
-      // Soft breaks should be rendered as spaces
-      // Text is now split into separate spans, just check both words exist
-      expect(screen.getByText('Word one')).toBeInTheDocument();
-      expect(screen.getByText('Word two')).toBeInTheDocument();
+      const { container } = render(<Md content={content} />);
+      // Soft breaks should be rendered as spaces within the same paragraph
+      expect(container).toHaveTextContent('Word one Word two');
     });
   });
 
