@@ -18,7 +18,8 @@
       "Bash(grep:*)",
       "Bash(cp:*)",
       "Bash(sed:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

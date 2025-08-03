@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Md } from '../../src';
 import { comprehensiveExample } from './comprehensive-example';
-import '../../src/styles/index.css'
 
 function App() {
   const [content, setContent] = useState(comprehensiveExample);

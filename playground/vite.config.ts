@@ -7,8 +7,7 @@ export default defineConfig({
   root: path.resolve(__dirname),
   resolve: {
     alias: {
-      '@vaneui/md': path.resolve(__dirname, '../src/index.ts'),
-      '@vaneui/ui': '@vaneui/ui'
+      '@vaneui/md': path.resolve(__dirname, '../src/index.ts')
     }
   },
   server: {
