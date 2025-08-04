@@ -9,12 +9,11 @@ describe('MdCode Component', () => {
     render(<Md content={content} />);
     const code = screen.getByText('code snippet');
     expect(code).toBeInTheDocument();
-    // Now using Badge component instead of CODE element
-    // VaneUI Badge component classes for inline code
-    expect(code).toHaveClass('px-4', 'py-2', 'rounded-full');
-    expect(code).toHaveClass('text-base'); // default badge size
-    expect(code).toHaveClass('font-sans', 'font-semibold');
-    expect(code).toHaveClass('inline-flex', 'items-center');
-    expect(code).toHaveClass('whitespace-nowrap');
+    // Now using VaneUI Code component with secondary prop
+    expect(code).toHaveClass('w-fit', 'h-fit', 'transition-all', 'duration-200');
+    expect(code).toHaveClass('whitespace-nowrap', 'px-2', 'py-1', 'text-sm');
+    expect(code).toHaveClass('bg-(--background-color-secondary)', 'text-(--text-color-secondary)');
+    expect(code).toHaveClass('border-(--border-color-secondary)', 'rounded-md');
+    expect(code).toHaveClass('font-mono'); // monospace font for code
   });
 });
