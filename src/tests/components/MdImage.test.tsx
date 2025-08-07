@@ -11,11 +11,9 @@ describe('MdImage Component', () => {
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
     
-    // Image styling (direct inline styles from MdImage component)
-    expect(img).toHaveStyle('display: block');
-    expect(img).toHaveStyle('max-width: 100%');
-    expect(img).toHaveStyle('height: auto');
-    expect(img).toHaveStyle('border-radius: 0.5rem');
+    // VaneUI Img component doesn't add inline styles, check attributes instead
+    expect(img.tagName).toBe('IMG');
+    expect(img).toHaveAttribute('alt', 'Test image');
   });
 
   test('renders image with title', () => {

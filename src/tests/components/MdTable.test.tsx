@@ -20,7 +20,7 @@ describe('MdTable Component', () => {
     expect(cardWrapper).toBeInTheDocument();
     // VaneUI Card component classes
     expect(cardWrapper).toHaveClass('px-4', 'py-4', 'gap-4', 'flex');
-    expect(cardWrapper).toHaveClass('border', 'rounded-xl');
+    expect(cardWrapper).toHaveClass('border', 'rounded-(--layout-border-radius-md)');
     expect(cardWrapper).toHaveClass('flex-col');
     
     // Verify table styling
