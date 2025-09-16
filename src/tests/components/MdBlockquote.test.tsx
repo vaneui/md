@@ -14,9 +14,10 @@ describe('MdBlockquote Component', () => {
     const cardElement = blockquoteText.closest('div[style*="border-left"]');
     expect(cardElement).toBeInTheDocument();
     // VaneUI Card component classes
-    expect(cardElement).toHaveClass('px-4', 'py-4', 'gap-4', 'flex');
-    expect(cardElement).toHaveClass('border', 'rounded-(--layout-border-radius-md)');
+    expect(cardElement).toHaveClass('px-6', 'py-6', 'gap-4', 'flex');
+    expect(cardElement).toHaveClass('border', 'rounded-(--layout-br-md)');
     expect(cardElement).toHaveClass('flex-col'); // Card layout
+    expect(cardElement).toHaveClass('bg-(--color-bg-layout-default)', 'text-(--color-text-default)', 'border-(--color-border-default)', 'font-normal');
     // Verify custom border-left styling for blockquotes
     expect(cardElement).toHaveStyle('border-left: 4px solid #d1d5db');
     expect(cardElement).toHaveStyle('padding-left: 1rem');

@@ -10,10 +10,10 @@ describe('MdCode Component', () => {
     const code = screen.getByText('code snippet');
     expect(code).toBeInTheDocument();
     // VaneUI Code component with secondary prop has these classes
-    expect(code).toHaveClass('px-1.5', 'py-1', 'text-sm', 'gap-1.5');
-    expect(code).toHaveClass('bg-(--background-color-secondary)', 'text-(--text-color-secondary)');
-    expect(code).toHaveClass('border-(--border-color-secondary)', 'ring-(--border-color-secondary)');
-    expect(code).toHaveClass('inline', 'rounded-(--ui-border-radius-md)');
-    expect(code).toHaveClass('font-mono'); // monospace font for code
+    expect(code).toHaveClass('px-1.5', 'py-1', 'text-sm');
+    expect(code).toHaveClass('bg-(--color-bg-secondary)', 'text-(--color-text-secondary)');
+    expect(code).toHaveClass('ring-(--color-border-secondary)');
+    expect(code).toHaveClass('inline', 'rounded-(--ui-br-md)');
+    expect(code).toHaveClass('ring', 'ring-inset', 'font-mono', 'font-semibold'); // monospace font for code
   });
 });

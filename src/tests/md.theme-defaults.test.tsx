@@ -25,8 +25,8 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const h2 = container.querySelector('h2');
 
       // Both should have the theme defaults applied
-      expect(h1).toHaveClass('text-(--text-color-primary)', 'font-bold');
-      expect(h2).toHaveClass('text-(--text-color-primary)', 'font-bold');
+      expect(h1).toHaveClass('text-(--color-text-primary)', 'font-bold');
+      expect(h2).toHaveClass('text-(--color-text-primary)', 'font-bold');
       
       // Size overrides still maintained
       expect(h1).toHaveClass('text-4xl');
@@ -55,7 +55,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('text-lg', 'underline', 'font-semibold');
-        expect(link).toHaveClass('text-(--text-color-link)'); // Link color maintained
+        expect(link).toHaveClass('text-(--color-text-link)'); // Link color maintained
         expect(link).not.toHaveClass('text-base', 'font-normal');
       });
     });
@@ -78,8 +78,8 @@ describe('Md Component - ThemeDefaults Tests', () => {
       );
 
       const list = container.querySelector('ul');
-      expect(list).toHaveClass('text-xl', 'text-(--text-color-success)', 'font-semibold');
-      expect(list).not.toHaveClass('text-base', 'text-(--text-color-default)', 'font-normal');
+      expect(list).toHaveClass('text-xl', 'text-(--color-text-success)', 'font-semibold');
+      expect(list).not.toHaveClass('text-base', 'text-(--color-text-default)', 'font-normal');
     });
 
     it('should combine themeDefaults with custom theme', () => {
@@ -116,15 +116,15 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const list = container.querySelector('ul');
 
       // Title should have both custom theme and defaults merged
-      expect(h1).toHaveClass('text-(--text-color-accent)', 'font-black');
+      expect(h1).toHaveClass('text-(--color-text-accent)', 'font-black');
       expect(h1).toHaveClass('text-4xl');
 
       // Link should have themeDefaults applied
       expect(link).toHaveClass('text-sm');
-      expect(link).toHaveClass('text-(--text-color-link)');
+      expect(link).toHaveClass('text-(--color-text-link)');
 
       // List should have themeDefaults applied
-      expect(list).toHaveClass('text-(--text-color-warning)');
+      expect(list).toHaveClass('text-(--color-text-warning)');
     });
 
     it('should handle multiple component themeDefaults', () => {
@@ -159,9 +159,9 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const list = container.querySelector('ul');
 
       // All components should have their respective defaults
-      expect(h1).toHaveClass('text-(--text-color-secondary)', 'font-light');
+      expect(h1).toHaveClass('text-(--color-text-secondary)', 'font-light');
       expect(link).toHaveClass('font-mono', 'text-xl');
-      expect(list).toHaveClass('text-(--text-color-info)', 'text-lg', 'font-serif');
+      expect(list).toHaveClass('text-(--color-text-info)', 'text-lg', 'font-serif');
     });
 
     it('should prioritize explicit props over themeDefaults', () => {
@@ -185,7 +185,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       );
 
       const h1 = container.querySelector('h1');
-      expect(h1).toHaveClass('text-(--text-color-primary)', 'font-semibold');
+      expect(h1).toHaveClass('text-(--color-text-primary)', 'font-semibold');
     });
 
     it('should handle themeDefaults with rerender', () => {
@@ -212,7 +212,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       );
 
       let h1 = container.querySelector('h1');
-      expect(h1).toHaveClass('text-(--text-color-danger)', 'font-bold');
+      expect(h1).toHaveClass('text-(--color-text-danger)', 'font-bold');
 
       rerender(
         <ThemeProvider themeDefaults={themeDefaults2}>
@@ -221,8 +221,8 @@ describe('Md Component - ThemeDefaults Tests', () => {
       );
 
       h1 = container.querySelector('h1');
-      expect(h1).toHaveClass('text-(--text-color-success)', 'font-light');
-      expect(h1).not.toHaveClass('text-(--text-color-danger)', 'font-bold');
+      expect(h1).toHaveClass('text-(--color-text-success)', 'font-light');
+      expect(h1).not.toHaveClass('text-(--color-text-danger)', 'font-bold');
     });
   });
 });

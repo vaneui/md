@@ -13,7 +13,7 @@ describe('MdText Component', () => {
     // VaneUI Text component classes for paragraphs
     expect(paragraph).toHaveClass('p-0', 'm-0', 'w-fit');
     expect(paragraph).toHaveClass('text-base'); // default size
-    expect(paragraph).toHaveClass('font-sans', 'font-normal');
+    expect(paragraph).toHaveClass('font-sans', 'text-left');
   });
 
   test('renders text with inline formatting', () => {
