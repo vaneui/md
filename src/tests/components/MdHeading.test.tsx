@@ -11,8 +11,9 @@ describe('MdHeading Component', () => {
     expect(heading).toBeInTheDocument();
     expect(heading).toHaveTextContent('Heading 1');
     expect(heading.tagName).toBe('H1');
-    // VaneUI Title component classes for xl size
-    expect(heading).toHaveClass('text-4xl'); // xl size
+    // VaneUI Title component classes for xl size with CSS variables
+    expect(heading).toHaveClass('[--fs-unit:18]'); // xl size font unit
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -24,8 +25,9 @@ describe('MdHeading Component', () => {
     expect(heading).toBeInTheDocument();
     expect(heading).toHaveTextContent('Heading 3');
     expect(heading.tagName).toBe('H3');
-    // VaneUI Title component classes for md size
-    expect(heading).toHaveClass('text-2xl'); // md size
+    // VaneUI Title component classes for md size with CSS variables
+    expect(heading).toHaveClass('[--fs-unit:12]'); // md size font unit
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -37,8 +39,9 @@ describe('MdHeading Component', () => {
     expect(heading).toBeInTheDocument();
     expect(heading).toHaveTextContent('Heading 6');
     expect(heading.tagName).toBe('H6');
-    // VaneUI Title component classes for xs size
-    expect(heading).toHaveClass('text-lg'); // xs size
+    // VaneUI Title component classes for xs size with CSS variables
+    expect(heading).toHaveClass('[--fs-unit:9]'); // xs size font unit
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -66,16 +69,17 @@ describe('MdHeading Component', () => {
     expect(h5).toHaveTextContent('H5 Title');
     expect(h6).toHaveTextContent('H6 Title');
     
-    // Verify size classes for each heading level
-    expect(h1).toHaveClass('text-4xl'); // xl
-    expect(h2).toHaveClass('text-3xl'); // lg
-    expect(h3).toHaveClass('text-2xl'); // md
-    expect(h4).toHaveClass('text-xl');  // sm
-    expect(h5).toHaveClass('text-lg');  // xs
-    expect(h6).toHaveClass('text-lg');  // xs
-    
-    // All should have common Title classes
+    // Verify CSS variable size classes for each heading level
+    expect(h1).toHaveClass('[--fs-unit:18]'); // xl
+    expect(h2).toHaveClass('[--fs-unit:15]'); // lg
+    expect(h3).toHaveClass('[--fs-unit:12]'); // md
+    expect(h4).toHaveClass('[--fs-unit:10]');  // sm
+    expect(h5).toHaveClass('[--fs-unit:9]');  // xs
+    expect(h6).toHaveClass('[--fs-unit:9]');  // xs
+
+    // All should have common Title classes with CSS variables
     [h1, h2, h3, h4, h5, h6].forEach(heading => {
+      expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
       expect(heading).toHaveClass('text-balance', 'w-fit');
       expect(heading).toHaveClass('font-sans', 'font-semibold');
     });

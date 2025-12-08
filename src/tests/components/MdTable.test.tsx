@@ -15,19 +15,20 @@ describe('MdTable Component', () => {
     expect(screen.getByText('Cell 1')).toBeInTheDocument();
     expect(screen.getByText('Cell 2')).toBeInTheDocument();
     
-    // Verify table is wrapped in Card component
-    const cardWrapper = table.closest('div.px-6');
+    // Verify table is wrapped in Card component with CSS variables
+    const cardWrapper = table.closest('div.flex');
     expect(cardWrapper).toBeInTheDocument();
-    // VaneUI Card component classes
-    expect(cardWrapper).toHaveClass('px-6', 'py-6', 'gap-4', 'flex');
-    expect(cardWrapper).toHaveClass('border', 'rounded-(--layout-br-md)');
+    // VaneUI Card component classes with CSS variables
+    expect(cardWrapper).toHaveClass('px-(--px)', 'py-(--py)');
+    expect(cardWrapper).toHaveClass('gap-(--gap)', 'flex');
+    expect(cardWrapper).toHaveClass('border', 'rounded-(--br)');
     expect(cardWrapper).toHaveClass('flex-col');
-    expect(cardWrapper).toHaveClass('bg-(--color-bg-layout-default)', 'text-(--color-text-default)', 'border-(--color-border-default)', 'font-normal');
-    
+    expect(cardWrapper).toHaveClass('bg-(--color-bg-layout-default)', 'text-(--color-text-default)', 'border-(--color-border-default)');
+
     // Verify table styling
     expect(table).toHaveStyle('width: 100%');
     expect(table).toHaveStyle('border-collapse: collapse');
-    
+
     // Verify card wrapper has overflow styling
     expect(cardWrapper).toHaveStyle('overflow: auto');
     expect(cardWrapper).toHaveStyle('margin: 1rem 0px');

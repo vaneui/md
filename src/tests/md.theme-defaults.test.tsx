@@ -27,10 +27,12 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // Both should have the theme defaults applied
       expect(h1).toHaveClass('text-(--color-text-primary)', 'font-bold');
       expect(h2).toHaveClass('text-(--color-text-primary)', 'font-bold');
-      
+
       // Size overrides still maintained
-      expect(h1).toHaveClass('text-4xl');
-      expect(h2).toHaveClass('text-3xl');
+      expect(h1).toHaveClass('[--fs-unit:18]');
+      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h2).toHaveClass('[--fs-unit:15]');
+      expect(h2).toHaveClass('text-(length:--fs)');
     });
 
     it('should apply themeDefaults to link components', () => {
@@ -54,9 +56,10 @@ describe('Md Component - ThemeDefaults Tests', () => {
       expect(links).toHaveLength(2);
 
       links.forEach(link => {
-        expect(link).toHaveClass('text-lg', 'underline', 'font-semibold');
+        expect(link).toHaveClass('[--fs-unit:9]', 'underline', 'font-semibold');
+        expect(link).toHaveClass('text-(length:--fs)');
         expect(link).toHaveClass('text-(--color-text-link)'); // Link color maintained
-        expect(link).not.toHaveClass('text-base', 'font-normal');
+        expect(link).not.toHaveClass('[--fs-unit:8]', 'font-normal');
       });
     });
 
@@ -78,8 +81,9 @@ describe('Md Component - ThemeDefaults Tests', () => {
       );
 
       const list = container.querySelector('ul');
-      expect(list).toHaveClass('text-xl', 'text-(--color-text-success)', 'font-semibold');
-      expect(list).not.toHaveClass('text-base', 'text-(--color-text-default)', 'font-normal');
+      expect(list).toHaveClass('[--fs-unit:10]', 'text-(--color-text-success)', 'font-semibold');
+      expect(list).toHaveClass('text-(length:--fs)');
+      expect(list).not.toHaveClass('[--fs-unit:8]', 'text-(--color-text-default)', 'font-normal');
     });
 
     it('should combine themeDefaults with custom theme', () => {
@@ -117,10 +121,12 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       // Title should have both custom theme and defaults merged
       expect(h1).toHaveClass('text-(--color-text-accent)', 'font-black');
-      expect(h1).toHaveClass('text-4xl');
+      expect(h1).toHaveClass('[--fs-unit:18]');
+      expect(h1).toHaveClass('text-(length:--fs)');
 
       // Link should have themeDefaults applied
-      expect(link).toHaveClass('text-sm');
+      expect(link).toHaveClass('[--fs-unit:7]');
+      expect(link).toHaveClass('text-(length:--fs)');
       expect(link).toHaveClass('text-(--color-text-link)');
 
       // List should have themeDefaults applied
@@ -160,8 +166,10 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       // All components should have their respective defaults
       expect(h1).toHaveClass('text-(--color-text-secondary)', 'font-light');
-      expect(link).toHaveClass('font-mono', 'text-xl');
-      expect(list).toHaveClass('text-(--color-text-info)', 'text-lg', 'font-serif');
+      expect(link).toHaveClass('font-mono', '[--fs-unit:10]');
+      expect(link).toHaveClass('text-(length:--fs)');
+      expect(list).toHaveClass('text-(--color-text-info)', '[--fs-unit:9]', 'font-serif');
+      expect(list).toHaveClass('text-(length:--fs)');
     });
 
     it('should prioritize explicit props over themeDefaults', () => {

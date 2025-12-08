@@ -62,32 +62,37 @@ describe('Md Component Tests', () => {
       const h1 = container.querySelector('h1');
       expect(h1).toBeInTheDocument();
       expect(h1).toHaveClass('text-balance', 'w-fit');
-      expect(h1).toHaveClass('text-4xl'); // xl size
+      expect(h1).toHaveClass('[--fs-unit:18]'); // xl size
+      expect(h1).toHaveClass('text-(length:--fs)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
       expect(h1).toHaveClass('font-sans', 'font-semibold');
 
       // Test h2 (level 2)
       const h2 = container.querySelector('h2');
       expect(h2).toBeInTheDocument();
-      expect(h2).toHaveClass('text-3xl'); // lg size
+      expect(h2).toHaveClass('[--fs-unit:15]'); // lg size
+      expect(h2).toHaveClass('text-(length:--fs)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h3 (level 3)
       const h3 = container.querySelector('h3');
       expect(h3).toBeInTheDocument();
-      expect(h3).toHaveClass('text-2xl'); // md size
+      expect(h3).toHaveClass('[--fs-unit:12]'); // md size
+      expect(h3).toHaveClass('text-(length:--fs)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h4 (level 4)
       const h4 = container.querySelector('h4');
       expect(h4).toBeInTheDocument();
-      expect(h4).toHaveClass('text-xl'); // sm size
+      expect(h4).toHaveClass('[--fs-unit:10]'); // sm size
+      expect(h4).toHaveClass('text-(length:--fs)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h5 (level 5)
       const h5 = container.querySelector('h5');
       expect(h5).toBeInTheDocument();
-      expect(h5).toHaveClass('text-lg'); // xs size
+      expect(h5).toHaveClass('[--fs-unit:9]'); // xs size
+      expect(h5).toHaveClass('text-(length:--fs)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
     });
 
@@ -119,7 +124,8 @@ describe('Md Component Tests', () => {
       const list = container.querySelector('ul');
       expect(list).toBeInTheDocument();
       expect(list).toHaveClass('list-disc', 'list-inside');
-      expect(list).toHaveClass('text-base'); // md size
+      expect(list).toHaveClass('[--fs-unit:8]'); // md size
+      expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
       expect(list).toHaveClass('pl-6'); // default padding
       expect(list).toHaveClass('font-sans', 'font-normal');
 
@@ -193,16 +199,19 @@ This is a paragraph with [a link](https://example.com).
 
       // Check all elements are rendered with proper theme classes
       const h1 = container.querySelector('h1');
-      expect(h1).toHaveClass('text-4xl', 'font-semibold');
+      expect(h1).toHaveClass('[--fs-unit:18]', 'font-semibold');
+      expect(h1).toHaveClass('text-(length:--fs)');
 
       const h2 = container.querySelector('h2');
-      expect(h2).toHaveClass('text-3xl', 'font-semibold');
+      expect(h2).toHaveClass('[--fs-unit:15]', 'font-semibold');
+      expect(h2).toHaveClass('text-(length:--fs)');
 
       const link = container.querySelector('a');
       expect(link).toHaveClass('text-(--color-text-link)', 'hover:underline');
 
       const list = container.querySelector('ul');
-      expect(list).toHaveClass('list-disc', 'list-inside', 'text-base');
+      expect(list).toHaveClass('list-disc', 'list-inside', '[--fs-unit:8]');
+      expect(list).toHaveClass('text-(length:--fs)');
 
       const img = container.querySelector('img');
       // Now wrapped in Card component
@@ -270,7 +279,8 @@ This is a paragraph with [a link](https://example.com).
 
       const h1 = container.querySelector('h1');
       expect(h1).toHaveClass('text-(--color-text-primary)');
-      expect(h1).toHaveClass('text-4xl'); // Size override maintained
+      expect(h1).toHaveClass('[--fs-unit:18]'); // Size override maintained
+      expect(h1).toHaveClass('text-(length:--fs)');
     });
   });
 });

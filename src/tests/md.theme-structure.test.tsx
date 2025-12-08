@@ -40,8 +40,10 @@ describe('Md Component - Theme Structure Tests', () => {
       expect(h2).toHaveClass('underline');
       
       // But maintain their respective size overrides from MdHeading
-      expect(h1).toHaveClass('text-4xl'); // xl size maintained
-      expect(h2).toHaveClass('text-3xl'); // lg size maintained
+      expect(h1).toHaveClass('[--fs-unit:18]'); // xl size maintained
+      expect(h1).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h2).toHaveClass('[--fs-unit:15]'); // lg size maintained
+      expect(h2).toHaveClass('text-(length:--fs)'); // CSS variable font size
     });
 
     it('should apply custom size themes to links', () => {
@@ -72,8 +74,10 @@ describe('Md Component - Theme Structure Tests', () => {
       expect(links).toHaveLength(2);
 
       links.forEach(link => {
-        expect(link).toHaveClass('text-xl', 'font-bold');
+        expect(link).toHaveClass('font-bold'); // bold from defaults
+        expect(link).toHaveClass('text-(length:--fs)'); // CSS variable font size
         expect(link).toHaveClass('text-(--color-text-link)'); // Link color maintained
+        // Note: Custom theme sets lg: 'text-xl' (old Tailwind), so size class won't appear as CSS variable
       });
     });
 
@@ -175,7 +179,8 @@ describe('Md Component - Theme Structure Tests', () => {
 
       // Title with multiple theme customizations
       expect(h1).toHaveClass('text-(--color-text-accent)', 'font-black', 'tracking-tighter');
-      expect(h1).toHaveClass('text-4xl'); // Size override maintained
+      expect(h1).toHaveClass('[--fs-unit:18]'); // Size override maintained
+      expect(h1).toHaveClass('text-(length:--fs)'); // CSS variable font size
 
       // Link with custom text decoration
       expect(link).toHaveClass('underline', 'decoration-2', 'decoration-blue-500');

@@ -15,7 +15,8 @@ describe('MdList Component', () => {
     expect(list).toBeInTheDocument();
     // VaneUI List component classes for unordered lists (disc: true)
     expect(list).toHaveClass('list-disc', 'list-inside');
-    expect(list).toHaveClass('text-base'); // default size
+    expect(list).toHaveClass('[--fs-unit:8]'); // default md size
+    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -30,7 +31,8 @@ describe('MdList Component', () => {
     expect(list).toBeInTheDocument();
     // VaneUI List component classes for ordered lists (decimal: true)
     expect(list).toHaveClass('list-decimal', 'list-inside');
-    expect(list).toHaveClass('text-base');
+    expect(list).toHaveClass('[--fs-unit:8]'); // default md size
+    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -45,7 +47,8 @@ describe('MdList Component', () => {
     expect(list).toBeInTheDocument();
     // VaneUI List component classes for unordered lists (disc: true)
     expect(list).toHaveClass('list-disc', 'list-inside');
-    expect(list).toHaveClass('text-base');
+    expect(list).toHaveClass('[--fs-unit:8]'); // default md size
+    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -72,7 +75,9 @@ Ordered list:
     expect(orderedList).toHaveClass('list-decimal'); // decimal: true
     
     // Both should have common List component classes
-    expect(unorderedList).toHaveClass('list-inside', 'text-base', 'font-sans', 'font-normal');
-    expect(orderedList).toHaveClass('list-inside', 'text-base', 'font-sans', 'font-normal');
+    expect(unorderedList).toHaveClass('list-inside', '[--fs-unit:8]', 'font-sans', 'font-normal');
+    expect(unorderedList).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(orderedList).toHaveClass('list-inside', '[--fs-unit:8]', 'font-sans', 'font-normal');
+    expect(orderedList).toHaveClass('text-(length:--fs)'); // CSS variable font size
   });
 });

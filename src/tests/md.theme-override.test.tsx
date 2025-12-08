@@ -210,10 +210,12 @@ describe('Md Component - ThemeOverride Tests', () => {
 
       // Title should have both custom theme (primary) and override (black)
       expect(h1).toHaveClass('text-(--color-text-primary)', 'font-black');
-      expect(h1).toHaveClass('text-4xl');
+      expect(h1).toHaveClass('[--fs-unit:18]');
+      expect(h1).toHaveClass('text-(length:--fs)');
 
       // Link should have override applied
-      expect(link).toHaveClass('text-sm');
+      expect(link).toHaveClass('[--fs-unit:7]'); // sm size
+      expect(link).toHaveClass('text-(length:--fs)'); // CSS variable font size
       expect(link).toHaveClass('text-(--color-text-link)');
     });
 
@@ -241,7 +243,8 @@ describe('Md Component - ThemeOverride Tests', () => {
 
       // Title should have nested theme override applied
       expect(h1).toHaveClass('text-(--color-text-warning)');
-      expect(h1).toHaveClass('text-4xl');
+      expect(h1).toHaveClass('[--fs-unit:18]');
+      expect(h1).toHaveClass('text-(length:--fs)');
     });
 
     it('should create cohesive design system by overriding all component themes', () => {
