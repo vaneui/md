@@ -13,7 +13,7 @@ describe('Md Component - Theme Structure Tests', () => {
             appearance: {
               text: {
                 filled: {
-                  default: {
+                  primary: {
                     base: 'text-blue-600'
                   }
                 }

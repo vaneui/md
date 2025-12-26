@@ -13,7 +13,6 @@ describe('Md Component - ThemeOverride Tests', () => {
         theme.title.themes.typography.fontFamily.serif = 'font-serif-override';
         theme.title.themes.size.text.xl = 'text-6xl-override';
         
-        theme.link.themes.appearance.text.filled.primary.base = 'text-blue-600-override';
         theme.link.themes.typography.fontWeight.bold = 'font-bold-override';
         
         theme.list.themes.appearance.text.filled.info.base = 'text-info-700-override';
@@ -26,7 +25,7 @@ describe('Md Component - ThemeOverride Tests', () => {
         <ThemeProvider themeOverride={themeOverride}>
           <div>
             <Title danger extrabold serif xl tag="h1">Test Title</Title>
-            <Link primary bold href="#test">Test Link</Link>
+            <Link bold href="#test">Test Link</Link>
             <List info medium>
               <li>Test List Item</li>
             </List>
@@ -61,10 +60,10 @@ describe('Md Component - ThemeOverride Tests', () => {
       const content = '# Override Title\n## Override Subtitle';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Override the default title appearance to use danger styling with custom classes
-        theme.title.themes.appearance.text.filled.default.base = 'text-red-700-custom';
-        theme.title.themes.appearance.text.filled.default.hover = 'hover:text-red-800-custom';
-        theme.title.themes.appearance.text.filled.default.active = 'active:text-red-900-custom';
+        // Override the primary title appearance to use danger styling with custom classes
+        theme.title.themes.appearance.text.filled.primary.base = 'text-red-700-custom';
+        theme.title.themes.appearance.text.filled.primary.hover = 'hover:text-red-800-custom';
+        theme.title.themes.appearance.text.filled.primary.active = 'active:text-red-900-custom';
         
         // Override text sizes that are actually used by the Md component (xl for h1, lg for h2)
         theme.title.themes.size.text.xl = 'text-6xl-custom';
@@ -101,9 +100,8 @@ describe('Md Component - ThemeOverride Tests', () => {
       const content = '[Override Link](https://example.com) and [Another Link](https://test.com)';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Override the default link appearance and typography that will actually be used
-        theme.link.themes.appearance.text.filled.default.base = 'text-blue-600-custom';
-        theme.link.themes.appearance.text.filled.default.hover = 'hover:text-blue-700-custom';
+        // Override the link text decoration that will actually be used
+        // Note: Link component doesn't support appearance props - uses fixed link color
         
         // Override default size if links use it
         theme.link.themes.size.text.md = 'text-lg-custom';
@@ -137,9 +135,9 @@ describe('Md Component - ThemeOverride Tests', () => {
       const content = '- Override Item 1\n- Override Item 2\n- Override Item 3';
       
       const themeOverride = (theme: ThemeProps): ThemeProps => {
-        // Override the default list appearance and typography that will actually be used
-        theme.list.themes.appearance.text.filled.default.base = 'text-blue-700-custom';
-        theme.list.themes.appearance.text.filled.default.hover = 'hover:text-blue-800-custom';
+        // Override the primary list appearance and typography that will actually be used
+        theme.list.themes.appearance.text.filled.primary.base = 'text-blue-700-custom';
+        theme.list.themes.appearance.text.filled.primary.hover = 'hover:text-blue-800-custom';
         
         // Override default size that lists use
         theme.list.themes.size.text.md = 'text-lg-custom';
@@ -228,7 +226,7 @@ describe('Md Component - ThemeOverride Tests', () => {
         newTheme.title.defaults = {
           ...theme.title.defaults,
           warning: true,
-          default: false
+          primary: false
         };
         return newTheme;
       };
@@ -255,28 +253,24 @@ describe('Md Component - ThemeOverride Tests', () => {
 
       const themeOverride = (theme: ThemeProps): ThemeProps => {
         // Override title themes using real theme structure that will be applied
-        theme.title.themes.appearance.text.filled.default.base = 'text-indigo-800-system';
-        theme.title.themes.appearance.text.filled.default.hover = 'hover:text-indigo-900-system';
-        theme.title.themes.appearance.text.filled.default.active = 'active:text-indigo-950-system';
-        
+        theme.title.themes.appearance.text.filled.primary.base = 'text-indigo-800-system';
+        theme.title.themes.appearance.text.filled.primary.hover = 'hover:text-indigo-900-system';
+        theme.title.themes.appearance.text.filled.primary.active = 'active:text-indigo-950-system';
+
         theme.title.themes.size.text.xl = 'text-5xl-system';
         theme.title.themes.typography.fontWeight.semibold = 'font-black-system tracking-tight';
         theme.title.themes.typography.fontFamily.sans = 'font-serif-system';
 
-        // Override link themes using real theme structure that will be applied
-        theme.link.themes.appearance.text.filled.default.base = 'text-indigo-600-system';
-        theme.link.themes.appearance.text.filled.default.hover = 'hover:text-indigo-800-system';
-        theme.link.themes.appearance.text.filled.default.active = 'active:text-indigo-900-system';
-        
+        // Override link themes - Link uses fixed link color, no appearance props
         theme.link.themes.size.text.md = 'text-lg-system';
         theme.link.themes.typography.fontWeight.normal = 'font-semibold-system';
         theme.link.themes.typography.textDecoration.underline = 'underline-system decoration-2';
 
         // Override list themes using real theme structure that will be applied
-        theme.list.themes.appearance.text.filled.default.base = 'text-gray-800-system';
-        theme.list.themes.appearance.text.filled.default.hover = 'hover:text-gray-900-system';
-        theme.list.themes.appearance.text.filled.default.active = 'active:text-gray-950-system';
-        
+        theme.list.themes.appearance.text.filled.primary.base = 'text-gray-800-system';
+        theme.list.themes.appearance.text.filled.primary.hover = 'hover:text-gray-900-system';
+        theme.list.themes.appearance.text.filled.primary.active = 'active:text-gray-950-system';
+
         theme.list.themes.size.text.md = 'text-lg-system leading-relaxed';
         theme.list.themes.size.paddingLeft.xs = 'pl-2-system';
         theme.list.themes.size.paddingLeft.sm = 'pl-4-system';
@@ -324,7 +318,7 @@ describe('Md Component - ThemeOverride Tests', () => {
         theme.title.defaults = {
           ...theme.title.defaults,
           [overrideMode]: true,
-          default: false,
+          primary: false,
         };
         return theme;
       };
