@@ -13,7 +13,7 @@ describe('MdCode Component', () => {
     expect(code).toHaveClass('px-(--ui-px)', 'py-(--ui-py)');
     expect(code).toHaveClass('[--fs-unit:7]'); // sm size
     expect(code).toHaveClass('text-(length:--fs)'); // CSS variable font size
-    expect(code).toHaveClass('bg-(--color-bg-secondary)', 'text-(--color-text-secondary)');
+    expect(code).toHaveClass('[background:var(--color-bg-secondary)]', 'text-(--color-text-secondary)');
     expect(code).toHaveClass('ring-(--color-border-secondary)');
     expect(code).toHaveClass('inline', 'rounded-(--ui-br)');
     expect(code).toHaveClass('ring', 'ring-inset', 'font-mono', 'font-semibold'); // monospace font for code
