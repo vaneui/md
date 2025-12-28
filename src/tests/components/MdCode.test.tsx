@@ -16,6 +16,6 @@ describe('MdCode Component', () => {
     expect(code).toHaveClass('[background:var(--color-bg-secondary)]', 'text-(--color-text-secondary)');
     expect(code).toHaveClass('ring-(--color-border-secondary)');
     expect(code).toHaveClass('inline', 'rounded-(--ui-br)');
-    expect(code).toHaveClass('ring', 'ring-inset', 'font-mono', 'font-semibold'); // monospace font for code
+    expect(code).toHaveClass('ring-[length:var(--rw)]', 'ring-inset', 'font-mono', 'font-semibold'); // monospace font for code
   });
 });

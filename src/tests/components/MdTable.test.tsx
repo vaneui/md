@@ -21,7 +21,7 @@ describe('MdTable Component', () => {
     // VaneUI Card component classes with CSS variables
     expect(cardWrapper).toHaveClass('px-(--px)', 'py-(--py)');
     expect(cardWrapper).toHaveClass('gap-(--gap)', 'flex');
-    expect(cardWrapper).toHaveClass('border', 'rounded-(--br)');
+    expect(cardWrapper).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
     expect(cardWrapper).toHaveClass('flex-col');
     expect(cardWrapper).toHaveClass('[background:var(--color-bg-layout-primary)]', 'text-(--color-text-primary)', 'border-(--color-border-primary)');
 
