@@ -17,7 +17,7 @@ describe('MdBlockquote Component', () => {
     expect(cardElement).toHaveClass('px-(--px)', 'py-(--py)', 'gap-(--gap)', 'flex');
     expect(cardElement).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
     expect(cardElement).toHaveClass('flex-col'); // Card layout
-    expect(cardElement).toHaveClass('[background:var(--color-bg-layout-primary)]', 'text-(--color-text-primary)', 'border-(--color-border-primary)', 'font-normal');
+    expect(cardElement).toHaveClass('[background:var(--bg-color)]', 'text-(--text-color)', 'border-(--border-color)', 'font-normal');
     // Verify custom border-left styling for blockquotes
     expect(cardElement).toHaveStyle('border-left: 4px solid #d1d5db');
     expect(cardElement).toHaveStyle('padding-left: 1rem');

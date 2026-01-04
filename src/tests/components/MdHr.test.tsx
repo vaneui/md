@@ -17,8 +17,8 @@ describe('MdHr Component', () => {
     if (divider) {
       expect(divider).toBeInTheDocument();
       // VaneUI Divider component classes (actual implementation)
-      expect(divider).toHaveClass('h-px', 'w-full');
-      expect(divider).toHaveClass('[background:var(--color-border-primary)]');
+      expect(divider).toHaveClass('h-(--bw)', 'w-full');
+      expect(divider).toHaveClass('[background:var(--border-color)]');
     } else {
       // Just verify the content around the hr renders correctly
       expect(container).toHaveTextContent('Text above');
