@@ -134,7 +134,7 @@ describe('Md Component Tests', () => {
       listItems.forEach(listItem => {
         // ListItems inherit color from parent List
         // List items inherit from parent list styling
-        expect(listItem).not.toHaveClass('text-(--text-color)');
+        expect(listItem).toHaveClass('text-(--text-color)'); // primary is now default
       });
     });
 
