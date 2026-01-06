@@ -13,7 +13,7 @@ describe('MdText Component', () => {
     // VaneUI Text component classes for paragraphs
     expect(paragraph).toHaveClass('p-0', 'm-0', 'w-fit');
     // Size is inherited from theme defaults, not always set explicitly
-    expect(paragraph).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(paragraph).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(paragraph).toHaveClass('font-sans', 'text-left');
   });
 

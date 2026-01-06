@@ -16,7 +16,7 @@ describe('MdList Component', () => {
     // VaneUI List component classes for unordered lists (disc: true)
     expect(list).toHaveClass('list-disc', 'list-inside');
     // Size is inherited from theme defaults, not always set explicitly
-    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(list).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -31,7 +31,7 @@ describe('MdList Component', () => {
     expect(list).toBeInTheDocument();
     // VaneUI List component classes for ordered lists (decimal: true)
     expect(list).toHaveClass('list-decimal', 'list-inside');
-    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(list).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -46,7 +46,7 @@ describe('MdList Component', () => {
     expect(list).toBeInTheDocument();
     // VaneUI List component classes for unordered lists (disc: true)
     expect(list).toHaveClass('list-disc', 'list-inside');
-    expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(list).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(list).toHaveClass('font-sans', 'font-normal');
   });
 
@@ -74,8 +74,8 @@ Ordered list:
     
     // Both should have common List component classes
     expect(unorderedList).toHaveClass('list-inside', 'font-sans', 'font-normal');
-    expect(unorderedList).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(unorderedList).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(orderedList).toHaveClass('list-inside', 'font-sans', 'font-normal');
-    expect(orderedList).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(orderedList).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
   });
 });

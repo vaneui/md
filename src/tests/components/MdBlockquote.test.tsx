@@ -14,7 +14,7 @@ describe('MdBlockquote Component', () => {
     const cardElement = blockquoteText.closest('div[style*="border-left"]');
     expect(cardElement).toBeInTheDocument();
     // VaneUI Card component classes with CSS variables
-    expect(cardElement).toHaveClass('px-(--px)', 'py-(--py)', 'gap-(--gap)', 'flex');
+    expect(cardElement).toHaveClass('px-(--px-desktop)', 'py-(--py-desktop)', 'gap-(--gap-desktop)', 'flex');
     expect(cardElement).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
     expect(cardElement).toHaveClass('flex-col'); // Card layout
     expect(cardElement).toHaveClass('[background:var(--bg-color)]', 'text-(--text-color)', 'border-(--border-color)', 'font-normal');

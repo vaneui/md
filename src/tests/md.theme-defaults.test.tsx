@@ -29,10 +29,8 @@ describe('Md Component - ThemeDefaults Tests', () => {
       expect(h2).toHaveClass('text-(--text-color)', 'font-bold');
 
       // Size overrides still maintained
-      expect(h1).toHaveClass('[--fs-unit:var(--fs-unit-desktop)]');
-      expect(h1).toHaveClass('text-(length:--fs)');
-      expect(h2).toHaveClass('[--fs-unit:var(--fs-unit-desktop)]');
-      expect(h2).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
+      expect(h2).toHaveClass('text-(length:--fs-desktop)');
     });
 
     it('should apply themeDefaults to link components', () => {
@@ -57,7 +55,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('underline', 'font-semibold');
-        expect(link).toHaveClass('text-(length:--fs)');
+        expect(link).toHaveClass('text-(length:--fs-desktop)');
         expect(link).toHaveClass('text-(--text-color)'); // Link color maintained
         expect(link).not.toHaveClass('font-normal');
       });
@@ -83,7 +81,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const list = container.querySelector('ul');
       expect(list).toHaveClass('text-(--text-color)', 'font-semibold');
       expect(list).toHaveAttribute('data-appearance', 'success');
-      expect(list).toHaveClass('text-(length:--fs)');
+      expect(list).toHaveClass('text-(length:--fs-desktop)');
       expect(list).not.toHaveClass('font-normal');
     });
 
@@ -123,12 +121,11 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // Title should have both custom theme and defaults merged
       expect(h1).toHaveClass('text-(--text-color)', 'font-black');
       expect(h1).toHaveAttribute('data-appearance', 'accent');
-      expect(h1).toHaveClass('[--fs-unit:var(--fs-unit-desktop)]');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
 
       // Link should have themeDefaults applied
       // Link size is managed by CSS variables, not always explicit as class;
-      expect(link).toHaveClass('text-(length:--fs)');
+      expect(link).toHaveClass('text-(length:--fs-desktop)');
       expect(link).toHaveClass('text-(--text-color)');
 
       // List should have themeDefaults applied
@@ -170,10 +167,10 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // All components should have their respective defaults
       expect(h1).toHaveClass('text-(--text-color)', 'font-light');
       expect(link).toHaveClass('font-mono');
-      expect(link).toHaveClass('text-(length:--fs)');
+      expect(link).toHaveClass('text-(length:--fs-desktop)');
       expect(list).toHaveClass('text-(--text-color)', 'font-serif');
       expect(list).toHaveAttribute('data-appearance', 'info');
-      expect(list).toHaveClass('text-(length:--fs)');
+      expect(list).toHaveClass('text-(length:--fs-desktop)');
     });
 
     it('should prioritize explicit props over themeDefaults', () => {

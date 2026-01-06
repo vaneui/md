@@ -10,9 +10,9 @@ describe('MdCode Component', () => {
     const code = screen.getByText('code snippet');
     expect(code).toBeInTheDocument();
     // VaneUI Code component with secondary prop has these classes
-    expect(code).toHaveClass('px-(--px)', 'py-(--py)');
+    expect(code).toHaveClass('px-(--px-desktop)', 'py-(--py-desktop)');
     // Code size is managed by CSS variables, may not be explicit as class
-    expect(code).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(code).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(code).toHaveClass('[background:var(--bg-color)]', 'text-(--text-color)');
     expect(code).toHaveClass('ring-(--ring-color)');
     expect(code).toHaveClass('inline', 'rounded-(--br)');
