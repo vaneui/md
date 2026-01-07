@@ -12,7 +12,7 @@ describe('MdHeading Component', () => {
     expect(heading).toHaveTextContent('Heading 1');
     expect(heading.tagName).toBe('H1');
     // VaneUI Title component classes for xl size with CSS variables
-    expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -25,7 +25,7 @@ describe('MdHeading Component', () => {
     expect(heading).toHaveTextContent('Heading 3');
     expect(heading.tagName).toBe('H3');
     // VaneUI Title component classes for md size with CSS variables
-    expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -38,7 +38,7 @@ describe('MdHeading Component', () => {
     expect(heading).toHaveTextContent('Heading 6');
     expect(heading.tagName).toBe('H6');
     // VaneUI Title component classes for xs size with CSS variables
-    expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
+    expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
     expect(heading).toHaveClass('font-sans', 'font-semibold');
   });
@@ -70,7 +70,7 @@ describe('MdHeading Component', () => {
 
     // All should have common Title classes with CSS variables
     [h1, h2, h3, h4, h5, h6].forEach(heading => {
-      expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
+      expect(heading).toHaveClass('text-(length:--fs)'); // CSS variable font size
       expect(heading).toHaveClass('text-balance', 'w-fit');
       expect(heading).toHaveClass('font-sans', 'font-semibold');
     });

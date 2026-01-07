@@ -36,8 +36,8 @@ describe('Md Component - Theme Structure Tests', () => {
       expect(h2).toHaveClass('underline');
 
       // But maintain their respective size overrides from MdHeading
-      expect(h1).toHaveClass('text-(length:--fs-desktop)');
-      expect(h2).toHaveClass('text-(length:--fs-desktop)');
+      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h2).toHaveClass('text-(length:--fs)');
     });
 
     it('should apply custom defaults to links', () => {
@@ -62,7 +62,7 @@ describe('Md Component - Theme Structure Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('font-bold');
-        expect(link).toHaveClass('text-(length:--fs-desktop)');
+        expect(link).toHaveClass('text-(length:--fs)');
         expect(link).toHaveClass('text-(--text-color)');
       });
     });
@@ -156,7 +156,7 @@ describe('Md Component - Theme Structure Tests', () => {
       const list = container.querySelector('ul');
 
       expect(h1).toHaveClass('text-purple-600', 'drop-shadow-lg', 'font-black', 'tracking-tighter');
-      expect(h1).toHaveClass('text-(length:--fs-desktop)');
+      expect(h1).toHaveClass('text-(length:--fs)');
 
       expect(link).toHaveClass('underline', 'decoration-2', 'decoration-blue-500');
       expect(link).toHaveClass('text-(--text-color)');
