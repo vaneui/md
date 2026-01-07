@@ -13,7 +13,7 @@ describe('MdCode Component', () => {
     expect(code).toHaveClass('px-(--px-desktop)', 'py-(--py-desktop)');
     // Code size is managed by CSS variables, may not be explicit as class
     expect(code).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
-    expect(code).toHaveClass('[background:var(--bg-color)]', 'text-(--text-color)');
+    expect(code).toHaveClass('bg-(--bg-color)', 'text-(--text-color)');
     expect(code).toHaveClass('ring-(--ring-color)');
     expect(code).toHaveClass('inline', 'rounded-(--br)');
     expect(code).toHaveClass('ring-[length:var(--rw)]', 'ring-inset', 'font-mono', 'font-semibold'); // monospace font for code

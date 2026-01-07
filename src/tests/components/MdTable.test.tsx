@@ -23,7 +23,7 @@ describe('MdTable Component', () => {
     expect(cardWrapper).toHaveClass('gap-(--gap-desktop)', 'flex');
     expect(cardWrapper).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
     expect(cardWrapper).toHaveClass('flex-col');
-    expect(cardWrapper).toHaveClass('[background:var(--bg-color)]', 'text-(--text-color)', 'border-(--border-color)');
+    expect(cardWrapper).toHaveClass('bg-(--bg-color)', 'text-(--text-color)', 'border-(--border-color)');
 
     // Verify table styling
     expect(table).toHaveStyle('width: 100%');
