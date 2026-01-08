@@ -29,8 +29,8 @@ describe('Md Component - ThemeDefaults Tests', () => {
       expect(h2).toHaveClass('text-(--text-color)', 'font-bold');
 
       // Size overrides still maintained
-      expect(h1).toHaveClass('text-(length:--fs)');
-      expect(h2).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
+      expect(h2).toHaveClass('text-(length:--fs-desktop)');
     });
 
     it('should apply themeDefaults to link components', () => {
@@ -121,7 +121,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // Title should have both custom theme and defaults merged
       expect(h1).toHaveClass('text-(--text-color)', 'font-black');
       expect(h1).toHaveAttribute('data-appearance', 'accent');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
 
       // Link should have themeDefaults applied
       // Link size is managed by CSS variables, not always explicit as class;

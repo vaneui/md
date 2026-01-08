@@ -62,7 +62,7 @@
     "@types/jest": "^29.5.14",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "@vaneui/ui": "^0.9.0-alpha.20260107153112.7883b1f",
+    "@vaneui/ui": "^0.9.0-alpha.20260108132757.32cb331",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.4",
     "jsdom": "^26.1.0",

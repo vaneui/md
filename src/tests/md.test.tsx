@@ -62,32 +62,32 @@ describe('Md Component Tests', () => {
       const h1 = container.querySelector('h1');
       expect(h1).toBeInTheDocument();
       expect(h1).toHaveClass('text-balance', 'w-fit');
-      expect(h1).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h1).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
       expect(h1).toHaveClass('font-sans', 'font-semibold');
 
       // Test h2 (level 2)
       const h2 = container.querySelector('h2');
       expect(h2).toBeInTheDocument();
-      expect(h2).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h2).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h3 (level 3)
       const h3 = container.querySelector('h3');
       expect(h3).toBeInTheDocument();
-      expect(h3).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h3).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h4 (level 4)
       const h4 = container.querySelector('h4');
       expect(h4).toBeInTheDocument();
-      expect(h4).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h4).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
 
       // Test h5 (level 5)
       const h5 = container.querySelector('h5');
       expect(h5).toBeInTheDocument();
-      expect(h5).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(h5).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
     });
 
@@ -195,11 +195,11 @@ This is a paragraph with [a link](https://example.com).
       // Check all elements are rendered with proper theme classes
       const h1 = container.querySelector('h1');
       expect(h1).toHaveClass('font-semibold');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
 
       const h2 = container.querySelector('h2');
       expect(h2).toHaveClass('font-semibold');
-      expect(h2).toHaveClass('text-(length:--fs)');
+      expect(h2).toHaveClass('text-(length:--fs-desktop)');
 
       const link = container.querySelector('a');
       expect(link).toHaveClass('text-(--text-color)', 'hover:underline');
@@ -274,7 +274,7 @@ This is a paragraph with [a link](https://example.com).
 
       const h1 = container.querySelector('h1');
       expect(h1).toHaveClass('text-(--text-color)');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
     });
   });
 });

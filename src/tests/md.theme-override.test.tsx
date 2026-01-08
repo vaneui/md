@@ -89,7 +89,7 @@ describe('Md Component - ThemeOverride Tests', () => {
       const h1 = container.querySelector('h1');
 
       expect(h1).toHaveClass('text-(--text-color)', 'font-black');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
     });
 
     it('should apply themeOverride with nested theme modifications', () => {
@@ -115,7 +115,7 @@ describe('Md Component - ThemeOverride Tests', () => {
 
       expect(h1).toHaveClass('text-(--text-color)');
       expect(h1).toHaveAttribute('data-appearance', 'warning');
-      expect(h1).toHaveClass('text-(length:--fs)');
+      expect(h1).toHaveClass('text-(length:--fs-desktop)');
     });
 
     it('should handle themeOverride with rerender', () => {
