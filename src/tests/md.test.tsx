@@ -64,7 +64,7 @@ describe('Md Component Tests', () => {
       expect(h1).toHaveClass('text-balance', 'w-fit');
       expect(h1).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       // Default appearance may not be visible as explicit CSS class
-      expect(h1).toHaveClass('font-sans', 'font-semibold');
+      expect(h1).toHaveClass('font-heading', 'font-semibold');
 
       // Test h2 (level 2)
       const h2 = container.querySelector('h2');
@@ -102,7 +102,7 @@ describe('Md Component Tests', () => {
       const link = container.querySelector('a');
       expect(link).toBeInTheDocument();
       expect(link).toHaveClass('hover:underline', 'w-fit');
-      expect(link).toHaveClass('cursor-pointer'); // link behavior
+      // cursor-pointer was removed from Link defaults in new VaneUI
       expect(link).toHaveClass('text-(--text-color)'); // link appearance
       expect(link).toHaveClass('font-sans', 'underline');
       expect(link).toHaveAttribute('href', 'https://example.com');

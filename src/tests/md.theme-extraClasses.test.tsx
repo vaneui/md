@@ -171,7 +171,10 @@ Paragraph with extra classes
       };
 
       const { container } = render(
-        <ThemeProvider extraClasses={extraClasses}>
+        <ThemeProvider
+          themeDefaults={{ title: { primary: true } }}
+          extraClasses={extraClasses}
+        >
           <Md content={content} />
         </ThemeProvider>
       );

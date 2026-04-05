@@ -14,7 +14,7 @@ describe('MdHeading Component', () => {
     // VaneUI Title component classes for xl size with CSS variables
     expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
-    expect(heading).toHaveClass('font-sans', 'font-semibold');
+    expect(heading).toHaveClass('font-heading', 'font-semibold');
   });
 
   test('renders h3 with level 3', () => {
@@ -27,7 +27,7 @@ describe('MdHeading Component', () => {
     // VaneUI Title component classes for md size with CSS variables
     expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
-    expect(heading).toHaveClass('font-sans', 'font-semibold');
+    expect(heading).toHaveClass('font-heading', 'font-semibold');
   });
 
   test('renders h6 with level 6', () => {
@@ -40,7 +40,7 @@ describe('MdHeading Component', () => {
     // VaneUI Title component classes for xs size with CSS variables
     expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
     expect(heading).toHaveClass('text-balance', 'w-fit');
-    expect(heading).toHaveClass('font-sans', 'font-semibold');
+    expect(heading).toHaveClass('font-heading', 'font-semibold');
   });
 
   test('renders all heading levels correctly', () => {
@@ -72,7 +72,7 @@ describe('MdHeading Component', () => {
     [h1, h2, h3, h4, h5, h6].forEach(heading => {
       expect(heading).toHaveClass('text-(length:--fs-desktop)'); // CSS variable font size
       expect(heading).toHaveClass('text-balance', 'w-fit');
-      expect(heading).toHaveClass('font-sans', 'font-semibold');
+      expect(heading).toHaveClass('font-heading', 'font-semibold');
     });
   });
 });

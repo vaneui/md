@@ -12,7 +12,6 @@ describe('MdLink Component', () => {
     expect(link).toHaveAttribute('href', 'https://example.com');
     // VaneUI Link component classes
     expect(link).toHaveClass('hover:underline', 'w-fit');
-    expect(link).toHaveClass('cursor-pointer'); // link behavior
     expect(link).toHaveClass('text-(--text-color)', 'font-sans', 'underline');
   });
 

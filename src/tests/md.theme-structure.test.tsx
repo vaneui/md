@@ -191,7 +191,7 @@ describe('Md Component - Theme Structure Tests', () => {
       const link = container.querySelector('a');
 
       expect(h1).toHaveClass('font-light', 'opacity-75');
-      expect(link).toHaveClass('hover:underline', 'w-fit', 'cursor-pointer', 'text-(--text-color)', 'font-sans', 'underline');
+      expect(link).toHaveClass('hover:underline', 'w-fit', 'text-(--text-color)', 'font-sans', 'underline');
     });
   });
 
