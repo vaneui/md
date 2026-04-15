@@ -103,7 +103,7 @@ describe('Md Component Tests', () => {
       expect(link).toBeInTheDocument();
       expect(link).toHaveClass('hover:underline', 'w-fit');
       // cursor-pointer was removed from Link defaults in new VaneUI
-      expect(link).toHaveClass('text-(--text-color)'); // link appearance
+      expect(link).toHaveClass('text-(--link-text)'); // link appearance
       expect(link).toHaveClass('font-sans', 'underline');
       expect(link).toHaveAttribute('href', 'https://example.com');
     });
@@ -202,7 +202,7 @@ This is a paragraph with [a link](https://example.com).
       expect(h2).toHaveClass('text-(length:--fs-desktop)');
 
       const link = container.querySelector('a');
-      expect(link).toHaveClass('text-(--text-color)', 'hover:underline');
+      expect(link).toHaveClass('text-(--link-text)', 'hover:underline');
 
       const list = container.querySelector('ul');
       expect(list).toHaveClass('list-disc', 'list-inside');

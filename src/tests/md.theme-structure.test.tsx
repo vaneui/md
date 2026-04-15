@@ -63,7 +63,7 @@ describe('Md Component - Theme Structure Tests', () => {
       links.forEach(link => {
         expect(link).toHaveClass('font-bold');
         expect(link).toHaveClass('text-(length:--fs)');
-        expect(link).toHaveClass('text-(--text-color)');
+        expect(link).toHaveClass('text-(--link-text)');
       });
     });
 
@@ -159,7 +159,7 @@ describe('Md Component - Theme Structure Tests', () => {
       expect(h1).toHaveClass('text-(length:--fs-desktop)');
 
       expect(link).toHaveClass('underline', 'decoration-2', 'decoration-blue-500');
-      expect(link).toHaveClass('text-(--text-color)');
+      expect(link).toHaveClass('text-(--link-text)');
 
       expect(list).toHaveClass('text-green-600', 'font-normal');
     });
@@ -191,7 +191,7 @@ describe('Md Component - Theme Structure Tests', () => {
       const link = container.querySelector('a');
 
       expect(h1).toHaveClass('font-light', 'opacity-75');
-      expect(link).toHaveClass('hover:underline', 'w-fit', 'text-(--text-color)', 'font-sans', 'underline');
+      expect(link).toHaveClass('hover:underline', 'w-fit', 'text-(--link-text)', 'font-sans', 'underline');
     });
   });
 

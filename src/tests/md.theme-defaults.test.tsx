@@ -56,7 +56,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       links.forEach(link => {
         expect(link).toHaveClass('underline', 'font-semibold');
         expect(link).toHaveClass('text-(length:--fs)');
-        expect(link).toHaveClass('text-(--text-color)'); // Link color maintained
+        expect(link).toHaveClass('text-(--link-text)'); // Link color maintained
         expect(link).not.toHaveClass('font-normal');
       });
     });
@@ -126,7 +126,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // Link should have themeDefaults applied
       // Link size is managed by CSS variables, not always explicit as class;
       expect(link).toHaveClass('text-(length:--fs)');
-      expect(link).toHaveClass('text-(--text-color)');
+      expect(link).toHaveClass('text-(--link-text)');
 
       // List should have themeDefaults applied
       expect(list).toHaveClass('text-(--text-color)');
