@@ -62,7 +62,7 @@ describe('Md Component - Theme Structure Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('font-bold');
-        expect(link).toHaveClass('text-(length:--fs)');
+        expect(link).toHaveClass('text-[length:inherit]');
         expect(link).toHaveClass('text-(--link-text)');
       });
     });

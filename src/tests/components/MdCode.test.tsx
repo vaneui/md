@@ -12,7 +12,7 @@ describe('MdCode Component', () => {
     // VaneUI Code component with secondary prop has these classes
     expect(code).toHaveClass('px-(--px)', 'py-(--py)');
     // Code size is managed by CSS variables, may not be explicit as class
-    expect(code).toHaveClass('text-(length:--fs)'); // CSS variable font size
+    expect(code).toHaveClass('text-[length:inherit]'); // inheritSize default
     expect(code).toHaveClass('bg-(--bg-color)', 'text-(--text-color)');
     expect(code).toHaveClass('ring-(--ring-color)');
     expect(code).toHaveClass('inline', 'rounded-(--br)');

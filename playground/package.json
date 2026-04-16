@@ -11,7 +11,7 @@
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "@vaneui/ui": "^0.9.0-alpha.20260415173009.6fa335f"
+    "@vaneui/ui": "^0.9.0-alpha.20260416133042.a0b0746"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",
