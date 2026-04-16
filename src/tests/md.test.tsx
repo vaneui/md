@@ -120,7 +120,7 @@ describe('Md Component Tests', () => {
       expect(list).toBeInTheDocument();
       expect(list).toHaveClass('list-disc', 'list-inside');
       // Size is inherited from theme defaults, not always set explicitly; // md size
-      expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
+      expect(list).toHaveClass('text-[length:inherit]'); // CSS variable font size
       expect(list).toHaveClass('pl-(--pl)'); // default padding
       expect(list).toHaveClass('font-sans', 'font-normal');
 
@@ -206,7 +206,7 @@ This is a paragraph with [a link](https://example.com).
 
       const list = container.querySelector('ul');
       expect(list).toHaveClass('list-disc', 'list-inside');
-      expect(list).toHaveClass('text-(length:--fs)');
+      expect(list).toHaveClass('text-[length:inherit]');
 
       const img = container.querySelector('img');
       // Now wrapped in Card component

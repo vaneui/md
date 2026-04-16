@@ -6,20 +6,22 @@ import { Md } from '../../components/md';
 describe('MdBlockquote Component', () => {
   test('renders blockquote with content', () => {
     const content = '> This is a blockquote text';
-    const { container } = render(<Md content={content} />);
+    render(<Md content={content} />);
     const blockquoteText = screen.getByText('This is a blockquote text');
     expect(blockquoteText).toBeInTheDocument();
-    
-    // Find the Card container (blockquote is now rendered as Card)
-    const cardElement = blockquoteText.closest('div[style*="border-left"]');
+
+    // Find the Card container (blockquote is rendered as Card with left-border accent)
+    const cardElement = blockquoteText.closest('div.flex');
     expect(cardElement).toBeInTheDocument();
     // VaneUI Card component classes with CSS variables
     expect(cardElement).toHaveClass('px-(--px)', 'py-(--py)', 'gap-(--gap)', 'flex');
-    expect(cardElement).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
-    expect(cardElement).toHaveClass('flex-col'); // Card layout
+    expect(cardElement).toHaveClass('rounded-(--br)');
+    expect(cardElement).toHaveClass('flex-col');
     expect(cardElement).toHaveClass('bg-(--bg-color)', 'text-(--text-color)', 'border-(--border-color)');
-    // Verify custom border-left styling for blockquotes
-    expect(cardElement).toHaveStyle('border-left: 4px solid #d1d5db');
-    expect(cardElement).toHaveStyle('padding-left: 1rem');
+    // borderL-only (noBorder suppresses full border, borderL adds left accent)
+    expect(cardElement).toHaveClass('border-l-[length:var(--bw)]');
+    expect(cardElement).not.toHaveClass('border-[length:var(--bw)]');
+    // secondary appearance for subtle blockquote look
+    expect(cardElement).toHaveAttribute('data-appearance', 'secondary');
   });
 });

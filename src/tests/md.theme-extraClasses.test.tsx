@@ -117,7 +117,7 @@ describe('Md Component - ExtraClasses Tests', () => {
       expect(p).toBeInTheDocument();
       // Should have both the extra classes and existing theme classes
       expect(p).toHaveClass('leading-relaxed', 'custom-class');
-      expect(p).toHaveClass('text-(length:--fs)'); // Default text size class
+      expect(p).toHaveClass('text-[length:inherit]'); // Default text size class
     });
 
     it('should apply multiple extraClasses to different components', () => {

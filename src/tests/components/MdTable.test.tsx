@@ -29,8 +29,8 @@ describe('MdTable Component', () => {
     expect(table).toHaveStyle('width: 100%');
     expect(table).toHaveStyle('border-collapse: collapse');
 
-    // Verify card wrapper has overflow styling
-    expect(cardWrapper).toHaveStyle('overflow: auto');
-    expect(cardWrapper).toHaveStyle('margin: 1rem 0px');
+    // Verify card wrapper uses VaneUI overflowAuto prop and margin utility class
+    expect(cardWrapper).toHaveClass('overflow-auto');
+    expect(cardWrapper).toHaveClass('my-4');
   });
 });
