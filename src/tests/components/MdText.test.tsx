@@ -13,7 +13,7 @@ describe('MdText Component', () => {
     // VaneUI Text component classes for paragraphs
     expect(paragraph).toHaveClass('p-0', 'm-0', 'w-fit');
     // Text defaults to `inherit` appearance → font-size cascades from parent
-    expect(paragraph).toHaveClass('text-[length:inherit]');
+    expect(paragraph).toHaveClass('text-(length:--fs)');
     expect(paragraph).toHaveClass('font-sans', 'text-left');
   });
 
