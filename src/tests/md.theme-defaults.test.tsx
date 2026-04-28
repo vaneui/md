@@ -55,7 +55,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('underline', 'font-semibold');
-        expect(link).toHaveClass('text-[length:inherit]');
+        expect(link).toHaveClass('text-(length:--fs-em)');
         expect(link).toHaveClass('text-(--link-text)'); // Link color maintained
         expect(link).not.toHaveClass('font-normal');
       });
@@ -125,7 +125,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       // Link should have themeDefaults applied
       // Link size is managed by CSS variables, not always explicit as class;
-      expect(link).toHaveClass('text-[length:inherit]');
+      expect(link).toHaveClass('text-(length:--fs-em)');
       expect(link).toHaveClass('text-(--link-text)');
 
       // List should have themeDefaults applied
@@ -167,7 +167,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       // All components should have their respective defaults
       expect(h1).toHaveClass('text-(--text-color)', 'font-light');
       expect(link).toHaveClass('font-mono');
-      expect(link).toHaveClass('text-[length:inherit]');
+      expect(link).toHaveClass('text-(length:--fs-em)');
       expect(list).toHaveClass('text-(--text-color)', 'font-serif');
       expect(list).toHaveAttribute('data-appearance', 'info');
       expect(list).toHaveClass('text-(length:--fs)'); // explicit info appearance, inherit expansion doesn't fire

@@ -62,7 +62,7 @@ describe('Md Component - Theme Structure Tests', () => {
 
       links.forEach(link => {
         expect(link).toHaveClass('font-bold');
-        expect(link).toHaveClass('text-[length:inherit]');
+        expect(link).toHaveClass('text-(length:--fs-em)');
         expect(link).toHaveClass('text-(--link-text)');
       });
     });
@@ -92,7 +92,7 @@ describe('Md Component - Theme Structure Tests', () => {
 
       const list = container.querySelector('ul');
       expect(list).toHaveClass('font-serif', 'italic');
-      expect(list).toHaveClass('list-disc', 'list-inside');
+      expect(list).toHaveClass('list-disc', 'list-outside');
     });
 
     it('should handle multiple nested theme customizations', () => {

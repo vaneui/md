@@ -11,8 +11,8 @@ describe('MdCode Component', () => {
     expect(code).toBeInTheDocument();
     // VaneUI Code component with secondary prop has these classes
     expect(code).toHaveClass('px-(--px)', 'py-(--py)');
-    // Code size is managed by CSS variables, may not be explicit as class
-    expect(code).toHaveClass('text-[length:inherit]'); // inheritSize default
+    // Code uses local --spacing: 0.25em override so font-size resolves in em relative to parent
+    expect(code).toHaveClass('text-(length:--fs)');
     expect(code).toHaveClass('bg-(--bg-color)', 'text-(--text-color)');
     expect(code).toHaveClass('ring-(--ring-color)');
     expect(code).toHaveClass('inline', 'rounded-(--br)');

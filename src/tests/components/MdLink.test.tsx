@@ -37,8 +37,8 @@ describe('MdLink Component', () => {
       const content = '[Link text](https://example.com)';
       render(<Md content={content} />);
       const link = screen.getByRole('link');
-      // VaneUI Link now defaults to inheritSize: true — emits text-[length:inherit]
-      expect(link).toHaveClass('text-[length:inherit]');
+      // VaneUI Link defaults to inheritSize: true — emits text-(length:--fs-em)
+      expect(link).toHaveClass('text-(length:--fs-em)');
       expect(link).toHaveClass('leading-[inherit]');
       // No inline fontSize style (hack removed)
       expect(link).not.toHaveAttribute('style');
@@ -50,7 +50,7 @@ describe('MdLink Component', () => {
       const link = container.querySelector('h3 a');
 
       expect(link).toBeInTheDocument();
-      expect(link).toHaveClass('text-[length:inherit]');
+      expect(link).toHaveClass('text-(length:--fs-em)');
       expect(link).toHaveClass('leading-[inherit]');
       expect(link).toHaveAttribute('href', 'https://example.com');
       // Link keeps its own appearance (blue color) via data-appearance
@@ -67,7 +67,7 @@ describe('MdLink Component', () => {
       for (const tag of ['h1', 'h2', 'h3']) {
         const link = container.querySelector(`${tag} a`);
         expect(link).toBeInTheDocument();
-        expect(link).toHaveClass('text-[length:inherit]');
+        expect(link).toHaveClass('text-(length:--fs-em)');
       }
     });
   });

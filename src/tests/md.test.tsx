@@ -118,7 +118,7 @@ describe('Md Component Tests', () => {
 
       const list = container.querySelector('ul');
       expect(list).toBeInTheDocument();
-      expect(list).toHaveClass('list-disc', 'list-inside');
+      expect(list).toHaveClass('list-disc', 'list-outside');
       // Size is inherited from theme defaults, not always set explicitly; // md size
       expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
       expect(list).toHaveClass('pl-(--pl)'); // default padding
@@ -205,7 +205,7 @@ This is a paragraph with [a link](https://example.com).
       expect(link).toHaveClass('text-(--link-text)', 'hover:underline');
 
       const list = container.querySelector('ul');
-      expect(list).toHaveClass('list-disc', 'list-inside');
+      expect(list).toHaveClass('list-disc', 'list-outside');
       expect(list).toHaveClass('text-(length:--fs)');
 
       const img = container.querySelector('img');
