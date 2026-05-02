@@ -50,6 +50,8 @@ export const defaultRendererTheme: MdRendererTheme = {
   em: { italic: true },
   strong: { bold: true },
   s: { lineThrough: true },
+  error: { danger: true },
+  table: { overflowAuto: true },
 };
 
 /**

@@ -511,6 +511,70 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
     const s = container.querySelector('s');
     expect(s).not.toHaveClass('line-through');
   });
+
+  // ── error.danger (appearance) — MdError is invoked via Md when frontmatter parsing fails
+  test('error.danger → replace with warning (appearance group)', () => {
+    // Trigger MdError by passing malformed YAML to parseFrontmatter
+    const content = '---\n: : : :\n  bad\n---\n\nbody';
+    const malformedParser = (raw: string) => {
+      void raw;
+      throw new Error('test parse error');
+    };
+    const { container } = render(
+      <Md
+        content={content}
+        parseFrontmatter={malformedParser}
+        rendererTheme={{ error: { warning: true } }}
+      />
+    );
+    // The error Card is the one that contains "Error:" text
+    const errorCard = Array.from(container.querySelectorAll('.vane-card')).find((el) =>
+      el.textContent?.includes('Error:')
+    );
+    expect(errorCard).toHaveAttribute('data-appearance', 'warning');
+  });
+
+  test('error.danger renders by default', () => {
+    const content = ['---', 'broken', '---', '', 'body'].join('\n');
+    const malformedParser = (raw: string) => {
+      void raw;
+      throw new Error('test parse error');
+    };
+    const { container } = render(
+      <Md content={content} parseFrontmatter={malformedParser} />
+    );
+    const errorCard = Array.from(container.querySelectorAll('.vane-card')).find((el) =>
+      el.textContent?.includes('Error:')
+    );
+    expect(errorCard).toHaveAttribute('data-appearance', 'danger');
+  });
+
+  // ── table.overflowAuto — wrapping Card around <table>
+  test('table renders with overflowAuto by default', () => {
+    const content = ['| a | b |', '|---|---|', '| 1 | 2 |'].join('\n');
+    const { container } = render(<Md content={content} />);
+    const tableCard = container.querySelector('table')?.parentElement;
+    expect(tableCard).toHaveClass('overflow-auto');
+  });
+
+  test('table.overflowAuto → replace with overflowVisible (overflow group)', () => {
+    const content = ['| a | b |', '|---|---|', '| 1 | 2 |'].join('\n');
+    const { container } = render(
+      <Md content={content} rendererTheme={{ table: { overflowVisible: true } }} />
+    );
+    const tableCard = container.querySelector('table')?.parentElement;
+    expect(tableCard).toHaveClass('overflow-visible');
+    expect(tableCard).not.toHaveClass('overflow-auto');
+  });
+
+  test('table.shadow override applies to wrapping Card', () => {
+    const content = ['| a |', '|---|', '| 1 |'].join('\n');
+    const { container } = render(
+      <Md content={content} rendererTheme={{ table: { shadow: true } }} />
+    );
+    const tableCard = container.querySelector('table')?.parentElement;
+    expect(tableCard).toHaveClass('shadow-(--shadow-base)');
+  });
 });
 
 describe('Md instances — rendererTheme isolation', () => {
