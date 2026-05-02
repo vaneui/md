@@ -82,6 +82,26 @@ export interface MdConfig {
 // Props for the main Md component
 export interface MdProps {
   content: string;
+  /**
+   * Pre-parsed frontmatter. Wins over `parseFrontmatter` when both are
+   * supplied. Exposed inside markdown as `$markdoc.frontmatter`.
+   */
   frontmatter?: Record<string, unknown>;
+  /**
+   * Optional parser invoked with the raw YAML string between `---`
+   * markers when `frontmatter` is not supplied. Returns the object
+   * exposed as `$markdoc.frontmatter`. Throwing routes to MdError.
+   * Pass `parseYamlFrontmatter` from `@vaneui/md/yaml` for the default.
+   * Also used to parse `vaneui` fenced code blocks at body position.
+   */
+  parseFrontmatter?: (raw: string) => Record<string, unknown>;
+  /**
+   * String -> component map used to resolve component names in
+   * `vaneui` fenced code blocks. Pass `defaultRegistry` from
+   * `@vaneui/md/registry` for the safe VaneUI allowlist, or supply
+   * a custom map. Defaults to an empty registry when omitted, in
+   * which case `vaneui` fences fall back to plain code rendering.
+   */
+  components?: Record<string, React.ComponentType<any>>;
   config?: MdConfig;
 }
