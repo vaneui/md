@@ -36,5 +36,5 @@ export const MdHeading: React.FC<React.PropsWithChildren> = (props) => {
       break;
   }
 
-  return <Title {...theme.heading} {...rest} {...size} tag={tag}>{children}</Title>;
+  return <Title {...theme.mdHeading} {...rest} {...size} tag={tag}>{children}</Title>;
 };

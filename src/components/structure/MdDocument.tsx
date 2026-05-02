@@ -4,5 +4,5 @@ import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdDocument: React.FC<React.PropsWithChildren> = (props) => {
   const theme = useContext(RendererThemeContext);
-  return <Col {...theme.document} {...(props as Record<string, unknown>)} />;
+  return <Col {...theme.mdDocument} {...(props as Record<string, unknown>)} />;
 };

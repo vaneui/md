@@ -262,24 +262,26 @@ Both forms work in the same tree. The `expandShorthand` pass runs once at the to
 Each Md renderer (`MdBlockquote`, `MdCode`, `MdEm`, etc.) has its own slot in `MdRendererTheme`. Slots hold boolean props that the renderer spreads onto its underlying VaneUI element. This solves the "shared VaneUI primitive" problem: `MdBlockquote` and `MdFence` both render `<Card>`, but each has its own theme slot, so styling them independently is straightforward.
 
 ```ts
-// src/rendererTheme.ts
+// src/rendererTheme.ts — slot keys mirror renderer file names (md + capitalized name)
 interface MdRendererTheme {
-  blockquote?: MdRendererProps;   // → MdBlockquote spreads on <Card>
-  fence?: MdRendererProps;        // → MdFence spreads on <Card> (separate from blockquote)
-  code?: MdRendererProps;         // → MdCode
-  em?: MdRendererProps;           // → MdEm
-  strong?: MdRendererProps;       // → MdStrong
-  s?: MdRendererProps;            // → MdS
-  paragraph?: MdRendererProps;
-  text?: MdRendererProps;
-  heading?: MdRendererProps;
-  link?: MdRendererProps;
-  list?: MdRendererProps;
-  item?: MdRendererProps;
-  hr?: MdRendererProps;
-  document?: MdRendererProps;
-  image?: MdRendererProps;
-  // ...one slot per Md renderer
+  mdBlockquote?: MdRendererProps;   // → MdBlockquote spreads on <Card>
+  mdFence?: MdRendererProps;        // → MdFence spreads on <Card> (separate from blockquote)
+  mdCode?: MdRendererProps;         // → MdCode
+  mdEm?: MdRendererProps;           // → MdEm
+  mdStrong?: MdRendererProps;       // → MdStrong
+  mdS?: MdRendererProps;            // → MdS
+  mdParagraph?: MdRendererProps;
+  mdText?: MdRendererProps;
+  mdHeading?: MdRendererProps;
+  mdLink?: MdRendererProps;
+  mdList?: MdRendererProps;
+  mdItem?: MdRendererProps;
+  mdHr?: MdRendererProps;
+  mdDocument?: MdRendererProps;
+  mdImage?: MdRendererProps;
+  mdError?: MdRendererProps;
+  mdTable?: MdRendererProps;
+  // ...one slot per Md renderer (mdInline, mdHardbreak, mdSoftbreak, mdThead, mdTbody, mdTr, mdTd, mdTh)
 }
 ```
 
@@ -287,11 +289,13 @@ interface MdRendererTheme {
 
 ```ts
 {
-  blockquote: { secondary: true, noBorder: true, borderL: true },
-  code: { secondary: true },
-  em: { italic: true },
-  strong: { bold: true },
-  s: { lineThrough: true },
+  mdBlockquote: { secondary: true, noBorder: true, borderL: true },
+  mdCode:       { secondary: true },
+  mdEm:         { italic: true },
+  mdStrong:     { bold: true },
+  mdS:          { lineThrough: true },
+  mdError:      { danger: true },
+  mdTable:      { overflowAuto: true },
   // other slots are empty — renderers fall through to VaneUI's own defaults
 }
 ```
@@ -303,7 +307,7 @@ interface MdRendererTheme {
 export const MdBlockquote: React.FC<React.PropsWithChildren> = (props) => {
   const { children, ...rest } = props as { children: React.ReactNode } & Record<string, unknown>;
   const theme = useContext(RendererThemeContext);
-  return <Card {...theme.blockquote} {...rest}>{children}</Card>;
+  return <Card {...theme.mdBlockquote} {...rest}>{children}</Card>;
 };
 ```
 
@@ -317,10 +321,10 @@ The slot spreads first, then `...rest` from Markdoc, then any hardcoded essentia
 <Md
   content={md}
   rendererTheme={{
-    blockquote: { primary: true },        // appearance only — keeps left bar
-    code: { success: true },
-    em: { italic: false, bold: true },    // bold emphasis instead of italic
-    fence: { tertiary: true },            // code-block wrapper — does NOT affect blockquote
+    mdBlockquote: { primary: true },        // appearance only — keeps left bar
+    mdCode:       { success: true },
+    mdEm:         { italic: false, bold: true },  // bold emphasis instead of italic
+    mdFence:      { tertiary: true },        // code-block wrapper — does NOT affect blockquote
   }}
 />
 ```
@@ -330,7 +334,7 @@ The slot spreads first, then `...rest` from Markdoc, then any hardcoded essentia
 ```tsx
 import { RendererThemeContext, defaultRendererTheme } from "@vaneui/md";
 
-<RendererThemeContext.Provider value={{ ...defaultRendererTheme, code: { primary: true } }}>
+<RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
   <Md content={a} />
   <Md content={b} />
 </RendererThemeContext.Provider>
@@ -340,19 +344,21 @@ The `rendererTheme` prop wins over an outer `RendererThemeContext.Provider` (Md 
 
 #### Group-aware merge
 
-`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories — size, appearance, variant, shape, and border. When a user sets ANY truthy key in one of those groups for a given slot, all sibling keys from the defaults are dropped before merging. So:
+`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories. The group list is derived directly from `ComponentKeys` (vaneui's exported category map) so it auto-stays in sync with future vaneui categories — currently covers size, appearance, variant, shape, border, fontWeight, fontStyle, textDecoration, textTransform, gap, padding, ring, shadow, overflow, position, display, flexDirection, items, justify, wrap, listStyle, listPosition, hide, breakpoint, cursor, blur, focusVisible, pointerEvents, transparent, responsive, transition, whitespace, objectFit, status, orientation, height, letterSpacing.
+
+When a user sets ANY truthy key in one of those groups for a given slot, all sibling keys from the defaults are dropped before merging. So:
 
 ```tsx
-// default blockquote = { secondary: true, noBorder: true, borderL: true }
-rendererTheme={{ blockquote: { primary: true } }}
+// default mdBlockquote = { secondary: true, noBorder: true, borderL: true }
+rendererTheme={{ mdBlockquote: { primary: true } }}
 // final: { primary: true, noBorder: true, borderL: true }
 //   secondary dropped (appearance group); border-related kept (different group)
 
-rendererTheme={{ blockquote: { border: true } }}
+rendererTheme={{ mdBlockquote: { border: true } }}
 // final: { secondary: true, border: true }
 //   noBorder + borderL dropped (border group); appearance kept
 
-rendererTheme={{ blockquote: { primary: true, border: true } }}
+rendererTheme={{ mdBlockquote: { primary: true, border: true } }}
 // final: { primary: true, border: true }
 //   both groups cleared
 ```
@@ -368,16 +374,16 @@ Genuinely dynamic per-render logic that can't be expressed as static defaults st
 - `MdImage` — `src`, `alt`, `title` come from Markdoc node attributes
 - `MdLink` — `href`, `title` from Markdoc
 
-A consumer can still override the *non-dynamic* visuals on these via `rendererTheme.heading: { mono: true }`, `rendererTheme.list: { uppercase: true }`, etc.
+A consumer can still override the *non-dynamic* visuals on these via `rendererTheme.mdHeading: { mono: true }`, `rendererTheme.mdList: { uppercase: true }`, etc.
 
 #### Two-axis customization model
 
 | Customization scope | Where to set it |
 |---|---|
 | All `<Card>` components in your app should have shadows | vaneui's `<ThemeProvider themeDefaults={{ card: { main: { shadow: true } } }}>` |
-| Markdown blockquotes specifically should have a different style | `<Md rendererTheme={{ blockquote: { ... } }}>` |
-| Markdown code blocks specifically (not inline code) | `<Md rendererTheme={{ fence: { ... } }}>` |
-| Inline `code` only | `<Md rendererTheme={{ code: { ... } }}>` |
+| Markdown blockquotes specifically should have a different style | `<Md rendererTheme={{ mdBlockquote: { ... } }}>` |
+| Markdown code blocks specifically (not inline code) | `<Md rendererTheme={{ mdFence: { ... } }}>` |
+| Inline `code` only | `<Md rendererTheme={{ mdCode: { ... } }}>` |
 
 The two systems compose cleanly: `rendererTheme` sets JSX props on the underlying VaneUI element, and vaneui's `ThemeProvider` continues to fill in any other defaults that aren't set as JSX props.
 
@@ -421,7 +427,7 @@ Run with `npm test` (includes `type-check` as a prerequisite).
 - Custom renderers should be thin — delegate to VaneUI components for styling
 - Keep Markdoc node configs simple; push complexity to the React component
 - **No hardcoded visual props on Md* renderers.** Visual defaults (size, appearance, variant, shape, border, font-style, etc.) MUST live in `defaultRendererTheme` — never as JSX props on the underlying VaneUI element. Renderers spread `theme.<slot>` from `RendererThemeContext`. Only semantic essentials (`tag` for `<em>`/`<strong>`/`<s>`, `src`/`href` from Markdoc node attributes) and dynamic per-render logic (`MdHeading`'s level→size mapping, `MdList`'s ordered→decimal/disc) belong as JSX props.
-- When adding a new Md renderer: add a slot to `MdRendererTheme`, decide whether it needs a default in `defaultRendererTheme`, read the slot via `useContext(RendererThemeContext)`, and add a per-renderer override test in `md.renderer-theme.test.tsx`.
+- When adding a new Md renderer: add a slot to `MdRendererTheme` named `md{ComponentName}` (e.g., `mdBlockquote` for `MdBlockquote`), decide whether it needs a default in `defaultRendererTheme`, read the slot via `useContext(RendererThemeContext)`, and add a per-renderer override test in `md.renderer-theme.test.tsx`.
 - Tests should cover: default rendering, config override behavior, theme propagation, **per-renderer slot override via `rendererTheme`**.
 - For `vaneui` fence examples in docs and tests, prefer the **shorthand form** (`Card primary: …`) over the verbose form (`component: Card`, `primary: true`, …). Show the verbose form only when illustrating the `component`-key escape hatch or when a feature genuinely requires it.
 

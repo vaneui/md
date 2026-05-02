@@ -10,34 +10,36 @@ export type MdRendererProps = Record<string, unknown>;
 
 /**
  * One slot per Md renderer. Each slot's props are spread onto the underlying
- * VaneUI element, before any markdown-supplied attribute props.
+ * VaneUI element, before any markdown-supplied attribute props. Slot names
+ * mirror the renderer file names (MdBlockquote -> mdBlockquote, etc.) so
+ * consumers can find the relevant slot by looking at the renderer.
  */
 export interface MdRendererTheme {
-  blockquote?: MdRendererProps;
-  fence?: MdRendererProps;
-  code?: MdRendererProps;
-  em?: MdRendererProps;
-  strong?: MdRendererProps;
-  s?: MdRendererProps;
-  paragraph?: MdRendererProps;
-  text?: MdRendererProps;
-  heading?: MdRendererProps;
-  link?: MdRendererProps;
-  list?: MdRendererProps;
-  item?: MdRendererProps;
-  hr?: MdRendererProps;
-  document?: MdRendererProps;
-  inline?: MdRendererProps;
-  image?: MdRendererProps;
-  hardbreak?: MdRendererProps;
-  softbreak?: MdRendererProps;
-  table?: MdRendererProps;
-  thead?: MdRendererProps;
-  tbody?: MdRendererProps;
-  tr?: MdRendererProps;
-  td?: MdRendererProps;
-  th?: MdRendererProps;
-  error?: MdRendererProps;
+  mdBlockquote?: MdRendererProps;
+  mdFence?: MdRendererProps;
+  mdCode?: MdRendererProps;
+  mdEm?: MdRendererProps;
+  mdStrong?: MdRendererProps;
+  mdS?: MdRendererProps;
+  mdParagraph?: MdRendererProps;
+  mdText?: MdRendererProps;
+  mdHeading?: MdRendererProps;
+  mdLink?: MdRendererProps;
+  mdList?: MdRendererProps;
+  mdItem?: MdRendererProps;
+  mdHr?: MdRendererProps;
+  mdDocument?: MdRendererProps;
+  mdInline?: MdRendererProps;
+  mdImage?: MdRendererProps;
+  mdHardbreak?: MdRendererProps;
+  mdSoftbreak?: MdRendererProps;
+  mdTable?: MdRendererProps;
+  mdThead?: MdRendererProps;
+  mdTbody?: MdRendererProps;
+  mdTr?: MdRendererProps;
+  mdTd?: MdRendererProps;
+  mdTh?: MdRendererProps;
+  mdError?: MdRendererProps;
 }
 
 /**
@@ -45,13 +47,13 @@ export interface MdRendererTheme {
  * Md* renderers. Consumers can override per-renderer via <Md rendererTheme>.
  */
 export const defaultRendererTheme: MdRendererTheme = {
-  blockquote: { secondary: true, noBorder: true, borderL: true },
-  code: { secondary: true },
-  em: { italic: true },
-  strong: { bold: true },
-  s: { lineThrough: true },
-  error: { danger: true },
-  table: { overflowAuto: true },
+  mdBlockquote: { secondary: true, noBorder: true, borderL: true },
+  mdCode: { secondary: true },
+  mdEm: { italic: true },
+  mdStrong: { bold: true },
+  mdS: { lineThrough: true },
+  mdError: { danger: true },
+  mdTable: { overflowAuto: true },
 };
 
 /**

@@ -14,5 +14,5 @@ export const MdList: React.FC<React.PropsWithChildren> = (props) => {
     ? { decimal: true }
     : { disc: true };
 
-  return <List {...theme.list} {...rest} {...listProps}>{children}</List>;
+  return <List {...theme.mdList} {...rest} {...listProps}>{children}</List>;
 };

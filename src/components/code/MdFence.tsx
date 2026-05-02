@@ -26,7 +26,7 @@ export const MdFence: React.FC<unknown> = (props) => {
 
   if (language === "vaneui") {
     if (!parser) {
-      return renderCodeBlock(content, language, rest, theme.fence);
+      return renderCodeBlock(content, language, rest, theme.mdFence);
     }
     try {
       const spec = parser(content);
@@ -36,11 +36,11 @@ export const MdFence: React.FC<unknown> = (props) => {
       return (
         <>
           <MdError>{`vaneui spec parse error: ${message}`}</MdError>
-          {renderCodeBlock(content, language, rest, theme.fence)}
+          {renderCodeBlock(content, language, rest, theme.mdFence)}
         </>
       );
     }
   }
 
-  return renderCodeBlock(content, language, rest, theme.fence);
+  return renderCodeBlock(content, language, rest, theme.mdFence);
 };
