@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Title } from "@vaneui/ui";
+import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdHeading: React.FC<React.PropsWithChildren> = (props) => {
   const { level, children, ...rest } = props as { level: number; children: React.ReactNode } & Record<string, unknown>;
+  const theme = useContext(RendererThemeContext);
   const tags = ["h1","h2","h3","h4","h5","h6"] as const;
   type HeadingTag = typeof tags[number];
   let tag: HeadingTag = `h1`;
@@ -34,5 +36,5 @@ export const MdHeading: React.FC<React.PropsWithChildren> = (props) => {
       break;
   }
 
-  return <Title {...rest} {...size} tag={tag}>{children}</Title>;
+  return <Title {...theme.heading} {...rest} {...size} tag={tag}>{children}</Title>;
 };

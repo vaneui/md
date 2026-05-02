@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Text } from "@vaneui/ui";
+import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdEm: React.FC<React.PropsWithChildren> = (props) => {
   const { children, ...rest } = props as { children: React.ReactNode } & Record<string, unknown>;
-  return <Text {...rest} tag="em" italic>{children}</Text>;
+  const theme = useContext(RendererThemeContext);
+  return <Text {...theme.em} tag="em" {...rest}>{children}</Text>;
 };

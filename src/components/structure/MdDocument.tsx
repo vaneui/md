@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Col } from "@vaneui/ui";
+import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdDocument: React.FC<React.PropsWithChildren> = (props) => {
-  return <Col {...(props as Record<string, unknown>)} />;
+  const theme = useContext(RendererThemeContext);
+  return <Col {...theme.document} {...(props as Record<string, unknown>)} />;
 };

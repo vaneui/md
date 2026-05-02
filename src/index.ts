@@ -14,5 +14,14 @@ export type { ComponentSpec, ComponentRegistry } from "./spec";
 export { RegistryContext, ParserContext } from "./context";
 export type { FrontmatterParser } from "./context";
 
+// Per-renderer visual defaults — one slot per Md* renderer. Override via
+// <Md rendererTheme={...}> or wrap children in <RendererThemeContext.Provider>.
+export {
+  RendererThemeContext,
+  defaultRendererTheme,
+  mergeRendererTheme,
+} from "./rendererTheme";
+export type { MdRendererTheme, MdRendererProps } from "./rendererTheme";
+
 // Export types
 export * from "./types";

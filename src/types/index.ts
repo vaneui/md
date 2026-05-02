@@ -103,5 +103,14 @@ export interface MdProps {
    * which case `vaneui` fences fall back to plain code rendering.
    */
   components?: Record<string, React.ComponentType<any>>;
+  /**
+   * Per-renderer visual defaults for Md* renderers. Each slot
+   * (blockquote, code, em, strong, ...) holds boolean props that get
+   * spread onto the underlying VaneUI element. Merges over
+   * `defaultRendererTheme` with awareness of mutually-exclusive prop
+   * categories (size/appearance/variant/shape/border) so consumer
+   * intent wins over package defaults.
+   */
+  rendererTheme?: import("../rendererTheme").MdRendererTheme;
   config?: MdConfig;
 }

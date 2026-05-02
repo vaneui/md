@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Divider } from "@vaneui/ui";
+import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdHr: React.FC<unknown> = (props) => {
-  return <Divider {...(props as Record<string, unknown>)} />;
+  const theme = useContext(RendererThemeContext);
+  return <Divider {...theme.hr} {...(props as Record<string, unknown>)} />;
 };

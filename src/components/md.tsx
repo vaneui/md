@@ -1,9 +1,13 @@
 import Markdoc from "@markdoc/markdoc";
-import React from "react";
+import React, { useContext } from "react";
 import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents } from "../config/default-config";
 import { MdError } from "./errors/MdError";
 import { ParserContext, RegistryContext } from "../context";
+import {
+  RendererThemeContext,
+  mergeRendererTheme,
+} from "../rendererTheme";
 
 // Helper function to merge configurations
 function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
@@ -18,7 +22,7 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, config: userConfig}) => {
+export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, config: userConfig}) => {
   const ast = Markdoc.parse(content);
 
   // Markdoc stores raw frontmatter on the document node; type cast because
@@ -65,10 +69,17 @@ export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, c
     </>
   ) : rendered;
 
+  // Inherit from any parent RendererThemeContext (default value of which is
+  // defaultRendererTheme), then layer the rendererTheme prop over the top.
+  const inheritedTheme = useContext(RendererThemeContext);
+  const mergedRendererTheme = mergeRendererTheme(inheritedTheme, rendererTheme);
+
   return (
     <RegistryContext.Provider value={components ?? {}}>
       <ParserContext.Provider value={parseFrontmatter}>
-        {body as React.ReactNode}
+        <RendererThemeContext.Provider value={mergedRendererTheme}>
+          {body as React.ReactNode}
+        </RendererThemeContext.Provider>
       </ParserContext.Provider>
     </RegistryContext.Provider>
   );
