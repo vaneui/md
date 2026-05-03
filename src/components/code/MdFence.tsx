@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Card } from "@vaneui/ui";
 import { ParserContext, RegistryContext } from "../../context";
-import { RendererThemeContext } from "../../rendererTheme";
+import { RendererThemeContext, type MdRendererProps } from "../../rendererTheme";
 import { renderSpec } from "../../spec";
 import { MdError } from "../errors/MdError";
 
@@ -9,7 +9,7 @@ const renderCodeBlock = (
   content: string,
   language: string | undefined,
   rest: Record<string, unknown>,
-  fenceProps: Record<string, unknown> | undefined
+  fenceProps: MdRendererProps | undefined
 ) => (
   <Card {...fenceProps} {...rest}>
     <pre style={{ margin: 0, fontFamily: "monospace", fontSize: "0.875rem" }}>
