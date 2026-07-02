@@ -121,18 +121,19 @@ describe('Md Component - ThemeOverride Tests', () => {
     it('should handle themeOverride with rerender', () => {
       const content = '# Dynamic Override';
 
-      let overrideMode = 'danger';
-      const themeOverride = (theme: ThemeProps): ThemeProps => {
+      // ThemeProvider memoizes on the override's function identity, so a new
+      // mode must come as a new function reference (as an inline closure would)
+      const makeOverride = (mode: string) => (theme: ThemeProps): ThemeProps => {
         theme.title.defaults = {
           ...theme.title.defaults,
-          [overrideMode]: true,
+          [mode]: true,
           primary: false,
         };
         return theme;
       };
 
       const { container, rerender } = render(
-        <ThemeProvider themeOverride={themeOverride}>
+        <ThemeProvider themeOverride={makeOverride('danger')}>
           <Md content={content} />
         </ThemeProvider>
       );
@@ -141,9 +142,8 @@ describe('Md Component - ThemeOverride Tests', () => {
       expect(h1).toHaveClass('text-(--text-color)');
       expect(h1).toHaveAttribute('data-appearance', 'danger');
 
-      overrideMode = 'success';
       rerender(
-        <ThemeProvider themeOverride={themeOverride}>
+        <ThemeProvider themeOverride={makeOverride('success')}>
           <Md content={content} />
         </ThemeProvider>
       );

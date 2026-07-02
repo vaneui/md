@@ -124,7 +124,7 @@ describe('Md Component Tests', () => {
       expect(list).toHaveClass('list-disc', 'list-outside');
       // Size is inherited from theme defaults, not always set explicitly; // md size
       expect(list).toHaveClass('text-(length:--fs)'); // CSS variable font size
-      expect(list).toHaveClass('pl-(--pl)'); // default padding
+      expect(list).toHaveClass('ps-(--pl)'); // default start-indent (logical property, RTL-aware)
       expect(list).toHaveClass('font-sans', 'font-normal');
 
       const listItems = container.querySelectorAll('li');
