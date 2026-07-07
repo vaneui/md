@@ -392,7 +392,7 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 - `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (~33 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
-- `@vaneui/md/styles` — Pre-built CSS (`dist/styles/index.css`)
+- `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer (`dist/styles/index.css`). **Rules-only**: it does NOT bundle `@vaneui/ui`'s CSS (that is a peer dependency the consumer already loads via `@vaneui/ui/css` or `@vaneui/ui/vars`), it only adds spacing rules that build on VaneUI's tokens (`--spacing`, `--gap`). Import it alongside your vaneui CSS to get the document rhythm; omit it to fall back to the raw block flow.
 
 ## Testing
 

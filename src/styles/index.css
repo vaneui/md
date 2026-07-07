@@ -1,12 +1,17 @@
-/* Import @vaneui/ui base styles */
-@import '@vaneui/ui/dist/ui.css';
-
 /* ─────────────────────────────────────────────────────────────────────────
-   PROTOTYPE — prose vertical rhythm for @vaneui/md documents.
+   @vaneui/md/styles — prose vertical rhythm for rendered documents.
+
+   RULES-ONLY, by design. @vaneui/ui is a PEER dependency of @vaneui/md, so
+   its CSS is always loaded by the consumer — either the prebuilt bundle
+   (`@vaneui/ui/css`) or `@vaneui/ui/vars` + a Tailwind build. This stylesheet
+   does NOT re-bundle vaneui's CSS (that would duplicate it wherever the
+   consumer already loads it, which is always). It only adds the `.vaneui-md`
+   layer, which depends solely on VaneUI's own tokens, so it composes with
+   either setup at zero extra cost.
 
    MdDocument renders <Col noGap className="vaneui-md">, so this layer owns
-   ALL spacing between blocks. Every value is derived from VaneUI's own CSS
-   variables — never hardcoded px:
+   ALL spacing between blocks. Every value derives from VaneUI variables —
+   never hardcoded px:
 
      --spacing  the atomic spacing unit — rescales the whole rhythm if a
                 container overrides it (the same knob gap/padding use).
