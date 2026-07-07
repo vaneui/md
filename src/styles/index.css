@@ -1,2 +1,68 @@
 /* Import @vaneui/ui base styles */
 @import '@vaneui/ui/dist/ui.css';
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PROTOTYPE — prose vertical rhythm for @vaneui/md documents.
+
+   MdDocument renders <Col noGap className="vaneui-md">, so this layer owns
+   ALL spacing between blocks. Every value is derived from VaneUI's own CSS
+   variables — never hardcoded px:
+
+     --spacing  the atomic spacing unit — rescales the whole rhythm if a
+                container overrides it (the same knob gap/padding use).
+     --gap      each element's size-scaled gap token (= --gap-unit × --spacing).
+                On a heading it tracks the heading's level (h1 xl → h6 xs) via
+                the ui gap-unit curve, so heading spacing scales with size.
+                (We deliberately do NOT use --fs here: `Title` is responsive
+                and drives its font-size through --fs-desktop/-tablet/-mobile,
+                leaving the base --fs at 16px for every heading — no scaling.)
+
+   The result is the asymmetric prose rhythm — more space ABOVE a heading than
+   below it, scaled to the heading's size — that the mutually-exclusive
+   marginT/marginB props cannot express on a single element.
+
+   Tunable knobs (override on .vaneui-md to re-balance):
+   ───────────────────────────────────────────────────────────────────────── */
+.vaneui-md {
+  /* Base rhythm between body blocks (paragraphs, lists, quotes, code, tables).
+     5 × the spacing atom ≈ 20px at the default --spacing — the roomy body
+     rhythm of editorial docs (GitHub uses ~16px, long-form prose ~20px). */
+  --md-block-space: calc(var(--spacing) * 5);
+
+  /* Space ABOVE a heading = this ratio × the heading's own size-scaled --gap,
+     floored at the base rhythm (see rule below). At 4 this lands editorial-doc
+     magnitudes (h2 ≈ 40px, h3 ≈ 32px), so section breaks read clearly. */
+  --md-heading-ratio: 4;
+
+  /* Space BELOW a heading — the first block hugs it (tight, asymmetric):
+     ≈12px so a heading pairs with its content, well under the body rhythm. */
+  --md-after-heading-space: calc(var(--spacing) * 3);
+}
+
+/* Uniform rhythm — every block after the first. The owl selector (`* + *`)
+   means the first block never carries a leading margin. */
+.vaneui-md > * + * {
+  margin-block-start: var(--md-block-space);
+}
+
+/* Tighten the block immediately after a heading (heading → body hug).
+   Placed before the heading rule so a heading that follows a heading still
+   gets its full top space (equal specificity → later rule wins). */
+.vaneui-md > :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-block-start: var(--md-after-heading-space);
+}
+
+/* The heading's own space above: scales with its size via --gap, but never
+   less than the base block rhythm (so h5/h6 aren't tighter than a paragraph). */
+.vaneui-md > :is(h1, h2, h3, h4, h5, h6) {
+  margin-block-start: max(
+    var(--md-block-space),
+    calc(var(--gap) * var(--md-heading-ratio))
+  );
+}
+
+/* First block never gets a leading margin (covers a document that opens on a
+   heading). Most specific, so it wins over the heading rule above. */
+.vaneui-md > :first-child {
+  margin-block-start: 0;
+}
