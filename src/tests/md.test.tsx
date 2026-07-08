@@ -622,6 +622,23 @@ This is a paragraph with [a link](https://example.com).
       expect(link).toBeInTheDocument();
       expect(link?.textContent).toContain('Get started');
     });
+
+    it('applies shorthand boolean flags as props on the rendered component', () => {
+      const content = [
+        '```vaneui',
+        'Card primary filled:',
+        '  - Text: Body',
+        '```',
+      ].join('\n');
+      const { container } = render(
+        <Md content={content} parseFrontmatter={parseYaml} components={defaultRegistry} />
+      );
+      // the `primary`/`filled` flags in the shorthand key must reach the Card as
+      // props, not just render its children (asserted via the emitted data-attrs)
+      const card = container.querySelector('[data-appearance="primary"][data-variant="filled"]');
+      expect(card).toBeInTheDocument();
+      expect(screen.getByText('Body')).toBeInTheDocument();
+    });
   });
 
   describe('vaneui fence — edge cases', () => {
