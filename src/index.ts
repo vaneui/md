@@ -11,8 +11,8 @@ export { defaultNodesConfig, defaultComponents } from "./config/default-config";
 // so consumers who don't use vaneui fences pay zero bundle cost).
 export { renderSpec, expandShorthand, collapseShorthand } from "./spec";
 export type { ComponentSpec, ComponentRegistry } from "./spec";
-export { RegistryContext, ParserContext } from "./context";
-export type { FrontmatterParser } from "./context";
+export { RegistryContext, ParserContext, HighlightContext } from "./context";
+export type { FrontmatterParser, HighlightFn } from "./context";
 
 // Per-renderer visual defaults — one slot per Md* renderer. Override via
 // <Md rendererTheme={...}> or wrap children in <RendererThemeContext.Provider>.

@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Card } from "@vaneui/ui";
-import { ParserContext, RegistryContext } from "../../context";
+import { HighlightContext, ParserContext, RegistryContext, type HighlightFn } from "../../context";
 import { RendererThemeContext, type MdRendererProps } from "../../rendererTheme";
 import { renderSpec } from "../../spec";
 import { MdError } from "../errors/MdError";
@@ -9,12 +9,17 @@ const renderCodeBlock = (
   content: string,
   language: string | undefined,
   rest: Record<string, unknown>,
-  fenceProps: MdRendererProps | undefined
+  fenceProps: MdRendererProps | undefined,
+  highlight?: HighlightFn,
 ) => (
   <Card {...fenceProps} {...rest}>
-    <pre style={{ margin: 0, fontFamily: "monospace", fontSize: "0.875rem" }}>
-      <code className={language ? `language-${language}` : ""}>{content}</code>
-    </pre>
+    {highlight ? (
+      highlight(content, language)
+    ) : (
+      <pre style={{ margin: 0, fontFamily: "monospace", fontSize: "0.875rem" }}>
+        <code className={language ? `language-${language}` : ""}>{content}</code>
+      </pre>
+    )}
   </Card>
 );
 
@@ -23,10 +28,11 @@ export const MdFence: React.FC<unknown> = (props) => {
   const registry = useContext(RegistryContext);
   const parser = useContext(ParserContext);
   const theme = useContext(RendererThemeContext);
+  const highlight = useContext(HighlightContext);
 
   if (language === "vaneui") {
     if (!parser) {
-      return renderCodeBlock(content, language, rest, theme.mdFence);
+      return renderCodeBlock(content, language, rest, theme.mdFence, highlight);
     }
     try {
       const spec = parser(content);
@@ -36,11 +42,11 @@ export const MdFence: React.FC<unknown> = (props) => {
       return (
         <>
           <MdError>{`vaneui spec parse error: ${message}`}</MdError>
-          {renderCodeBlock(content, language, rest, theme.mdFence)}
+          {renderCodeBlock(content, language, rest, theme.mdFence, highlight)}
         </>
       );
     }
   }
 
-  return renderCodeBlock(content, language, rest, theme.mdFence);
+  return renderCodeBlock(content, language, rest, theme.mdFence, highlight);
 };

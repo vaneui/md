@@ -112,5 +112,12 @@ export interface MdProps {
    * intent wins over package defaults.
    */
   rendererTheme?: import("../rendererTheme").MdRendererTheme;
+  /**
+   * Synchronous syntax-highlighting hook for code fences. Receives the fence
+   * body, its language, and optional meta, and returns the highlighted node.
+   * When omitted, code fences render as a plain <pre>. Pass `shikiHighlighter`
+   * from `@vaneui/md/shiki` or `prismHighlighter` from `@vaneui/md/prism`.
+   */
+  highlight?: import("../context").HighlightFn;
   config?: MdConfig;
 }

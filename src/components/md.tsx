@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents } from "../config/default-config";
 import { MdError } from "./errors/MdError";
-import { ParserContext, RegistryContext } from "../context";
+import { HighlightContext, ParserContext, RegistryContext } from "../context";
 import {
   RendererThemeContext,
   mergeRendererTheme,
@@ -22,7 +22,7 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, config: userConfig}) => {
+export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, config: userConfig}) => {
   const ast = Markdoc.parse(content);
 
   // Markdoc stores raw frontmatter on the document node; type cast because
@@ -77,9 +77,11 @@ export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, c
   return (
     <RegistryContext.Provider value={components ?? {}}>
       <ParserContext.Provider value={parseFrontmatter}>
-        <RendererThemeContext.Provider value={mergedRendererTheme}>
-          {body as React.ReactNode}
-        </RendererThemeContext.Provider>
+        <HighlightContext.Provider value={highlight}>
+          <RendererThemeContext.Provider value={mergedRendererTheme}>
+            {body as React.ReactNode}
+          </RendererThemeContext.Provider>
+        </HighlightContext.Provider>
       </ParserContext.Provider>
     </RegistryContext.Provider>
   );

@@ -68,5 +68,41 @@ export default [
       }
     ],
     plugins: plugins()
+  },
+  {
+    input: 'src/shiki.tsx',
+    output: [
+      {
+        file: 'dist/shiki.cjs',
+        format: 'cjs',
+        exports: 'named',
+        sourcemap: true
+      },
+      {
+        file: 'dist/shiki.esm.js',
+        format: 'esm',
+        exports: 'named',
+        sourcemap: true
+      }
+    ],
+    plugins: plugins()
+  },
+  {
+    input: 'src/prism.tsx',
+    output: [
+      {
+        file: 'dist/prism.cjs',
+        format: 'cjs',
+        exports: 'named',
+        sourcemap: true
+      },
+      {
+        file: 'dist/prism.esm.js',
+        format: 'esm',
+        exports: 'named',
+        sourcemap: true
+      }
+    ],
+    plugins: plugins()
   }
 ];
