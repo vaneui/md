@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { renderSpec, ComponentRegistry } from '../spec';
+import { renderSpec, expandShorthand, collapseShorthand, ComponentRegistry } from '../spec';
 
 const Plain: React.FC<React.PropsWithChildren<{ 'data-testid'?: string }>> = ({
   children,
@@ -93,5 +93,72 @@ describe('renderSpec — direct unit tests', () => {
       <>{renderSpec({ component: 'Plain', text: 'from-text' }, reg)}</>
     );
     expect(c.container.textContent).toBe('from-text');
+  });
+});
+
+describe('renderSpec — stable node identity (spec.id → React key)', () => {
+  it('uses spec.id as the React key when present', () => {
+    const el = renderSpec({ component: 'Plain', id: 42 }, registry) as React.ReactElement;
+    expect(el.key).toBe('42');
+  });
+
+  it('still passes id through as a prop (components can read it)', () => {
+    const el = renderSpec({ component: 'Plain', id: 7 }, registry) as React.ReactElement;
+    expect((el.props as Record<string, unknown>).id).toBe(7);
+  });
+
+  it('falls back to the positional key when no id is present', () => {
+    const el = renderSpec({ component: 'Plain' }, registry) as React.ReactElement;
+    expect(el.key).toBeNull();
+  });
+});
+
+describe('collapseShorthand — inverse of expandShorthand', () => {
+  it('collapses a flagged leaf to a shorthand key + string value', () => {
+    expect(collapseShorthand({ component: 'Title', xl: true, children: 'Welcome' })).toEqual({
+      'Title xl': 'Welcome',
+    });
+  });
+
+  it('collapses a content-less leaf to a null value', () => {
+    expect(collapseShorthand({ component: 'Divider' })).toEqual({ Divider: null });
+  });
+
+  it('puts non-boolean props into the map form', () => {
+    expect(
+      collapseShorthand({ component: 'Button', primary: true, href: '/go', children: 'Go' }),
+    ).toEqual({ 'Button primary': { href: '/go', children: 'Go' } });
+  });
+
+  it('puts id into the map form', () => {
+    expect(collapseShorthand({ component: 'Card', id: 3, children: 'x' })).toEqual({
+      Card: { id: 3, children: 'x' },
+    });
+  });
+
+  it('recursively collapses array children', () => {
+    const spec = {
+      component: 'Stack',
+      children: [
+        { component: 'Title', xl: true, children: 'A' },
+        { component: 'Text', children: 'B' },
+      ],
+    };
+    expect(collapseShorthand(spec as any)).toEqual({
+      Stack: [{ 'Title xl': 'A' }, { Text: 'B' }],
+    });
+  });
+
+  it('round-trips through expandShorthand (collapse then expand ≡ original)', () => {
+    const spec = {
+      component: 'Card',
+      primary: true,
+      href: '/x',
+      children: [
+        { component: 'Title', xl: true, children: 'Welcome' },
+        { component: 'Text', children: 'Done.' },
+      ],
+    };
+    expect(expandShorthand(collapseShorthand(spec as any))).toEqual(spec);
   });
 });

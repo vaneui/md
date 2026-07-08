@@ -54,7 +54,7 @@ src/
 ├── types/                   # MdProps, MdConfig, theme types
 ├── context.ts               # RegistryContext + ParserContext (used by MdFence)
 ├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, RendererThemeContext, mergeRendererTheme
-├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand
+├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
 ├── registry.ts              # defaultRegistry — safe VaneUI component allowlist (subpath: @vaneui/md/registry)
 ├── yaml.ts                  # parseYamlFrontmatter (subpath: @vaneui/md/yaml)
 ├── setupTests.ts
@@ -253,7 +253,8 @@ Both forms work in the same tree. The `expandShorthand` pass runs once at the to
 
 #### Internals
 
-- `src/spec.ts` — `expandShorthand(node)` walks the parsed YAML and converts shorthand maps to verbose `ComponentSpec` shape. `renderSpec(spec, registry)` materializes the spec into React elements. Depth capped at 16 levels.
+- `src/spec.ts` — `expandShorthand(node)` walks the parsed YAML and converts shorthand maps to verbose `ComponentSpec` shape. `renderSpec(spec, registry)` materializes the spec into React elements. Depth capped at 16 levels. `collapseShorthand(spec)` is the inverse of `expandShorthand` — it turns a verbose spec back into the compact shorthand YAML shape so an editor can serialize an edited tree to a `vaneui` fence (`expandShorthand(collapseShorthand(spec))` reproduces the spec).
+- **Stable node identity:** a `ComponentSpec` may carry an `id` (string or number). When present it's used as the React `key` (so an editor can reorder / add / remove nodes without remounting subtrees) and is also passed through to the component as an `id` prop. Without an `id`, keys fall back to the positional index.
 - `src/components/code/MdFence.tsx` — branches on `language === "vaneui"`. Reads parser + registry from React context. Catches parse errors and routes to `<MdError>` + code-block fallback.
 - `src/registry.ts` — exports `defaultRegistry`, a 33-entry map of safe presentational VaneUI components. Excludes anything requiring callbacks (Modal, Popup, Menu, Input, Checkbox, Overlay, IconButton-as-button).
 
@@ -389,7 +390,7 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 
 ## Exports
 
-- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
+- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (~33 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer (`dist/styles/index.css`). **Rules-only**: it does NOT bundle `@vaneui/ui`'s CSS (that is a peer dependency the consumer already loads via `@vaneui/ui/css` or `@vaneui/ui/vars`), it only adds spacing rules that build on VaneUI's tokens (`--spacing`, `--gap`). Import it alongside your vaneui CSS to get the document rhythm; omit it to fall back to the raw block flow.

@@ -2,6 +2,12 @@ import React from "react";
 
 export interface ComponentSpec {
   component: string;
+  /**
+   * Stable node identity. When present it's used as the React key (so an
+   * editor can reorder/add/remove nodes without remounting subtrees), and it
+   * is ALSO passed through to the component as an `id` prop.
+   */
+  id?: string | number;
   text?: string;
   children?: ComponentSpec[] | string;
   [prop: string]: unknown;
@@ -78,5 +84,53 @@ export function renderSpec(
     resolvedChildren = text;
   }
 
-  return React.createElement(Component, { ...props, key }, resolvedChildren);
+  // Prefer the spec's own stable id as the React key; fall back to the
+  // positional key supplied by the parent. `id` stays in `props` so the
+  // rendered component still receives it.
+  const reactKey = obj.id != null ? String(obj.id) : key;
+  return React.createElement(Component, { ...props, key: reactKey }, resolvedChildren);
+}
+
+/**
+ * Inverse of `expandShorthand`: turn a verbose `ComponentSpec` back into the
+ * compact shorthand YAML shape, so an editor can serialize an edited tree to
+ * a `vaneui` fence. `expandShorthand(collapseShorthand(spec))` reproduces the
+ * spec.
+ *
+ * - Boolean-`true` props fold into the key (`Card` + `primary` → `"Card primary"`).
+ * - Non-boolean props (and a stable `id`) force the map value form.
+ * - Content is emitted as the shorthand string / list value, which expands
+ *   back to `children`. A leaf with no content becomes a `null` value.
+ */
+export function collapseShorthand(spec: ComponentSpec): Record<string, unknown> {
+  const { component, id, text, children, ...props } = spec;
+
+  const flags: string[] = [];
+  const nonBool: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(props)) {
+    if (v === true) flags.push(k);
+    else nonBool[k] = v;
+  }
+  const head = [component, ...flags].join(" ");
+
+  const collapsedChildren = Array.isArray(children)
+    ? children.map((c) => collapseShorthand(c as ComponentSpec))
+    : children;
+  const content =
+    collapsedChildren !== undefined
+      ? collapsedChildren
+      : typeof text === "string"
+        ? text
+        : undefined;
+
+  // No non-boolean props and no id → pure shorthand (bare value).
+  if (Object.keys(nonBool).length === 0 && id == null) {
+    return { [head]: content ?? null };
+  }
+
+  // Otherwise the map value form carries props + id + children.
+  const value: Record<string, unknown> = { ...nonBool };
+  if (id != null) value.id = id;
+  if (content !== undefined) value.children = content;
+  return { [head]: value };
 }
