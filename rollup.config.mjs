@@ -70,6 +70,27 @@ export default [
     plugins: plugins()
   },
   {
+    // Pure spec transforms (renderSpec / expandShorthand / collapseShorthand /
+    // sanitizeSpecProps). No createContext, so this subpath is safe to import
+    // from a React Server Component / server-only module.
+    input: 'src/spec.ts',
+    output: [
+      {
+        file: 'dist/spec.cjs',
+        format: 'cjs',
+        exports: 'named',
+        sourcemap: true
+      },
+      {
+        file: 'dist/spec.esm.js',
+        format: 'esm',
+        exports: 'named',
+        sourcemap: true
+      }
+    ],
+    plugins: plugins()
+  },
+  {
     input: 'src/shiki.tsx',
     output: [
       {
