@@ -1,6 +1,7 @@
 import React from "react";
 import { Highlight, themes, type Language, type PrismTheme } from "prism-react-renderer";
 import type { HighlightFn } from "./context";
+import type { MdPreset } from "./preset";
 
 export interface PrismHighlighterOptions {
   /** A prism-react-renderer theme. Defaults to the built-in GitHub light theme. */
@@ -33,4 +34,9 @@ export function prismHighlighter(options: PrismHighlighterOptions = {}): Highlig
       )}
     </Highlight>
   );
+}
+
+/** The Prism highlighter packaged as a preset for `createMd().use(...)`. */
+export function prismPreset(options: PrismHighlighterOptions = {}): MdPreset {
+  return { highlight: prismHighlighter(options) };
 }

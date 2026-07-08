@@ -2,6 +2,7 @@ import React from "react";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import type { HighlightFn } from "./context";
+import type { MdPreset } from "./preset";
 
 type SyncCoreOptions = Parameters<typeof createHighlighterCoreSync>[0];
 
@@ -44,4 +45,9 @@ export function shikiHighlighter(options: ShikiHighlighterOptions): HighlightFn 
     const html = highlighter.codeToHtml(src, { lang: language, theme: themeName });
     return <div className="vaneui-md-shiki" dangerouslySetInnerHTML={{ __html: html }} />;
   };
+}
+
+/** The Shiki highlighter packaged as a preset for `createMd().use(...)`. */
+export function shikiPreset(options: ShikiHighlighterOptions): MdPreset {
+  return { highlight: shikiHighlighter(options) };
 }

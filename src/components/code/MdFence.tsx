@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Card } from "@vaneui/ui";
 import { HighlightContext, ParserContext, RegistryContext, type HighlightFn } from "../../context";
+import { SanitizeContext } from "../../sanitize";
 import { RendererThemeContext, type MdRendererProps } from "../../rendererTheme";
 import { renderSpec } from "../../spec";
 import { MdError } from "../errors/MdError";
@@ -29,6 +30,7 @@ export const MdFence: React.FC<unknown> = (props) => {
   const parser = useContext(ParserContext);
   const theme = useContext(RendererThemeContext);
   const highlight = useContext(HighlightContext);
+  const sanitize = useContext(SanitizeContext);
 
   if (language === "vaneui") {
     if (!parser) {
@@ -36,7 +38,7 @@ export const MdFence: React.FC<unknown> = (props) => {
     }
     try {
       const spec = parser(content);
-      return <>{renderSpec(spec, registry)}</>;
+      return <>{renderSpec(spec, registry, { sanitize })}</>;
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       return (

@@ -4,6 +4,8 @@ import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents } from "../config/default-config";
 import { MdError } from "./errors/MdError";
 import { HighlightContext, ParserContext, RegistryContext } from "../context";
+import { SanitizeContext } from "../sanitize";
+import { mergePresets, applyPresetProps } from "../preset";
 import {
   RendererThemeContext,
   mergeRendererTheme,
@@ -22,7 +24,13 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, config: userConfig}) => {
+export const Md: React.FC<MdProps> = (rawProps) => {
+  const resolvedPreset = rawProps.presets && rawProps.presets.length
+    ? mergePresets(...rawProps.presets)
+    : undefined;
+  const {content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, sanitize, config: userConfig} =
+    resolvedPreset ? applyPresetProps(resolvedPreset, rawProps) : rawProps;
+
   const ast = Markdoc.parse(content);
 
   // Markdoc stores raw frontmatter on the document node; type cast because
@@ -75,15 +83,27 @@ export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, c
   const inheritedTheme = useContext(RendererThemeContext);
   const mergedRendererTheme = mergeRendererTheme(inheritedTheme, rendererTheme);
 
-  return (
+  const tree = (
     <RegistryContext.Provider value={components ?? {}}>
       <ParserContext.Provider value={parseFrontmatter}>
         <HighlightContext.Provider value={highlight}>
-          <RendererThemeContext.Provider value={mergedRendererTheme}>
-            {body as React.ReactNode}
-          </RendererThemeContext.Provider>
+          <SanitizeContext.Provider value={sanitize}>
+            <RendererThemeContext.Provider value={mergedRendererTheme}>
+              {body as React.ReactNode}
+            </RendererThemeContext.Provider>
+          </SanitizeContext.Provider>
         </HighlightContext.Provider>
       </ParserContext.Provider>
     </RegistryContext.Provider>
   );
+
+  if (resolvedPreset && resolvedPreset.styles.length > 0) {
+    return (
+      <>
+        <style>{resolvedPreset.styles.join("\n")}</style>
+        {tree}
+      </>
+    );
+  }
+  return tree;
 };

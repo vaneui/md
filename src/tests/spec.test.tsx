@@ -45,7 +45,7 @@ describe('renderSpec — direct unit tests', () => {
 
   it('caps recursion at MAX_DEPTH (17 returns null)', () => {
     // depth parameter is internal; pass it explicitly to verify the cap
-    const result = renderSpec({ component: 'Plain' }, registry, undefined, 17);
+    const result = renderSpec({ component: 'Plain' }, registry, { depth: 17 });
     expect(result).toBeNull();
   });
 
@@ -62,7 +62,7 @@ describe('renderSpec — direct unit tests', () => {
     expect(React.isValidElement(expanded)).toBe(true);
 
     // At depth>0, shorthand is NOT expanded — the spec lacks `component`, returns null.
-    const skipped = renderSpec({ 'Plain': 'shorthand' }, registry, undefined, 1);
+    const skipped = renderSpec({ 'Plain': 'shorthand' }, registry, { depth: 1 });
     expect(skipped).toBeNull();
   });
 
@@ -217,5 +217,32 @@ describe('sanitizeSpecProps — always-on fence prop hardening', () => {
     expect(props.dangerouslySetInnerHTML).toBeUndefined();
     expect(props.href).toBeUndefined();
     expect(props.primary).toBe(true);
+  });
+});
+
+describe('SanitizePolicy — configurable tightening over the floor', () => {
+  it('allowedProtocols drops URL schemes not on the list, keeps relative URLs', () => {
+    const policy = { allowedProtocols: ['https:'] };
+    expect(sanitizeSpecProps({ href: 'https://ok.example' }, policy)).toEqual({ href: 'https://ok.example' });
+    expect(sanitizeSpecProps({ href: 'http://no.example' }, policy)).toEqual({});
+    expect(sanitizeSpecProps({ href: '/relative' }, policy)).toEqual({ href: '/relative' });
+  });
+
+  it('blockedProps strips extra prop names beyond the floor', () => {
+    expect(sanitizeSpecProps({ foo: 1, bar: 2 }, { blockedProps: ['foo'] })).toEqual({ bar: 2 });
+  });
+
+  it('allowComponents narrows which components may render', () => {
+    expect(renderSpec({ component: 'Plain' }, registry, { sanitize: { allowComponents: ['Other'] } })).toBeNull();
+    const el = renderSpec({ component: 'Plain' }, registry, { sanitize: { allowComponents: ['Plain'] } });
+    expect(React.isValidElement(el)).toBe(true);
+  });
+
+  it('a policy composes with the always-on floor (dangerous props still stripped)', () => {
+    const out = sanitizeSpecProps(
+      { href: 'javascript:alert(1)', onClick: 'x', keep: true },
+      { allowedProtocols: ['https:'] },
+    );
+    expect(out).toEqual({ keep: true });
   });
 });

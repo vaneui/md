@@ -125,5 +125,19 @@ export interface MdProps {
    * Presets contribute transforms that merge into one chain.
    */
   transform?: import("../transform").MdTransform;
+  /**
+   * Optional policy that tightens the always-on vaneui-fence sanitize floor
+   * for untrusted content (URL-scheme allowlist, extra blocked props, or a
+   * narrowed component allowlist). Use `strictSanitizePolicy` or the
+   * `untrustedPreset` for user- or AI-authored content.
+   */
+  sanitize?: import("../sanitize").SanitizePolicy;
+  /**
+   * Presets to fold into this render (config, components, registry,
+   * rendererTheme, highlight, transform, sanitize, styles). Explicit props
+   * above win over preset-supplied values. Prefer `createMd().use(...)` for a
+   * reusable preconfigured component.
+   */
+  presets?: import("../preset").MdPreset[];
   config?: MdConfig;
 }

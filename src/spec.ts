@@ -1,4 +1,5 @@
 import React from "react";
+import type { SanitizePolicy } from "./sanitize";
 
 export interface ComponentSpec {
   component: string;
@@ -28,20 +29,29 @@ const SHORTHAND_HEAD = /^[A-Z]/;
 const URL_PROPS = new Set(["href", "src", "poster", "action", "formAction"]);
 const DANGEROUS_PROTOCOL = /^\s*(?:javascript|vbscript):/i;
 const NON_IMAGE_DATA_URL = /^\s*data:(?!image\/)/i;
+const URL_SCHEME = /^\s*([a-z][a-z0-9+.-]*:)/i;
 
-function isSafeUrl(value: unknown): boolean {
+function isSafeUrl(value: unknown, policy?: SanitizePolicy): boolean {
   if (typeof value !== "string") return true;
-  return !DANGEROUS_PROTOCOL.test(value) && !NON_IMAGE_DATA_URL.test(value);
+  if (DANGEROUS_PROTOCOL.test(value) || NON_IMAGE_DATA_URL.test(value)) return false;
+  if (policy?.allowedProtocols) {
+    const match = URL_SCHEME.exec(value);
+    // Scheme-less (relative) URLs are always allowed; a scheme must be listed.
+    if (match && !policy.allowedProtocols.includes(match[1].toLowerCase())) return false;
+  }
+  return true;
 }
 
 export function sanitizeSpecProps(
   props: Record<string, unknown>,
+  policy?: SanitizePolicy,
 ): Record<string, unknown> {
   const safe: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(props)) {
     if (key === "dangerouslySetInnerHTML" || key === "ref") continue;
     if (/^on[A-Z]/.test(key)) continue;
-    if (URL_PROPS.has(key) && !isSafeUrl(value)) continue;
+    if (policy?.blockedProps?.includes(key)) continue;
+    if (URL_PROPS.has(key) && !isSafeUrl(value, policy)) continue;
     safe[key] = value;
   }
   return safe;
@@ -82,12 +92,22 @@ export function expandShorthand(node: unknown): unknown {
   return Object.fromEntries(entries.map(([k, v]) => [k, expandShorthand(v)]));
 }
 
+export interface RenderSpecOptions {
+  /** React key for this node (usually the positional index from the parent). */
+  key?: React.Key;
+  /** Recursion depth. Do not set this yourself. */
+  depth?: number;
+  /** Optional policy that tightens the always-on sanitize floor. */
+  sanitize?: SanitizePolicy;
+}
+
 export function renderSpec(
   spec: unknown,
   registry: ComponentRegistry,
-  key?: React.Key,
-  depth = 0
+  options: RenderSpecOptions = {},
 ): React.ReactNode {
+  const { key, sanitize } = options;
+  const depth = options.depth ?? 0;
   if (depth > MAX_DEPTH) return null;
   if (depth === 0) spec = expandShorthand(spec);
   if (spec == null) return null;
@@ -96,17 +116,22 @@ export function renderSpec(
 
   const obj = spec as ComponentSpec;
   if (typeof obj.component !== "string") return null;
+  if (sanitize?.allowComponents && !sanitize.allowComponents.includes(obj.component)) {
+    return null;
+  }
 
   const Component = registry[obj.component];
   if (!Component) return null;
 
   const { component: _ignored, text, children, ...props } = obj;
   void _ignored;
-  const safeProps = sanitizeSpecProps(props);
+  const safeProps = sanitizeSpecProps(props, sanitize);
 
   let resolvedChildren: React.ReactNode = null;
   if (Array.isArray(children)) {
-    resolvedChildren = children.map((c, i) => renderSpec(c, registry, i, depth + 1));
+    resolvedChildren = children.map((c, i) =>
+      renderSpec(c, registry, { key: i, depth: depth + 1, sanitize }),
+    );
   } else if (typeof children === "string") {
     resolvedChildren = children;
   } else if (typeof text === "string") {
