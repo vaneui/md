@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { renderSpec, expandShorthand, collapseShorthand, ComponentRegistry } from '../spec';
+import { renderSpec, expandShorthand, collapseShorthand, sanitizeSpecProps, ComponentRegistry } from '../spec';
 
 const Plain: React.FC<React.PropsWithChildren<{ 'data-testid'?: string }>> = ({
   children,
@@ -160,5 +160,62 @@ describe('collapseShorthand — inverse of expandShorthand', () => {
       ],
     };
     expect(expandShorthand(collapseShorthand(spec as any))).toEqual(spec);
+  });
+});
+
+describe('sanitizeSpecProps — always-on fence prop hardening', () => {
+  it('strips dangerouslySetInnerHTML, event handlers, and ref', () => {
+    const out = sanitizeSpecProps({
+      dangerouslySetInnerHTML: { __html: '<script>alert(1)</script>' },
+      onClick: 'noop',
+      onMouseEnter: 'noop',
+      ref: 'x',
+    });
+    expect(out).toEqual({});
+  });
+
+  it('drops URL props carrying script-executing protocols', () => {
+    expect(sanitizeSpecProps({ href: 'javascript:alert(1)' })).toEqual({});
+    expect(sanitizeSpecProps({ src: 'vbscript:msgbox' })).toEqual({});
+    expect(sanitizeSpecProps({ src: 'data:text/html,<script>' })).toEqual({});
+  });
+
+  it('is case-insensitive and tolerant of leading whitespace on protocols', () => {
+    expect(sanitizeSpecProps({ href: '  JavaScript:alert(1)' })).toEqual({});
+    expect(sanitizeSpecProps({ href: 'JAVASCRIPT:alert(1)' })).toEqual({});
+  });
+
+  it('keeps safe URLs, data:image, and all non-dangerous props', () => {
+    expect(
+      sanitizeSpecProps({
+        href: '/get-started',
+        src: 'data:image/png;base64,AAAA',
+        primary: true,
+        id: 3,
+        className: 'x',
+      }),
+    ).toEqual({
+      href: '/get-started',
+      src: 'data:image/png;base64,AAAA',
+      primary: true,
+      id: 3,
+      className: 'x',
+    });
+  });
+
+  it('applies through renderSpec so dangerous props never reach the element', () => {
+    const el = renderSpec(
+      {
+        component: 'Plain',
+        dangerouslySetInnerHTML: { __html: '<img src=x onerror=alert(1)>' },
+        href: 'javascript:alert(1)',
+        primary: true,
+      } as any,
+      registry,
+    ) as React.ReactElement;
+    const props = el.props as Record<string, unknown>;
+    expect(props.dangerouslySetInnerHTML).toBeUndefined();
+    expect(props.href).toBeUndefined();
+    expect(props.primary).toBe(true);
   });
 });

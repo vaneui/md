@@ -19,6 +19,34 @@ const MAX_DEPTH = 16;
 
 const SHORTHAND_HEAD = /^[A-Z]/;
 
+// Props on a vaneui-fence component come from author-supplied YAML. Strip the
+// handful that could inject markup or behavior when the content is untrusted:
+// dangerouslySetInnerHTML, event handlers, and ref cannot be legitimately
+// expressed in YAML-authored content, and URL-bearing props must not carry
+// script-executing protocols. This is an always-on floor; a configurable
+// policy can tighten it further.
+const URL_PROPS = new Set(["href", "src", "poster", "action", "formAction"]);
+const DANGEROUS_PROTOCOL = /^\s*(?:javascript|vbscript):/i;
+const NON_IMAGE_DATA_URL = /^\s*data:(?!image\/)/i;
+
+function isSafeUrl(value: unknown): boolean {
+  if (typeof value !== "string") return true;
+  return !DANGEROUS_PROTOCOL.test(value) && !NON_IMAGE_DATA_URL.test(value);
+}
+
+export function sanitizeSpecProps(
+  props: Record<string, unknown>,
+): Record<string, unknown> {
+  const safe: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (key === "dangerouslySetInnerHTML" || key === "ref") continue;
+    if (/^on[A-Z]/.test(key)) continue;
+    if (URL_PROPS.has(key) && !isSafeUrl(value)) continue;
+    safe[key] = value;
+  }
+  return safe;
+}
+
 export function expandShorthand(node: unknown): unknown {
   if (node == null || typeof node !== "object") return node;
   if (Array.isArray(node)) return node.map(expandShorthand);
@@ -74,6 +102,7 @@ export function renderSpec(
 
   const { component: _ignored, text, children, ...props } = obj;
   void _ignored;
+  const safeProps = sanitizeSpecProps(props);
 
   let resolvedChildren: React.ReactNode = null;
   if (Array.isArray(children)) {
@@ -88,7 +117,7 @@ export function renderSpec(
   // positional key supplied by the parent. `id` stays in `props` so the
   // rendered component still receives it.
   const reactKey = obj.id != null ? String(obj.id) : key;
-  return React.createElement(Component, { ...props, key: reactKey }, resolvedChildren);
+  return React.createElement(Component, { ...safeProps, key: reactKey }, resolvedChildren);
 }
 
 /**
