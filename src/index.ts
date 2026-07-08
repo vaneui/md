@@ -14,6 +14,10 @@ export type { ComponentSpec, ComponentRegistry } from "./spec";
 export { RegistryContext, ParserContext, HighlightContext } from "./context";
 export type { FrontmatterParser, HighlightFn } from "./context";
 
+// Post-transform hook + helpers.
+export { visit, composeTransforms, headingAnchors, rewriteLinks } from "./transform";
+export type { MdTransform } from "./transform";
+
 // Per-renderer visual defaults — one slot per Md* renderer. Override via
 // <Md rendererTheme={...}> or wrap children in <RendererThemeContext.Provider>.
 export {

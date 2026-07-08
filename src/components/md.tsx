@@ -22,7 +22,7 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, config: userConfig}) => {
+export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, config: userConfig}) => {
   const ast = Markdoc.parse(content);
 
   // Markdoc stores raw frontmatter on the document node; type cast because
@@ -58,7 +58,8 @@ export const Md: React.FC<MdProps> = ({content, frontmatter, parseFrontmatter, c
   };
 
   const transformed = Markdoc.transform(ast, markdocConfig);
-  const rendered = Markdoc.renderers.react(transformed, React, {
+  const finalTree = transform ? transform(transformed) : transformed;
+  const rendered = Markdoc.renderers.react(finalTree, React, {
     components: mergedConfig.components as any,
   });
 
