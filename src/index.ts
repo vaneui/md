@@ -28,6 +28,10 @@ export type { MdBuilder } from "./createMd";
 export { mergePresets, untrustedPreset } from "./preset";
 export type { MdPreset } from "./preset";
 
+// Streaming renderer for incremental (LLM) output. Lives on the main entry
+// (not a subpath) because it depends on Md, which is already the main export.
+export { MdStream, useMdStream, splitBlocks } from "./stream";
+
 // Per-renderer visual defaults — one slot per Md* renderer. Override via
 // <Md rendererTheme={...}> or wrap children in <RendererThemeContext.Provider>.
 export {
