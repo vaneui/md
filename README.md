@@ -174,9 +174,86 @@ Override any part of the default configuration. The merge is shallow per key.
 
 `config` accepts `nodes`, `components`, `tags`, `functions`, and `variables`, all passed through to Markdoc.
 
+## Syntax highlighting
+
+Code fences render as a plain `<pre>` by default. Pass a `highlight` hook to render highlighted code. Two engines ship as optional subpaths; install the one you use.
+
+```tsx
+import { Md } from "@vaneui/md";
+import { prismHighlighter } from "@vaneui/md/prism";
+
+<Md content={md} highlight={prismHighlighter()} />
+```
+
+Shiki uses a synchronous core, so you import the languages and themes you need and pass them in:
+
+```tsx
+import { shikiHighlighter } from "@vaneui/md/shiki";
+import tsx from "shiki/langs/tsx.mjs";
+import githubDark from "shiki/themes/github-dark.mjs";
+
+<Md content={md} highlight={shikiHighlighter({ langs: [tsx], themes: [githubDark] })} />
+```
+
+The hook signature is `(code, language, meta?) => ReactNode`, so any function of that shape works as a custom engine.
+
+## Presets and createMd()
+
+A preset bundles renderer configuration: `nodes`, `tags`, `functions`, `variables`, renderer swaps (`components`), vaneui-fence allowlist entries (`registry`), `rendererTheme`, `highlight`, `transform`, `sanitize`, and co-shipped `styles`. Compose presets with `createMd().use(...)`:
+
+```tsx
+import { createMd } from "@vaneui/md";
+import { shikiPreset } from "@vaneui/md/shiki";
+
+const Doc = createMd().use(shikiPreset({ langs, themes }));
+<Doc content={md} />
+```
+
+Or fold presets on a single render with the `presets` prop:
+
+```tsx
+<Md content={md} presets={[shikiPreset({ langs, themes })]} />
+```
+
+Presets merge left to right. Two presets that define the same `tags`, `components`, `functions`, or `registry` key log a development warning and the last one wins. Explicit `<Md>` props win over preset-supplied values.
+
+## Safe rendering of untrusted content
+
+The `vaneui` fence resolves component names through the registry allowlist, and props are always sanitized: `dangerouslySetInnerHTML`, event handlers, and `ref` are stripped, and `javascript:`, `vbscript:`, and non-image `data:` URLs are dropped from `href`/`src`. To tighten further for user- or AI-authored content, pass a `sanitize` policy or use `untrustedPreset`:
+
+```tsx
+import { Md, untrustedPreset } from "@vaneui/md";
+
+<Md content={userMarkdown} presets={[untrustedPreset]} parseFrontmatter={parseYamlFrontmatter} components={registry} />
+```
+
+A `SanitizePolicy` can set `allowedProtocols`, `blockedProps`, and `allowComponents`.
+
+## Post-transform hook
+
+The `transform` prop runs on Markdoc's renderable tree after transform and before render, so it can rewrite nodes. Built-in helpers: `headingAnchors()` (adds slug ids to headings) and `rewriteLinks(fn)`.
+
+```tsx
+import { Md, headingAnchors } from "@vaneui/md";
+
+<Md content={md} transform={headingAnchors()} />
+```
+
+## Streaming
+
+`MdStream` renders growing markdown (for example token-by-token LLM output) by splitting it into fence-aware blocks and memoizing each, so only the changed trailing block re-parses:
+
+```tsx
+import { MdStream } from "@vaneui/md";
+
+<MdStream content={streamingText} highlight={prismHighlighter()} />
+```
+
 ## Exports
 
-- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, and the types.
+- `@vaneui/md` — `Md`, `MdStream`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `useMdStream`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`), and the types (`MdPreset`, `MdTransform`, `HighlightFn`, `SanitizePolicy`, and more).
+- `@vaneui/md/shiki` — `shikiHighlighter`, `shikiPreset`. `shiki` is an optional peer dependency.
+- `@vaneui/md/prism` — `prismHighlighter`, `prismPreset`. `prism-react-renderer` is an optional peer dependency.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter`, a thin wrapper over `yaml.parse`. `yaml` is an optional peer dependency.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe component allowlist. Imported only when used, so consumers who do not render `vaneui` fences pay no bundle cost.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer. It adds spacing rules built on VaneUI tokens; it does not re-bundle `@vaneui/ui` CSS. Import it alongside your VaneUI CSS.
