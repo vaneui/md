@@ -19,7 +19,7 @@
     "component"
   ],
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -35,17 +35,17 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.esm.js",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     },
     "./yaml": {
       "types": "./dist/yaml.d.ts",
       "import": "./dist/yaml.esm.js",
-      "require": "./dist/yaml.js"
+      "require": "./dist/yaml.cjs"
     },
     "./registry": {
       "types": "./dist/registry.d.ts",
       "import": "./dist/registry.esm.js",
-      "require": "./dist/registry.js"
+      "require": "./dist/registry.cjs"
     },
     "./styles": "./dist/styles/index.css"
   },

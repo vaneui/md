@@ -19,7 +19,7 @@ export default [
     input: 'src/index.ts',
     output: [
       {
-        file: 'dist/index.js',
+        file: 'dist/index.cjs',
         format: 'cjs',
         exports: 'named',
         sourcemap: true
@@ -37,7 +37,7 @@ export default [
     input: 'src/yaml.ts',
     output: [
       {
-        file: 'dist/yaml.js',
+        file: 'dist/yaml.cjs',
         format: 'cjs',
         exports: 'named',
         sourcemap: true
@@ -55,7 +55,7 @@ export default [
     input: 'src/registry.ts',
     output: [
       {
-        file: 'dist/registry.js',
+        file: 'dist/registry.cjs',
         format: 'cjs',
         exports: 'named',
         sourcemap: true
