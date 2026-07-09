@@ -52,17 +52,43 @@ function slugify(value: string): string {
     .replace(/-+/g, "-");
 }
 
+export interface HeadingAnchorsOptions {
+  /** Heading render name to match. Default `"MdHeading"`. */
+  name?: string;
+  /**
+   * Slug function for the heading text, so a consumer can match its own anchor
+   * convention (for example a docs site's existing table-of-contents ids).
+   * Default: the built-in GitHub-style slugify.
+   */
+  slug?: (text: string) => string;
+  /**
+   * When true, wrap the heading's content in a plain `<a href="#id">` so the
+   * heading itself is clickable. Default false. Consumers that need a framework
+   * link (for example `next/link`) or custom styling should keep their own
+   * heading renderer instead of enabling this.
+   */
+  link?: boolean;
+}
+
 /**
- * Add a slug `id` to heading tags that lack one, derived from their text.
- * Targets the default heading renderer name (`MdHeading`); pass a different
- * `name` if you overrode the heading node's render target.
+ * Add a slug `id` to heading tags that lack one, derived from their text, and
+ * optionally wrap the heading content in a self-anchor. Targets the default
+ * heading renderer name (`MdHeading`) unless `name` is given.
  */
-export function headingAnchors(name = "MdHeading"): MdTransform {
+export function headingAnchors(options: HeadingAnchorsOptions = {}): MdTransform {
+  const { name = "MdHeading", slug = slugify, link = false } = options;
   return (tree) => {
     visit(tree, name, (tag) => {
-      if (tag.attributes.id) return;
-      const text = textContent(tag.children as RenderableTreeNode);
-      if (text) tag.attributes.id = slugify(text);
+      let id = tag.attributes.id as string | undefined;
+      if (!id) {
+        const text = textContent(tag.children as RenderableTreeNode);
+        if (!text) return;
+        id = slug(text);
+        tag.attributes.id = id;
+      }
+      if (link && id) {
+        tag.children = [new Tag("a", { href: `#${id}` }, tag.children as RenderableTreeNode[])];
+      }
     });
     return tree;
   };

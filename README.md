@@ -231,12 +231,18 @@ A `SanitizePolicy` can set `allowedProtocols`, `blockedProps`, and `allowCompone
 
 ## Post-transform hook
 
-The `transform` prop runs on Markdoc's renderable tree after transform and before render, so it can rewrite nodes. Built-in helpers: `headingAnchors()` (adds slug ids to headings) and `rewriteLinks(fn)`.
+The `transform` prop runs on Markdoc's renderable tree after transform and before render, so it can rewrite nodes. Built-in helpers: `headingAnchors(options?)` and `rewriteLinks(fn)`.
 
 ```tsx
 import { Md, headingAnchors } from "@vaneui/md";
 
 <Md content={md} transform={headingAnchors()} />
+```
+
+`headingAnchors` accepts `{ slug, link, name }`. Pass `slug` to match your own anchor convention (for example a docs site whose table of contents computes ids a specific way), `link: true` to wrap each heading in a plain `<a href="#id">`, and `name` when you render headings under a non-default component name.
+
+```tsx
+<Md content={md} transform={headingAnchors({ slug: myToId, link: true })} />
 ```
 
 ## Streaming

@@ -13,6 +13,21 @@ describe('post-transform hook', () => {
     expect(heading?.textContent).toContain('Hello World');
   });
 
+  it('headingAnchors accepts a custom slug function', () => {
+    const slug = (t: string) => 'x-' + t.toLowerCase().replace(/\s+/g, '_');
+    const { container } = render(<Md content={'# Hello World'} transform={headingAnchors({ slug })} />);
+    expect(container.querySelector('[id="x-hello_world"]')).toBeInTheDocument();
+  });
+
+  it('headingAnchors link mode wraps the heading content in a self-anchor', () => {
+    const { container } = render(<Md content={'# Hello World'} transform={headingAnchors({ link: true })} />);
+    const heading = container.querySelector('[id="hello-world"]');
+    expect(heading).toBeInTheDocument();
+    const anchor = heading?.querySelector('a[href="#hello-world"]');
+    expect(anchor).toBeInTheDocument();
+    expect(anchor?.textContent).toContain('Hello World');
+  });
+
   it('rewriteLinks rewrites hrefs before render', () => {
     const { container } = render(
       <Md content={'[link](/old)'} transform={rewriteLinks((h) => h.replace('/old', '/new'))} />,

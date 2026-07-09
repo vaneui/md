@@ -16,7 +16,7 @@ export type { FrontmatterParser, HighlightFn } from "./context";
 
 // Post-transform hook + helpers.
 export { visit, composeTransforms, headingAnchors, rewriteLinks } from "./transform";
-export type { MdTransform } from "./transform";
+export type { MdTransform, HeadingAnchorsOptions } from "./transform";
 
 // Sanitize policy for untrusted vaneui-fence content.
 export { SanitizeContext, strictSanitizePolicy } from "./sanitize";
