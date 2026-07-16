@@ -281,8 +281,9 @@ interface MdRendererTheme {
   mdDocument?: MdRendererProps;
   mdImage?: MdRendererProps;
   mdError?: MdRendererProps;
-  mdTable?: MdRendererProps;
-  // ...one slot per Md renderer (mdInline, mdHardbreak, mdSoftbreak, mdThead, mdTbody, mdTr, mdTd, mdTh)
+  mdTable?: MdRendererProps;        // → MdTable spreads on <Table> (inside a scroll wrapper)
+  // table cells: mdThead/mdTbody/mdTr/mdTh/mdTd spread on their matching VaneUI Table part
+  // ...plus mdInline, mdHardbreak, mdSoftbreak
 }
 ```
 
@@ -296,7 +297,6 @@ interface MdRendererTheme {
   mdStrong:     { bold: true },
   mdS:          { lineThrough: true },
   mdError:      { danger: true },
-  mdTable:      { overflowAuto: true },
   // other slots are empty — renderers fall through to VaneUI's own defaults
 }
 ```

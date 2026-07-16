@@ -528,31 +528,21 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
     expect(errorCard).toHaveAttribute('data-appearance', 'danger');
   });
 
-  // ── mdTable.overflowAuto — wrapping Card around <table> ─────────────────────
-  test('mdTable renders with overflowAuto by default', () => {
+  // ── mdTable — Col scroll wrapper + Table slot ──────────────────────────────
+  test('mdTable wraps the Table in an overflow-x-auto scroll container', () => {
     const content = ['| a | b |', '|---|---|', '| 1 | 2 |'].join('\n');
     const { container } = render(<Md content={content} />);
-    const tableCard = container.querySelector('table')?.parentElement;
-    expect(tableCard).toHaveClass('overflow-auto');
+    const table = container.querySelector('table');
+    expect(table).toHaveClass('vane-table');
+    expect(table?.parentElement).toHaveClass('overflow-x-auto');
   });
 
-  test('mdTable.overflowAuto → replace with overflowVisible (overflow group)', () => {
+  test('mdTable slot props apply to the <table>', () => {
     const content = ['| a | b |', '|---|---|', '| 1 | 2 |'].join('\n');
     const { container } = render(
-      <Md content={content} rendererTheme={{ mdTable: { overflowVisible: true } }} />
+      <Md content={content} rendererTheme={{ mdTable: { lg: true } }} />
     );
-    const tableCard = container.querySelector('table')?.parentElement;
-    expect(tableCard).toHaveClass('overflow-visible');
-    expect(tableCard).not.toHaveClass('overflow-auto');
-  });
-
-  test('mdTable.shadow override applies to wrapping Card', () => {
-    const content = ['| a |', '|---|', '| 1 |'].join('\n');
-    const { container } = render(
-      <Md content={content} rendererTheme={{ mdTable: { shadow: true } }} />
-    );
-    const tableCard = container.querySelector('table')?.parentElement;
-    expect(tableCard).toHaveClass('shadow-(--shadow-base)');
+    expect(container.querySelector('table')).toHaveAttribute('data-size', 'lg');
   });
 });
 

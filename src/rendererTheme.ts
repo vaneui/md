@@ -53,6 +53,12 @@ import {
   type ListItemProps,
   type DividerProps,
   type ImgProps,
+  type TableProps,
+  type TheadProps,
+  type TbodyProps,
+  type TrProps,
+  type ThProps,
+  type TdProps,
 } from "@vaneui/ui";
 
 /**
@@ -145,7 +151,6 @@ export interface MdRendererTheme {
   mdBlockquote?: SlotPropsOf<CardProps>;
   mdFence?: SlotPropsOf<CardProps>;
   mdError?: SlotPropsOf<CardProps>;
-  mdTable?: SlotPropsOf<CardProps>;
   mdDocument?: SlotPropsOf<ColProps>;
   mdCode?: SlotPropsOf<CodeProps>;
   // Typography (Text uses TypographyProps directly; Title and ListItem have
@@ -162,15 +167,17 @@ export interface MdRendererTheme {
   mdList?: SlotPropsOf<ListProps>;
   mdHr?: SlotPropsOf<DividerProps>;
   mdImage?: SlotPropsOf<ImgProps>;
+  // Table family (Table / Thead / Tbody / Tr / Th / Td)
+  mdTable?: SlotPropsOf<TableProps>;
+  mdThead?: SlotPropsOf<TheadProps>;
+  mdTbody?: SlotPropsOf<TbodyProps>;
+  mdTr?: SlotPropsOf<TrProps>;
+  mdTh?: SlotPropsOf<ThProps>;
+  mdTd?: SlotPropsOf<TdProps>;
   // Plain-HTML renderers (no VaneUI primitive — slots accepted but unused)
   mdInline?: MdRendererProps;
   mdHardbreak?: MdRendererProps;
   mdSoftbreak?: MdRendererProps;
-  mdThead?: MdRendererProps;
-  mdTbody?: MdRendererProps;
-  mdTr?: MdRendererProps;
-  mdTd?: MdRendererProps;
-  mdTh?: MdRendererProps;
 }
 
 /**
@@ -184,7 +191,6 @@ export const defaultRendererTheme: MdRendererTheme = {
   mdStrong: { bold: true },
   mdS: { lineThrough: true },
   mdError: { danger: true },
-  mdTable: { overflowAuto: true },
 };
 
 /**

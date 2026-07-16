@@ -1,15 +1,16 @@
 import React, { useContext } from "react";
-import { Card } from "@vaneui/ui";
+import { Col, Table } from "@vaneui/ui";
 import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdTable: React.FC<React.PropsWithChildren> = (props) => {
   const { children, ...rest } = props as { children: React.ReactNode } & Record<string, unknown>;
   const theme = useContext(RendererThemeContext);
+  // Col wrapper scrolls the table horizontally on narrow screens.
   return (
-    <Card {...theme.mdTable} className="my-4">
-      <table {...rest} style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <Col overflowXAuto className="my-4">
+      <Table {...theme.mdTable} {...rest}>
         {children}
-      </table>
-    </Card>
+      </Table>
+    </Col>
   );
 };

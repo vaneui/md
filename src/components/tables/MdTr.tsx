@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
+import { Tr } from "@vaneui/ui";
+import { RendererThemeContext } from "../../rendererTheme";
 
 export const MdTr: React.FC<React.PropsWithChildren> = (props) => {
   const { children, ...rest } = props as { children: React.ReactNode } & Record<string, unknown>;
-  return <tr {...rest}>{children}</tr>;
+  const theme = useContext(RendererThemeContext);
+  return <Tr {...theme.mdTr} {...rest}>{children}</Tr>;
 };

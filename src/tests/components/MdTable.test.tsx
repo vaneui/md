@@ -4,33 +4,22 @@ import '@testing-library/jest-dom';
 import { Md } from '../../components/md';
 
 describe('MdTable Component', () => {
-  test('renders table with content', () => {
+  test('renders the VaneUI Table inside an overflow-x scroll wrapper', () => {
     const content = '| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |';
-    const { container } = render(<Md content={content} />);
-    
+    render(<Md content={content} />);
+
     const table = screen.getByRole('table');
     expect(table).toBeInTheDocument();
     expect(screen.getByText('Header 1')).toBeInTheDocument();
     expect(screen.getByText('Header 2')).toBeInTheDocument();
     expect(screen.getByText('Cell 1')).toBeInTheDocument();
     expect(screen.getByText('Cell 2')).toBeInTheDocument();
-    
-    // Verify table is wrapped in Card component with CSS variables
-    const cardWrapper = table.closest('div.flex');
-    expect(cardWrapper).toBeInTheDocument();
-    // VaneUI Card component classes with CSS variables
-    expect(cardWrapper).toHaveClass('px-(--px)', 'py-(--py)');
-    expect(cardWrapper).toHaveClass('gap-(--gap)', 'flex');
-    expect(cardWrapper).toHaveClass('border-[length:var(--bw)]', 'rounded-(--br)');
-    expect(cardWrapper).toHaveClass('flex-col');
-    expect(cardWrapper).toHaveClass('bg-(--bg-color)', 'text-(--text-color)', 'border-(--border-color)');
 
-    // Verify table styling
-    expect(table).toHaveStyle('width: 100%');
-    expect(table).toHaveStyle('border-collapse: collapse');
+    // Renders the VaneUI Table (border-collapse, full width) — not a Card wrapper.
+    expect(table).toHaveClass('vane-table', 'border-collapse', 'w-full');
 
-    // Verify card wrapper uses VaneUI overflowAuto prop and margin utility class
-    expect(cardWrapper).toHaveClass('overflow-auto');
-    expect(cardWrapper).toHaveClass('my-4');
+    // Wrapped in an overflow-x-auto scroll container with a vertical margin.
+    const wrapper = table.parentElement;
+    expect(wrapper).toHaveClass('overflow-x-auto', 'my-4');
   });
 });
