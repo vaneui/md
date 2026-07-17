@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [react()],
   root: path.resolve(__dirname),
   resolve: {
-    alias: {
-      '@vaneui/md': path.resolve(__dirname, '../src/index.ts')
-    }
+    // Array form: the /styles subpath must be matched before the bare package.
+    alias: [
+      { find: '@vaneui/md/styles', replacement: path.resolve(__dirname, '../src/styles/index.css') },
+      { find: '@vaneui/md', replacement: path.resolve(__dirname, '../src/index.ts') },
+    ]
   },
   server: {
     port: 3000,
