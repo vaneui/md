@@ -14,8 +14,8 @@ describe('MdCode Component', () => {
     // Code uses local --spacing: 0.25em override so font-size resolves in em relative to parent
     expect(code).toHaveClass('text-(length:--fs)');
     expect(code).toHaveClass('bg-(--bg-color)', 'text-(--text-color)');
-    expect(code).toHaveClass('ring-(--ring-color)');
     expect(code).toHaveClass('inline', 'rounded-(--br)');
-    expect(code).toHaveClass('ring-[length:var(--rw)]', 'ring-inset', 'font-mono', 'font-normal'); // monospace, normal weight for inline code
+    expect(code).toHaveClass('font-mono', 'font-normal'); // monospace, normal weight for inline code
+    expect(code).not.toHaveClass('ring-(--ring-color)'); // no ring by default now
   });
 });
