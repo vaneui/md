@@ -45,7 +45,7 @@ describe('Md Component - Theme Structure Tests', () => {
       const customTheme: PartialTheme = {
         link: {
           defaults: {
-            bold: true,
+            fontBold: true,
             lg: true,
           }
         }
@@ -74,12 +74,12 @@ describe('Md Component - Theme Structure Tests', () => {
           themes: {
             typography: {
               fontFamily: {
-                serif: 'font-serif italic'
+                fontSerif: 'font-serif italic'
               }
             }
           },
           defaults: {
-            serif: true
+            fontSerif: true
           }
         }
       };
@@ -110,13 +110,13 @@ describe('Md Component - Theme Structure Tests', () => {
             },
             typography: {
               fontWeight: {
-                black: 'font-black tracking-tighter'
+                fontBlack: 'font-black tracking-tighter'
               }
             }
           },
           defaults: {
             accent: true,
-            black: true
+            fontBlack: true
           }
         },
         link: {
@@ -171,12 +171,12 @@ describe('Md Component - Theme Structure Tests', () => {
           themes: {
             typography: {
               fontWeight: {
-                light: 'font-light opacity-75'
+                fontLight: 'font-light opacity-75'
               }
             }
           },
           defaults: {
-            light: true
+            fontLight: true
           }
         }
       };

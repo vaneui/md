@@ -11,7 +11,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const themeDefaults: ThemeDefaults = {
         title: {
           primary: true,
-          bold: true
+          fontBold: true
         }
       };
 
@@ -40,7 +40,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
         link: {
           lg: true,
           underline: true,
-          semibold: true
+          fontSemibold: true
         }
       };
 
@@ -68,7 +68,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
         list: {
           xl: true,
           success: true,
-          semibold: true
+          fontSemibold: true
         }
       };
 
@@ -98,7 +98,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
 
       const themeDefaults: ThemeDefaults = {
         title: {
-          black: true // ThemeDefaults adds black weight
+          fontBlack: true // ThemeDefaults adds black weight
         },
         link: {
           sm: true
@@ -141,16 +141,16 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const themeDefaults: ThemeDefaults = {
         title: {
           secondary: true,
-          light: true
+          fontLight: true
         },
         link: {
-          mono: true,
+          fontMono: true,
           xl: true
         },
         list: {
           info: true,
           lg: true,
-          serif: true
+          fontSerif: true
         }
       };
 
@@ -183,7 +183,7 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const themeDefaults: ThemeDefaults = {
         title: {
           primary: true,
-          semibold: true
+          fontSemibold: true
         }
       };
 
@@ -203,14 +203,14 @@ describe('Md Component - ThemeDefaults Tests', () => {
       const themeDefaults1: ThemeDefaults = {
         title: {
           danger: true,
-          bold: true
+          fontBold: true
         }
       };
 
       const themeDefaults2: ThemeDefaults = {
         title: {
           success: true,
-          light: true
+          fontLight: true
         }
       };
 

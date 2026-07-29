@@ -7,7 +7,7 @@ export const MdError: React.FC<React.PropsWithChildren> = (props) => {
   const theme = useContext(RendererThemeContext);
   return (
     <Card {...theme.mdError} {...rest} className="my-4">
-      <Text bold>Error:</Text> {children}
+      <Text fontBold>Error:</Text> {children}
     </Card>
   );
 };

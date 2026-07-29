@@ -9,13 +9,13 @@ describe('Md Component - ThemeOverride Tests', () => {
       const themeOverride = (theme: ThemeProps): ThemeProps => {
         // Override SimpleConsumerTheme base class
         theme.title.themes.appearance.text.base = 'text-red-700-override';
-        theme.title.themes.typography.fontWeight.extrabold = 'font-extrabold-override tracking-tight';
-        theme.title.themes.typography.fontFamily.serif = 'font-serif-override';
+        theme.title.themes.typography.fontWeight.fontExtrabold = 'font-extrabold-override tracking-tight';
+        theme.title.themes.typography.fontFamily.fontSerif = 'font-serif-override';
 
-        theme.link.themes.typography.fontWeight.bold = 'font-bold-override';
+        theme.link.themes.typography.fontWeight.fontBold = 'font-bold-override';
 
         theme.list.themes.appearance.text.base = 'text-info-700-override';
-        theme.list.themes.typography.fontWeight.medium = 'font-medium-override';
+        theme.list.themes.typography.fontWeight.fontMedium = 'font-medium-override';
 
         return theme;
       };
@@ -23,9 +23,9 @@ describe('Md Component - ThemeOverride Tests', () => {
       const { container } = render(
         <ThemeProvider themeOverride={themeOverride}>
           <div>
-            <Title danger extrabold serif xl tag="h1">Test Title</Title>
-            <Link bold href="#test">Test Link</Link>
-            <List info medium>
+            <Title danger fontExtrabold fontSerif xl tag="h1">Test Title</Title>
+            <Link fontBold href="#test">Test Link</Link>
+            <List info fontMedium>
               <li>Test List Item</li>
             </List>
           </div>
@@ -70,8 +70,8 @@ describe('Md Component - ThemeOverride Tests', () => {
         const newTheme = { ...theme };
         newTheme.title.defaults = {
           ...theme.title.defaults,
-          semibold: false,
-          black: true
+          fontSemibold: false,
+          fontBlack: true
         };
         newTheme.link.defaults = {
           ...theme.link.defaults,

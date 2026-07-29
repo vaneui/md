@@ -21,7 +21,6 @@ import {
   type ItemsProps,
   type JustifyProps,
   type FlexDirectionProps,
-  type ReverseProps,
   type WrapProps,
   type DisplayProps,
   type PositionProps,
@@ -112,7 +111,6 @@ export type MdRendererProps =
   & ItemsProps
   & JustifyProps
   & FlexDirectionProps
-  & ReverseProps
   & WrapProps
   & DisplayProps
   & PositionProps
@@ -188,7 +186,7 @@ export const defaultRendererTheme: MdRendererTheme = {
   mdBlockquote: { secondary: true, noBorder: true, borderL: true },
   mdCode: { secondary: true },
   mdEm: { italic: true },
-  mdStrong: { bold: true },
+  mdStrong: { fontBold: true },
   mdS: { lineThrough: true },
   mdError: { danger: true },
 };

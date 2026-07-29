@@ -92,7 +92,7 @@ describe('rendererTheme — per-renderer overrides via prop', () => {
     const { container } = render(
       <Md
         content="*emphasis*"
-        rendererTheme={{ mdEm: { italic: false, bold: true } }}
+        rendererTheme={{ mdEm: { italic: false, fontBold: true } }}
       />
     );
     const em = container.querySelector('em');
@@ -186,10 +186,10 @@ describe('mergeRendererTheme — group-aware merge utility', () => {
 
   test('adds new slots not present in defaults', () => {
     const userTheme: MdRendererTheme = {
-      mdHeading: { mono: true, uppercase: true },
+      mdHeading: { fontMono: true, uppercase: true },
     };
     const merged = mergeRendererTheme(defaultRendererTheme, userTheme);
-    expect(merged.mdHeading).toEqual({ mono: true, uppercase: true });
+    expect(merged.mdHeading).toEqual({ fontMono: true, uppercase: true });
     expect(merged.mdBlockquote).toEqual(defaultRendererTheme.mdBlockquote);
   });
 
@@ -266,7 +266,7 @@ describe('per-renderer override coverage — every plumbed renderer reads its sl
 
   test('mdHeading slot — applies alongside dynamic level→size mapping', () => {
     const { container } = render(
-      <Md content="# Big" rendererTheme={{ mdHeading: { mono: true } }} />
+      <Md content="# Big" rendererTheme={{ mdHeading: { fontMono: true } }} />
     );
     const h1 = container.querySelector('h1');
     expect(h1).toHaveClass('font-mono');
@@ -298,7 +298,7 @@ describe('per-renderer override coverage — every plumbed renderer reads its sl
   test('mdItem slot — applies to list items', () => {
     const content = ['- one', '- two'].join('\n');
     const { container } = render(
-      <Md content={content} rendererTheme={{ mdItem: { bold: true } }} />
+      <Md content={content} rendererTheme={{ mdItem: { fontBold: true } }} />
     );
     const li = container.querySelector('li');
     expect(li).toHaveClass('font-bold');
@@ -442,7 +442,7 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
   // ── mdStrong.bold (fontWeight) ──────────────────────────────────────────────
   test('mdStrong.bold → replace with light (same fontWeight group)', () => {
     const { container } = render(
-      <Md content="**word**" rendererTheme={{ mdStrong: { light: true } }} />
+      <Md content="**word**" rendererTheme={{ mdStrong: { fontLight: true } }} />
     );
     const strong = container.querySelector('strong');
     expect(strong).toHaveClass('font-light');
@@ -451,7 +451,7 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
 
   test('mdStrong.bold → replace with semibold (same fontWeight group)', () => {
     const { container } = render(
-      <Md content="**word**" rendererTheme={{ mdStrong: { semibold: true } }} />
+      <Md content="**word**" rendererTheme={{ mdStrong: { fontSemibold: true } }} />
     );
     const strong = container.querySelector('strong');
     expect(strong).toHaveClass('font-semibold');
@@ -460,7 +460,7 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
 
   test('mdStrong.bold → disable explicitly with bold:false', () => {
     const { container } = render(
-      <Md content="**word**" rendererTheme={{ mdStrong: { bold: false } }} />
+      <Md content="**word**" rendererTheme={{ mdStrong: { fontBold: false } }} />
     );
     const strong = container.querySelector('strong');
     expect(strong).not.toHaveClass('font-bold');

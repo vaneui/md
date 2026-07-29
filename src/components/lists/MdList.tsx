@@ -11,8 +11,8 @@ export const MdList: React.FC<React.PropsWithChildren> = (props) => {
 
   // Use the ordered attribute to determine list type
   const listProps = ordered
-    ? { decimal: true }
-    : { disc: true };
+    ? { listDecimal: true }
+    : { listDisc: true };
 
   return <List {...theme.mdList} {...rest} {...listProps}>{children}</List>;
 };
