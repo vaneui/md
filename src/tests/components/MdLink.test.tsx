@@ -53,8 +53,8 @@ describe('MdLink Component', () => {
       expect(link).toHaveClass('text-(length:--fs-em)');
       expect(link).toHaveClass('leading-[inherit]');
       expect(link).toHaveAttribute('href', 'https://example.com');
-      // Link keeps its own appearance (blue color) via data-appearance
-      expect(link).toHaveAttribute('data-appearance', 'link');
+      // Link keeps its blue color via the --link-text cascade (no explicit appearance)
+      expect(link).not.toHaveAttribute('data-appearance');
     });
 
     test('link inside h1/h2/h3 all receive inheritSize class', () => {
