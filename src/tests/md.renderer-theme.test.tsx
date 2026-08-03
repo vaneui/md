@@ -162,7 +162,6 @@ describe('mergeRendererTheme — group-aware merge utility', () => {
     });
     expect(merged.mdBlockquote).toEqual({
       primary: true,
-      noBorder: true,
       borderL: true,
     });
     expect((merged.mdBlockquote as Record<string, unknown>).secondary).toBeUndefined();
@@ -377,7 +376,7 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
 
   test('mdBlockquote.secondary → replace with inherit (vaneui omits data-appearance for inherit)', () => {
     const { container } = render(
-      <Md content="> q" rendererTheme={{ mdBlockquote: { inherit: true } }} />
+      <Md content="> q" rendererTheme={{ mdBlockquote: { inheritAppearance: true } }} />
     );
     const card = container.querySelector('.border-l-\\[length\\:var\\(--bw\\)\\]');
     expect(card).toBeTruthy();
@@ -414,7 +413,7 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
 
   test('mdCode.secondary → replace with inherit (vaneui omits data-appearance for inherit)', () => {
     const { container } = render(
-      <Md content="`x`" rendererTheme={{ mdCode: { inherit: true } }} />
+      <Md content="`x`" rendererTheme={{ mdCode: { inheritAppearance: true } }} />
     );
     const codeWithSecondary = container.querySelector('.font-mono[data-appearance="secondary"]');
     expect(codeWithSecondary).toBeNull();

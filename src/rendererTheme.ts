@@ -183,7 +183,7 @@ export interface MdRendererTheme {
  * Md* renderers. Consumers can override per-renderer via <Md rendererTheme>.
  */
 export const defaultRendererTheme: MdRendererTheme = {
-  mdBlockquote: { secondary: true, noBorder: true, borderL: true },
+  mdBlockquote: { secondary: true, borderL: true },
   mdCode: { secondary: true },
   mdEm: { italic: true },
   mdStrong: { fontBold: true },
