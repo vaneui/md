@@ -291,10 +291,10 @@ interface MdRendererTheme {
 
 ```ts
 {
-  mdBlockquote: { secondary: true, noBorder: true, borderL: true },
+  mdBlockquote: { secondary: true, borderL: true },
   mdCode:       { secondary: true },
   mdEm:         { italic: true },
-  mdStrong:     { bold: true },
+  mdStrong:     { fontBold: true },
   mdS:          { lineThrough: true },
   mdError:      { danger: true },
   // other slots are empty — renderers fall through to VaneUI's own defaults
@@ -324,7 +324,7 @@ The slot spreads first, then `...rest` from Markdoc, then any hardcoded essentia
   rendererTheme={{
     mdBlockquote: { primary: true },        // appearance only — keeps left bar
     mdCode:       { success: true },
-    mdEm:         { italic: false, bold: true },  // bold emphasis instead of italic
+    mdEm:         { italic: false, fontBold: true },  // bold emphasis instead of italic
     mdFence:      { tertiary: true },        // code-block wrapper — does NOT affect blockquote
   }}
 />
@@ -345,19 +345,19 @@ The `rendererTheme` prop wins over an outer `RendererThemeContext.Provider` (Md 
 
 #### Group-aware merge
 
-`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories. The group list is derived directly from `ComponentKeys` (vaneui's exported category map) so it auto-stays in sync with future vaneui categories — currently covers size, appearance, variant, shape, border, fontWeight, fontStyle, textDecoration, textTransform, gap, padding, ring, shadow, overflow, position, display, flexDirection, items, justify, wrap, listStyle, listPosition, hide, breakpoint, cursor, blur, focusVisible, pointerEvents, transparent, responsive, transition, whitespace, objectFit, status, orientation, height, letterSpacing.
+`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories. The group list is derived directly from `ComponentKeys` (vaneui's exported category map) so it auto-stays in sync with future vaneui categories — currently covers size, appearance, variant, shape, border, fontWeight, fontStyle, textDecoration, textTransform, gap, padding, ring, shadow, overflow, position, display, flexDirection, items, justify, wrap, listStyle, listPosition, hide, breakpoint, cursor, blur, focusVisible, pointerEvents, transparent, responsiveSizing, transition, whitespace, objectFit, validity, orientation, height, letterSpacing.
 
 When a user sets ANY truthy key in one of those groups for a given slot, all sibling keys from the defaults are dropped before merging. So:
 
 ```tsx
-// default mdBlockquote = { secondary: true, noBorder: true, borderL: true }
+// default mdBlockquote = { secondary: true, borderL: true }
 rendererTheme={{ mdBlockquote: { primary: true } }}
-// final: { primary: true, noBorder: true, borderL: true }
+// final: { primary: true, borderL: true }
 //   secondary dropped (appearance group); border-related kept (different group)
 
 rendererTheme={{ mdBlockquote: { border: true } }}
 // final: { secondary: true, border: true }
-//   noBorder + borderL dropped (border group); appearance kept
+//   borderL dropped (border group); appearance kept
 
 rendererTheme={{ mdBlockquote: { primary: true, border: true } }}
 // final: { primary: true, border: true }
