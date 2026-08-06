@@ -35,6 +35,8 @@ This is a **Markdown** document rendered with VaneUI components.
 }
 ```
 
+The host app must wrap this content in `@vaneui/ui`'s `ThemeProvider` and import one `@vaneui/ui` stylesheet (`import "@vaneui/ui/css"`), otherwise the output renders unstyled.
+
 To get the document prose rhythm, import the styles once in your app (alongside your `@vaneui/ui` CSS):
 
 ```ts

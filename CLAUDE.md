@@ -6,6 +6,8 @@
 
 Peer dependency on `@vaneui/ui` — this project does not work standalone.
 
+For styled output, the host app must render `<Md>` inside `@vaneui/ui`'s `ThemeProvider` and import exactly one `@vaneui/ui` stylesheet (`@vaneui/ui/css`, or `@vaneui/ui/vars` if the app runs its own Tailwind v4 build).
+
 ## Stack
 
 - TypeScript, React 19 (peer range: 16.8+)
@@ -86,7 +88,7 @@ Users can override any part of the default config via the `config` prop. The mer
 <Md
   content={markdown}
   config={{
-    components: { heading: CustomHeading },  // replaces MdHeading
+    components: { MdHeading: CustomHeading },  // replaces MdHeading
     nodes: { fence: customFenceNode },       // replaces fence handler
   }}
 />
@@ -345,7 +347,7 @@ The `rendererTheme` prop wins over an outer `RendererThemeContext.Provider` (Md 
 
 #### Group-aware merge
 
-`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories. The group list is derived directly from `ComponentKeys` (vaneui's exported category map) so it auto-stays in sync with future vaneui categories — currently covers size, appearance, variant, shape, border, fontWeight, fontStyle, textDecoration, textTransform, gap, padding, ring, shadow, overflow, position, display, flexDirection, items, justify, wrap, listStyle, listPosition, hide, breakpoint, cursor, blur, focusVisible, pointerEvents, transparent, responsiveSizing, transition, whitespace, objectFit, validity, orientation, height, letterSpacing.
+`mergeRendererTheme(defaults, user)` is shallow-per-slot but **group-aware** for vaneui's mutually-exclusive prop categories. The group list is derived directly from `ComponentKeys` (vaneui's exported category map) so it auto-stays in sync with future vaneui categories. The authoritative set is whatever `ComponentKeys` exposes at runtime; the list below is illustrative and non-exhaustive: size, appearance, variant, shape, border, fontWeight, fontStyle, textDecoration, textTransform, gap, padding, ring, shadow, overflow, position, display, flexDirection, items, justify, wrap, listStyle, listPosition, hide, breakpoint, cursor, blur, focusVisible, pointerEvents, transparent, responsiveSizing, transition, whitespace, objectFit, validity, orientation, height, letterSpacing.
 
 When a user sets ANY truthy key in one of those groups for a given slot, all sibling keys from the defaults are dropped before merging. So:
 
