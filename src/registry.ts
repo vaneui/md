@@ -1,4 +1,5 @@
 import {
+  Alert,
   Badge,
   Blockquote,
   Button,
@@ -21,6 +22,7 @@ import {
   Row,
   Section,
   SectionTitle,
+  Spinner,
   Stack,
   Text,
   Title,
@@ -28,6 +30,7 @@ import {
 import { ComponentRegistry } from "./spec";
 
 export const defaultRegistry: ComponentRegistry = {
+  Alert,
   Badge,
   Blockquote,
   Button,
@@ -58,6 +61,7 @@ export const defaultRegistry: ComponentRegistry = {
   Row,
   Section,
   SectionTitle,
+  Spinner,
   Stack,
   Text,
   Title,
