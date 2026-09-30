@@ -9,6 +9,10 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # id-token: write — npm trusted publishing (OIDC), no NPM_TOKEN needed
+      id-token: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -16,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
@@ -72,8 +76,6 @@ jobs:
 
       - name: Publish Alpha to npm
         run: npm publish --access public --tag alpha
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Report Success
         run: |
