@@ -54,7 +54,7 @@ src/
 │   └── index.css            # PostCSS source, bundled to dist/styles/index.css
 ├── tests/                   # Jest tests (md.test, theme tests, node tests)
 ├── types/                   # MdProps, MdConfig, theme types
-├── context.ts               # RegistryContext + ParserContext (used by MdFence)
+├── context.ts               # RegistryContext + ParserContext + HighlightContext (used by MdFence)
 ├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, RendererThemeContext, mergeRendererTheme
 ├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
 ├── registry.ts              # defaultRegistry — safe VaneUI component allowlist (subpath: @vaneui/md/registry)
@@ -67,15 +67,17 @@ src/
 
 ### Rendering pipeline
 
-1. `Md` receives `content: string`, optional `frontmatter`, `parseFrontmatter`, `components`, `rendererTheme`, `config`
+1. `Md` receives `content: string`, optional `frontmatter`, `parseFrontmatter`, `components`, `rendererTheme`, `highlight`, `transform`, `sanitize`, `presets`, `config`
 2. `Markdoc.parse(content)` → AST. The raw frontmatter string lives at `ast.attributes.frontmatter`.
 3. Resolve effective frontmatter: `frontmatter` prop wins; else if `parseFrontmatter` is supplied, parse `ast.attributes.frontmatter`. On parse error, capture the message and surface via `<MdError>`.
 4. `mergeConfig` merges user config over defaults (nodes, components, variables, tags, functions). The resolved frontmatter is exposed in markdown as `$markdoc.frontmatter`; the raw string at `$markdoc.frontmatterRaw`.
 5. `Markdoc.transform(ast, config)` → transformed tree
-6. `Markdoc.renderers.react(transformed, React, { components })` → React element tree
-7. The output is wrapped in three React context providers:
+6. The optional `transform` hook runs, then `Markdoc.renderers.react(finalTree, React, { components })` → React element tree
+7. The output is wrapped in five React context providers:
    - `RegistryContext` — the spec component registry (used by `MdFence` for `vaneui` fences)
    - `ParserContext` — the YAML parser (used by `MdFence` for `vaneui` fences)
+   - `HighlightContext` — the `highlight` hook (used by `MdFence` for code blocks)
+   - `SanitizeContext` — the `sanitize` policy (used by `MdFence` for `vaneui` fences)
    - `RendererThemeContext` — per-renderer visual defaults, computed from `mergeRendererTheme(inheritedTheme, rendererTheme)` so consumers can wrap with their own provider OR pass the prop, and the prop wins on conflicts.
 
 Every markdown node is rendered via a VaneUI-wrapped component (e.g., `MdHeading` wraps `Title`). Each renderer reads its own slot from `RendererThemeContext` and spreads the boolean props onto the underlying VaneUI element before any markdown-supplied attributes.
@@ -258,7 +260,7 @@ Both forms work in the same tree. The `expandShorthand` pass runs once at the to
 - `src/spec.ts` — `expandShorthand(node)` walks the parsed YAML and converts shorthand maps to verbose `ComponentSpec` shape. `renderSpec(spec, registry)` materializes the spec into React elements. Depth capped at 16 levels. `collapseShorthand(spec)` is the inverse of `expandShorthand` — it turns a verbose spec back into the compact shorthand YAML shape so an editor can serialize an edited tree to a `vaneui` fence (`expandShorthand(collapseShorthand(spec))` reproduces the spec).
 - **Stable node identity:** a `ComponentSpec` may carry an `id` (string or number). When present it's used as the React `key` (so an editor can reorder / add / remove nodes without remounting subtrees) and is also passed through to the component as an `id` prop. Without an `id`, keys fall back to the positional index.
 - `src/components/code/MdFence.tsx` — branches on `language === "vaneui"`. Reads parser + registry from React context. Catches parse errors and routes to `<MdError>` + code-block fallback.
-- `src/registry.ts` — exports `defaultRegistry`, a 33-entry map of safe presentational VaneUI components. Excludes anything requiring callbacks (Modal, Popup, Menu, Input, Checkbox, Overlay, IconButton-as-button).
+- `src/registry.ts` — exports `defaultRegistry`, a 35-entry map of safe presentational VaneUI components. Excludes anything requiring callbacks (Modal, Popup, Menu, Input, Checkbox, Overlay, IconButton-as-button).
 
 ### Per-renderer visual defaults — `rendererTheme`
 
@@ -377,7 +379,7 @@ Genuinely dynamic per-render logic that can't be expressed as static defaults st
 - `MdImage` — `src`, `alt`, `title` come from Markdoc node attributes
 - `MdLink` — `href`, `title` from Markdoc
 
-A consumer can still override the *non-dynamic* visuals on these via `rendererTheme.mdHeading: { mono: true }`, `rendererTheme.mdList: { uppercase: true }`, etc.
+A consumer can still override the *non-dynamic* visuals on these via `rendererTheme.mdHeading: { fontMono: true }`, `rendererTheme.mdList: { uppercase: true }`, etc.
 
 #### Two-axis customization model
 
@@ -394,7 +396,7 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 
 - `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
-- `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (~33 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
+- `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (35 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer (`dist/styles/index.css`). **Rules-only**: it does NOT bundle `@vaneui/ui`'s CSS (that is a peer dependency the consumer already loads via `@vaneui/ui/css` or `@vaneui/ui/vars`), it only adds spacing rules that build on VaneUI's tokens (`--spacing`, `--gap`). Import it alongside your vaneui CSS to get the document rhythm; omit it to fall back to the raw block flow.
 
 ## Testing
