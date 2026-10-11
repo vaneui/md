@@ -52,6 +52,11 @@
       "import": "./dist/spec.esm.js",
       "require": "./dist/spec.cjs"
     },
+    "./include": {
+      "types": "./dist/include.d.ts",
+      "import": "./dist/include.esm.js",
+      "require": "./dist/include.cjs"
+    },
     "./shiki": {
       "types": "./dist/shiki.d.ts",
       "import": "./dist/shiki.esm.js",
