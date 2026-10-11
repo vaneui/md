@@ -52,7 +52,7 @@ import "@vaneui/md/styles";
 | `parseFrontmatter` | `(raw: string) => Record<string, unknown>` | Parser for the raw YAML between `---` markers. Also parses `vaneui` fences. Throwing routes to an inline error. |
 | `components` | `Record<string, React.ComponentType>` | String to component map used to resolve names in `vaneui` fences. Use `defaultRegistry` from `@vaneui/md/registry`, or supply your own. |
 | `rendererTheme` | `MdRendererTheme` | Per-renderer visual defaults (one slot per `Md*` renderer). |
-| `config` | `MdConfig` | Override Markdoc `nodes`, `components`, `tags`, `functions`, or `variables`. |
+| `config` | `MdConfig` | Override Markdoc `nodes`, `components`, `tags`, `functions`, or `variables`, and register named `partials` for the `{% partial %}` tag. |
 
 ## Frontmatter
 
@@ -73,6 +73,82 @@ import { parseYamlFrontmatter } from "@vaneui/md/yaml";
 ```
 
 Resolution order: `frontmatter` prop, then `parseFrontmatter(rawFrontmatter)`, then `undefined`. Malformed YAML renders an inline error above the body and never throws.
+
+## Including other files
+
+`@vaneui/md/include` expands include tags in Markdown source text before it reaches `<Md>`, so one `.md` file can pull in another by relative path (similar to GitBook includes or VitePress `<!--@include: -->`). It reads from the file system, so it is Node only: run it on the server or in a build step, never in the browser. Because the expansion happens on the raw text, everything else that reads that text (a table of contents, a search index, `llms.txt`, demo extraction) sees the full page too.
+
+```md
+# Guide
+
+{% include "parts/intro.md" %}
+
+{% include file="/shared/footer.md" /%}
+```
+
+```tsx
+import { readFileSync } from "node:fs";
+import { Md } from "@vaneui/md";
+import { resolveIncludes } from "@vaneui/md/include";
+
+const filePath = "docs/guide/page.md";
+const content = resolveIncludes(readFileSync(filePath, "utf8"), {
+  filePath,      // relative includes resolve against this file's directory
+  root: "docs",  // includes must stay inside this directory
+});
+
+<Md content={content} />
+```
+
+How it works:
+
+- A tag must be alone on its line. Indentation and blockquote markers (`> `, nested `> > `) before it are fine; a tag with anything else on its line, such as a list marker (`- {% include "x.md" %}`), is left untouched. These forms are recognized, with double or single quotes: `{% include "x.md" %}`, `{% include "x.md" /%}`, `{% include file="x.md" %}` and `{% include file="x.md" /%}`.
+- Inline tags, other tags (Markdoc's render-time `{% partial %}` tag is left alone) and anything inside a fenced code block are not touched, so docs can still show the syntax itself. Fences are found the way Markdoc reads them, inside blockquotes and list items too: a fence indented 4 or more columns is text, `2.` cannot start a list in the middle of a paragraph, and a fence ends with the list item or blockquote it is in. Tables, link reference definitions and tags spanning several lines are read as plain paragraph text, and a tab after a second `>` on a line is measured from the line start (markdown-it measures it from the enclosing blockquote), so in such rare input a fence can be found where Markdoc sees none, or the other way round.
+- Relative paths resolve against the file containing the tag, including inside nested includes. A leading `/` (or `\`) resolves from `root`.
+- Every include must resolve inside `root`, and only `.md`, `.mdoc` and `.markdown` files can be included unless you change `extensions`, so a tag like `{% include "/.env" %}` cannot inline a secret. With the default reader, symlinks are resolved: the real path of each include must be inside the real path of `root`, a loop through a symlink is reported as a cycle, and the file is read from the real path that was checked.
+- An included file loses its frontmatter, BOM and trailing newlines. Each of its lines gets the tag's prefix, so an include inside a list item stays in that item and an include in a blockquote stays in the quote. Empty lines get the prefix without trailing spaces (`>` in a blockquote) so the quote stays continuous.
+- Under a prefix, tabs in an included line's container markers and indentation become spaces (tab stop 4), so its lists and blocks keep their shape; tabs in fenced code are kept as written. The one exception is a code line that looks like a closing fence but is indented 4 or more columns: its indentation is written as spaces, since that is what keeps it code. After a prefix ending in `>`, a line that starts with whitespace gets one extra space, because Markdown reads the first space after `>` as part of the marker.
+- If an included file ends inside an unclosed code fence, a closing fence is added, so the rest of the page does not turn into code.
+- The entry file loses its BOM and keeps its own frontmatter as written; tags inside that frontmatter are not expanded.
+- An empty included file removes the tag line entirely.
+- A file included several times is read once per call.
+- The result always uses LF line endings.
+
+| Option | Description |
+|---|---|
+| `filePath` | Path of the file `source` was read from. Required. |
+| `root` | Includes must resolve to files inside this directory, and a leading `/` or `\` resolves from here. Default: `process.cwd()`. |
+| `maxDepth` | Maximum nesting depth, where the entry file is depth 0. Default: `16`. |
+| `maxIncludes` | Maximum number of successful includes in one call, counting a file each time it is included. Stops include trees that fan out exponentially. Default: `1000`. |
+| `maxOutputLength` | Maximum length of the result, in characters. The source's own text counts from the start and each included line counts, with its prefix, as it is added, so the include that would make the result longer raises a `"limit"` error before the long text is built. That error is always thrown, without calling `onError`. A source with no includes is returned whatever its length. Default: `10_000_000`. |
+| `extensions` | Extensions an include may target, compared case-insensitively. `false` allows any file. Default: `[".md", ".mdoc", ".markdown"]`. |
+| `checkRealPaths` | Resolve symlinks and check real paths as described above. Default: `true` with the default reader, `false` with a custom `readFile`. Set it to `true` when your `readFile` wraps the file system (a cache, for example) to keep the symlink check. |
+| `readFile` | `(absolutePath) => string`. Default: read UTF-8 from disk. Supply one to serve virtual files; throw an error with `code: "ENOENT"` for a missing file. |
+| `onError` | `(error: IncludeError) => string`. The returned text replaces the failed tag (prefixed like included content; `""` removes the line). It must return a string synchronously; anything else, a promise included, throws a `TypeError`. Default: throw the error. |
+| `onInclude` | `(absolutePath, fromPath) => void`. Called each time a file is included, in document order, for example to collect dependencies for a file watcher or a cache key. It is not called for an include that fails, such as a missing target; `error.file` in `onError` gives that path, so a watcher can still pick up the file once it is created. |
+
+Failures raise an `IncludeError` with a `code` (`"not-found"`, `"cycle"`, `"max-depth"`, `"limit"`, `"outside-root"`, `"extension"` or `"read-failed"`), the `target` as written, the resolved `file`, the including file `from`, the 1-based `line` and the include `chain`. Messages name the tag and its location, for example `Include "parts/x.md" not found (in guide/page.md:12)`, `Include cycle: a.md -> b.md -> a.md (in b.md:3)` or `Include "parts/x.md" exceeds the output limit of 10000000 characters (in guide/page.md:12)`. An error thrown by `onError` or `onInclude` propagates unchanged. `instanceof IncludeError` also recognizes errors from the other build (CommonJS or ES module) of the package, should both be loaded: it accepts an `Error` whose own `Symbol.for("@vaneui/md/IncludeError")` property is `true`, read without calling a getter, and returns `false` rather than throwing for a revoked `Proxy`.
+
+Invalid options throw before any file is read: a `TypeError` for a wrong type (for example a non-string `source` or an empty `filePath`) and a `RangeError` for a negative or `NaN` `maxDepth`, `maxIncludes` or `maxOutputLength`.
+
+`resolveIncludesAsync` takes the same options and reads files asynchronously (its `readFile` may return a promise):
+
+```ts
+import { readFile } from "node:fs/promises";
+import { resolveIncludesAsync } from "@vaneui/md/include";
+
+const file = "docs/guide/page.md";
+const dependencies = new Set<string>();
+const content = await resolveIncludesAsync(await readFile(file, "utf8"), {
+  filePath: file,
+  root: "docs",
+  onInclude: (path) => dependencies.add(path),
+  onError: (error) => {
+    if (error.file) dependencies.add(error.file); // rebuild once a missing file appears
+    return `> Missing include: ${error.target}`;
+  },
+});
+```
 
 ## The `vaneui` fence
 
@@ -174,7 +250,56 @@ Override any part of the default configuration. The merge is shallow per key.
 />
 ```
 
-`config` accepts `nodes`, `components`, `tags`, `functions`, and `variables`, all passed through to Markdoc.
+`config` accepts `nodes`, `components`, `tags`, `functions`, `variables`, and `partials` (see [Partials](#partials)), all passed through to Markdoc.
+
+## Partials
+
+Markdoc's `{% partial %}` tag reuses a named snippet. Register snippets under `config.partials`, keyed by the name the tag's `file` attribute uses. A value can be Markdown source, a document from `Markdoc.parse`, or an array of parsed documents rendered in order.
+
+```tsx
+const partials = {
+  "support.md": "Questions? Ask in **{% $channel %}**.",
+};
+
+<Md
+  content={'# Setup\n\n{% partial file="support.md" variables={channel: "#help"} /%}'}
+  config={{ partials }}
+/>
+```
+
+A Markdown source is parsed the first time a render uses it and kept in a small cache shared by all renders (the 100 most recently used sources, up to 2,000,000 characters of source in total), so re-renders and `MdStream` updates do not parse an unchanged partial again. A source over 250,000 characters is parsed on every render instead of being cached. Rendering never modifies a parsed partial, so the same AST can be shared across renders and pages.
+
+A partial renders with the page's variables (including `$markdoc.frontmatter`) plus anything passed in its `variables` attribute, and it can use other partials, itself included. Recursion works while the variables change, for example a navigation tree guarded by `{% if %}`:
+
+```md
+{% $node.title %}
+
+{% if $node.child %}
+{% partial file="nav.md" variables={node: $node.child} /%}
+{% /if %}
+```
+
+Unlike Markdoc's built-in tag, a missing name renders an error instead of nothing, and a partial that comes back with the same variables while it is still rendering, directly or through other partials, renders an error naming the cycle (for example `Partial cycle: a.md -> b.md -> a.md`). Variables count as the same when their content is equal: arrays and plain objects compare by value, even when they link back to themselves (tree nodes that point to their parent), and anything else compares by identity. Any other nesting is capped at 16 levels.
+
+One render handles at most 1000 partial tags, counting the ones that render an error, so a partial that uses itself more than once cannot multiply into millions of renders within those 16 levels. The first tag over the limit renders an error and later partial tags render nothing. Each `MdStream` block is a render of its own.
+
+All of these errors render in place instead of throwing, and the rest of the page still renders.
+
+Where Markdoc parses the tag as inline (next to text in a paragraph, heading, table cell or list item, or in link text), a partial contributes the inline content of its paragraphs, so `Built with {% partial file="brand.md" /%}.` stays a single paragraph. A partial with other block content (a list, a heading, a code block) used inline renders an error instead. A tag alone on its line, in a list item too, renders the partial in full.
+
+Links cannot nest, so in link text such as `[see {% partial file="name.md" /%}](/docs)` a partial whose content has a Markdown link renders an error instead. The default `link` node marks link text for this check; a `config.nodes.link` override keeps it as long as it spreads `defaultNodesConfig.link`.
+
+Errors render through `MdError`, a card styled by `rendererTheme.mdError`. Errors where the tag is inline render through `MdErrorInline`, a `<span>` styled by `rendererTheme.mdErrorInline`, so the DOM stays valid. Swap either one in `config.components`.
+
+`partial` and `include` never take children. `<Md>` parses `{% partial file="a.md" %}` as if it were written `{% partial file="a.md" /%}` and ignores closing `{% /partial %}` and `{% /include %}` tags, so neither tag can swallow the content after it. The rule applies only while these tags are the library's own: a `partial` or `include` tag you pass in `config.tags` or through a preset parses with Markdoc's normal rules.
+
+`Markdoc.validate(ast, { tags: defaultTagsConfig, partials })` reports a `file` that is not in `partials`, as Markdoc's built-in tag does.
+
+Presets can contribute `partials` as well. An explicit `config.partials` entry wins over a preset entry with the same name.
+
+Partials are named snippets you hand to `<Md>`, which never reads files. To pull in another file by relative path, as with GitBook's `{% include "../shared/note.md" %}`, expand includes before rendering with `resolveIncludes` from `@vaneui/md/include` (see [Including other files](#including-other-files)). Include syntax that reaches `<Md>` unexpanded renders an error pointing there, and the content after it still renders.
+
+Both tags are ordinary Markdoc tag schemas, exported together as `defaultTagsConfig`. Pass your own `partial` or `include` in `config.tags` to replace either one.
 
 ## Syntax highlighting
 
@@ -201,7 +326,7 @@ The hook signature is `(code, language, meta?) => ReactNode`, so any function of
 
 ## Presets and createMd()
 
-A preset bundles renderer configuration: `nodes`, `tags`, `functions`, `variables`, renderer swaps (`components`), vaneui-fence allowlist entries (`registry`), `rendererTheme`, `highlight`, `transform`, `sanitize`, and co-shipped `styles`. Compose presets with `createMd().use(...)`:
+A preset bundles renderer configuration: `nodes`, `tags`, `functions`, `variables`, `partials`, renderer swaps (`components`), vaneui-fence allowlist entries (`registry`), `rendererTheme`, `highlight`, `transform`, `sanitize`, and co-shipped `styles`. Compose presets with `createMd().use(...)`:
 
 ```tsx
 import { createMd } from "@vaneui/md";
@@ -217,7 +342,7 @@ Or fold presets on a single render with the `presets` prop:
 <Md content={md} presets={[shikiPreset({ langs, themes })]} />
 ```
 
-Presets merge left to right. Two presets that define the same `tags`, `components`, `functions`, or `registry` key log a development warning and the last one wins. Explicit `<Md>` props win over preset-supplied values.
+Presets merge left to right. Two presets that define the same `tags`, `components`, `functions`, `partials`, or `registry` key log a development warning and the last one wins. Explicit `<Md>` props win over preset-supplied values.
 
 ## Safe rendering of untrusted content
 
@@ -259,11 +384,12 @@ import { MdStream } from "@vaneui/md";
 
 ## Exports
 
-- `@vaneui/md` — `Md`, `MdStream`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `useMdStream`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`), and the types (`MdPreset`, `MdTransform`, `HighlightFn`, `SanitizePolicy`, and more).
+- `@vaneui/md` — `Md`, `MdStream`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `useMdStream`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`), and the types (`MdPreset`, `MdPartial`, `MdTransform`, `HighlightFn`, `SanitizePolicy`, and more).
 - `@vaneui/md/shiki` — `shikiHighlighter`, `shikiPreset`. `shiki` is an optional peer dependency.
 - `@vaneui/md/prism` — `prismHighlighter`, `prismPreset`. `prism-react-renderer` is an optional peer dependency.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter`, a thin wrapper over `yaml.parse`. `yaml` is an optional peer dependency.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe component allowlist. Imported only when used, so consumers who do not render `vaneui` fences pay no bundle cost.
+- `@vaneui/md/include` (Node only) exports `resolveIncludes`, `resolveIncludesAsync` and `IncludeError` for expanding `{% include %}` tags at load time, plus the option and error-code types.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer. It adds spacing rules built on VaneUI tokens; it does not re-bundle `@vaneui/ui` CSS. Import it alongside your VaneUI CSS.
 
 ## Development

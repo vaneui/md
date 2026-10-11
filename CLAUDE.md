@@ -47,7 +47,7 @@ src/
 │   ├── code/                # MdFence — handles both code blocks AND `vaneui` spec fences
 │   ├── tables/              # MdTable, MdThead, MdTbody, MdTr, MdTd, MdTh
 │   ├── breaks/              # MdHardbreak, MdSoftbreak
-│   └── errors/              # MdError
+│   └── errors/              # MdError (block card), MdErrorInline (span for errors where a tag is inline)
 ├── config/
 │   └── default-config.ts    # Markdoc node config + default component mapping
 ├── styles/
@@ -59,6 +59,9 @@ src/
 ├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
 ├── registry.ts              # defaultRegistry — safe VaneUI component allowlist (subpath: @vaneui/md/registry)
 ├── yaml.ts                  # parseYamlFrontmatter (subpath: @vaneui/md/yaml)
+├── tags.ts                  # partialTag, includeTag (defaultTagsConfig), parseMarkdown, selfClosingTagNames, preparePartials + partial parse cache
+├── include.ts               # resolveIncludes / resolveIncludesAsync / IncludeError (Node-only subpath: @vaneui/md/include)
+├── include-blocks.ts        # BlockScanner: which lines are fenced code, read like Markdoc (internal to include.ts)
 ├── setupTests.ts
 └── index.ts                 # Public barrel export
 ```
@@ -68,9 +71,9 @@ src/
 ### Rendering pipeline
 
 1. `Md` receives `content: string`, optional `frontmatter`, `parseFrontmatter`, `components`, `rendererTheme`, `highlight`, `transform`, `sanitize`, `presets`, `config`
-2. `Markdoc.parse(content)` → AST. The raw frontmatter string lives at `ast.attributes.frontmatter`.
+2. The effective tags (`defaultTagsConfig` merged with `config.tags`, presets included) are computed first, then `parseMarkdown(content, { selfClosingTags })` (`src/tags.ts`) → AST. It is `Markdoc.parse` except that `include` and `partial`, while they are the library's own schemas (`selfClosingTagNames`), always parse as self-closing: every opening tag takes no children and their closing tags are dropped, so an unexpanded GitBook-style `{% include %}` cannot swallow the content after it. A document without those tags parses exactly as with `Markdoc.parse`. The raw frontmatter string lives at `ast.attributes.frontmatter`.
 3. Resolve effective frontmatter: `frontmatter` prop wins; else if `parseFrontmatter` is supplied, parse `ast.attributes.frontmatter`. On parse error, capture the message and surface via `<MdError>`.
-4. `mergeConfig` merges user config over defaults (nodes, components, variables, tags, functions). The resolved frontmatter is exposed in markdown as `$markdoc.frontmatter`; the raw string at `$markdoc.frontmatterRaw`.
+4. `mergeConfig` merges user config over defaults (nodes, components, variables, tags, functions, partials). Default tags come from `defaultTagsConfig`. `config.partials` goes through `preparePartials`, which parses Markdown-string partials on first use through a module-level LRU cache (at most 100 entries and 2,000,000 characters of name plus source; a name plus source over 250,000 characters is never cached; keyed by the JSON of `[name, source, self-closing tag names]` so no two inputs collide; shared by `partialTag` outside `<Md>`), so re-renders and `MdStream` updates do not re-parse them. Markdoc's `resolve` / `transform` never mutate an AST, so cached ASTs are safe to share. The resolved frontmatter is exposed in markdown as `$markdoc.frontmatter`; the raw string at `$markdoc.frontmatterRaw`.
 5. `Markdoc.transform(ast, config)` → transformed tree
 6. The optional `transform` hook runs, then `Markdoc.renderers.react(finalTree, React, { components })` → React element tree
 7. The output is wrapped in five React context providers:
@@ -96,7 +99,7 @@ Users can override any part of the default config via the `config` prop. The mer
 />
 ```
 
-Defaults live in `src/config/default-config.ts` (`defaultNodesConfig`, `defaultComponents`).
+Defaults live in `src/config/default-config.ts` (`defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`).
 
 ### Component naming
 
@@ -123,6 +126,15 @@ import { parseYamlFrontmatter } from "@vaneui/md/yaml";
 ```
 
 Resolution: `frontmatter` prop > `parseFrontmatter(rawFrontmatter)` > `undefined`. Malformed YAML routes to `<MdError>` above the body — never throws. `yaml` is an optional peer dependency; consumers who never use auto-parse don't need it installed.
+
+### Partials and includes
+
+Two ways to reuse Markdown, at two different times:
+
+- **Load time, by file path: `@vaneui/md/include`** (`src/include.ts`, Node only, never exported from the main entry; path resolution and containment live in `src/include-paths.ts`, which takes the `path` module as a parameter so tests can run it with `path.win32`). `resolveIncludes(source, { filePath, root })` expands block-level `{% include "x.md" %}` / `{% include file="x.md" /%}` tags in the raw text before `<Md>` sees it. A tag must be alone on its line after optional indentation or blockquote markers (that prefix is added to every included line); a tag after a list marker is left alone. Under a prefix, tabs in a line's container markers and indentation become spaces while tabs in fenced code stay (except the indentation of a 4+-indented line that looks like a closing fence), and a line starting with whitespace after a prefix ending in `>` gets an extra space. Paths resolve relative to the including file (a leading `/` or `\` resolves from `root`), must stay inside `root` and, by default, end in `.md`, `.mdoc` or `.markdown`. With `checkRealPaths` (default with the default reader) containment, the extension and cycles are checked on real paths (`fs.realpathSync.native` / `fs.promises.realpath`) and files are read from the checked real path; errors and callbacks still use the paths as resolved from the tags. Fence tracking lives in `src/include-blocks.ts`: `BlockScanner` follows markdown-it's container rules as Markdoc configures them (blockquotes and list items, lazy lines, 4+-column indentation, list interruption rules), and `scan(line)` returns where the line's own text starts, so `include.ts` knows which tabs it may expand. Its known differences from Markdoc (tables, link reference definitions, multi-line tags, tabs after a second `>`) are listed in its header and the README; the fuzz tests in `include.test.ts` compare it with `Markdoc.Tokenizer` and leave those out. An included file that ends inside a fence gets a closing fence. The entry's BOM is stripped and its frontmatter copied unchanged; included files lose their frontmatter. `maxIncludes` (default 1000) caps successful includes per call, and each call caches reads and real paths. `maxOutputLength` (default 10,000,000 characters) caps the result: lines are written top-down through `Sink`s and each line's length is checked before it is built, so prefix amplification stops early; that `limit` error never goes to `onError`. Failures raise `IncludeError` (`not-found`, `cycle`, `max-depth`, `limit`, `outside-root`, `extension`, `read-failed`) unless `onError` returns replacement text (a non-string return throws a `TypeError`). `IncludeError` carries a `Symbol.for("@vaneui/md/IncludeError")` brand that its `Symbol.hasInstance` accepts on an `Error` as an own data property (read with `Object.getOwnPropertyDescriptor`, inside a try/catch for revoked proxies), so CJS and ESM copies recognize each other. The patterns run on untrusted lines, so keep them linear (no whitespace run split between two quantifiers, no trailing `.*$`). `resolveIncludesAsync` shares the same generator core. Because the expansion is textual, a consumer's TOC, search index and fence extraction all see the included content.
+- **Render time, by name: `config.partials`** feeds the `{% partial file="name" variables={...} /%}` tag. `partialTag` replaces Markdoc's built-in tag: same scoping and `$$partial:filename`, but a missing partial, a cycle, nesting over 16 or a tag over the render budget renders an error in place instead of throwing. Its private state lives under `$$vaneui:*` variables (unreachable from Markdown; the tag drops them and `$$partial:filename` from the `variables` attribute, so Markdown cannot reset them). The chain lives under `$$vaneui:partialChain` (read with an `Array.isArray` guard) as `{ file, variables }` entries, where `variables` is everything the partials on the chain set. A cycle is the same file with structurally equal variables already on the chain: only same-file entries are compared, lazily, by an iterative walk that short-circuits on `===`, compares arrays and plain objects by content and anything else by identity, and treats a pair already under comparison as equal, so cyclic data (parent links) neither loops nor reports a false cycle, and recursion with changing variables (a nav tree guarded by `{% if %}`) works. The budget (`MAX_PARTIALS`, 1000 partial tags per transform, errors included, mirroring `maxIncludes`) stops exponential fan-out within the depth cap: a `PartialBudget` passes down under `$$vaneui:partialBudget`, and top-level tags share one kept in a `WeakMap` keyed by the transform's `config.tags` (a new object per `Markdoc.transform` call, kept by configs derived with a spread), so it never carries over to another transform. Past it, one error renders and later partial tags render nothing. Used inline (`node.inline`: next to text in a paragraph, heading, table cell or list item, or in link text), the partial's top-level paragraphs unwrap into their inline content (joined by a softbreak); any other block renders an inline error. The default `link` node's `transform` (`transformLink` in `src/tags.ts`) sets `$$vaneui:inLink` for the link text, and an unwrapped partial there that contains a link renders an inline error instead of nesting `<a>`; a `nodes.link` override without that transform loses the check. `file` uses a `PartialFile`-style attribute type, so `Markdoc.validate` reports unknown partials. Presets can contribute `partials` (conflict warning, `__proto__` kept as a plain key); an explicit `config.partials` entry wins per key.
+- `includeTag` is the fallback for include syntax that reaches `<Md>` unexpanded: it renders an error pointing at `resolveIncludes`. `<Md>` itself never reads files. Both `includeTag` and `partialTag` are `selfClosing`, and `<Md>` parses them that way (see the pipeline above) unless `config.tags` or a preset replaces them.
+- The tags emit `MdError` (block card, `mdError` slot) for block-level errors and `MdErrorInline` (a `Text tag="span"`, `mdErrorInline` slot) for errors where the tag is inline (a paragraph, heading, table cell, list item text or link text), so the DOM stays valid. A custom `components.MdError` is never placed in phrasing content.
 
 ### Component spec rendering — `vaneui` fences
 
@@ -284,7 +296,8 @@ interface MdRendererTheme {
   mdHr?: MdRendererProps;
   mdDocument?: MdRendererProps;
   mdImage?: MdRendererProps;
-  mdError?: MdRendererProps;
+  mdError?: MdRendererProps;       // → MdError spreads on <Card>
+  mdErrorInline?: MdRendererProps; // → MdErrorInline spreads on <Text tag="span"> (errors where a tag is inline)
   mdTable?: MdRendererProps;        // → MdTable spreads on <Table> (inside a scroll wrapper)
   // table cells: mdThead/mdTbody/mdTr/mdTh/mdTd spread on their matching VaneUI Table part
   // ...plus mdInline, mdHardbreak, mdSoftbreak
@@ -301,6 +314,7 @@ interface MdRendererTheme {
   mdStrong:     { fontBold: true },
   mdS:          { lineThrough: true },
   mdError:      { danger: true },
+  mdErrorInline: { danger: true },
   // other slots are empty — renderers fall through to VaneUI's own defaults
 }
 ```
@@ -394,8 +408,9 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 
 ## Exports
 
-- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
+- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
+- `@vaneui/md/include` exports `resolveIncludes`, `resolveIncludesAsync`, `IncludeError` and their option and error-code types. **Node only** (imports `node:fs` / `node:path`, marked external in `rollup.config.mjs`); keep it out of `src/index.ts`, which `include.test.ts` checks by walking the browser entries' import graphs. `src/include-paths.ts` and `src/include-blocks.ts` are internal: not exported from any entry, and `rollup.config.mjs` drops their declaration files (and the tests') from `dist`.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (35 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer (`dist/styles/index.css`). **Rules-only**: it does NOT bundle `@vaneui/ui`'s CSS (that is a peer dependency the consumer already loads via `@vaneui/ui/css` or `@vaneui/ui/vars`), it only adds spacing rules that build on VaneUI's tokens (`--spacing`, `--gap`). Import it alongside your vaneui CSS to get the document rhythm; omit it to fall back to the raw block flow.
 
@@ -405,7 +420,9 @@ Tests live in `src/tests/`:
 
 **Md component & integration:**
 - `md.test.tsx` — main rendering, frontmatter parsing, `vaneui` fence rendering, `expandShorthand` integration, fence edge cases, context isolation between instances, rich frontmatter types
-- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence
+- `partials.test.tsx` — partial sources (string, AST, `Node[]`), scoping and variables, the cross-render parse cache (incl. `MdStream`, no AST mutation, writable `preparePartials` entries, size-based eviction, the large-source skip, collision-free keys), missing / empty-file / cycle / depth errors (incl. reserved keys in `variables`), guarded recursion and structural cycle detection (key order, cyclic data with parent links, deep copies, identity for other objects), the render budget (block and inline fan-out, errors counted, shared across link text, new per transform and per `<Md>`), inline use (paragraph, heading, table cell and list item unwrapping, block-content error, link text without nested links, no DOM nesting warnings), `mdError` / `mdErrorInline` theming and custom `MdError`, validation, presets (incl. `__proto__`), transform and `MdStream` pass-through, the `include` fallback (unclosed, self-closing, closed, stray close, blockquote, inline, list item, code fences, `MdStream`), the self-closing parse rule (no-op for documents without those tags, skipped for overridden tags), and `tags` overrides
+- `include.render.test.tsx`: resolved include content rendered through `<Md>`, including an include inside a list item (whose included code keeps its tab), one inside a blockquote, and a closing fence added for an included file left inside a fence
+- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot, including `mdErrorInline` and that `mdError` card props never reach it), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence
 - `md-nodes.test.tsx` — individual node renderers
 - `md.theme-defaults.test.tsx` — default theme behavior
 - `md.theme-extraClasses.test.tsx` — extraClasses prop propagation
@@ -415,6 +432,7 @@ Tests live in `src/tests/`:
 **Module-level units:**
 - `yaml.test.tsx` — `parseYamlFrontmatter` direct: normal/empty/null/string/array/number/malformed inputs
 - `registry.test.tsx` — `defaultRegistry` allowlist: safe components present, callback-required components absent, every entry is a valid component type
+- `include.test.ts`: `resolveIncludes` / `resolveIncludesAsync` (node environment): every tag form, blockquote prefixes, relative / nested / root-relative paths, the `include-paths` helpers under `path.win32`, frontmatter, BOM and CRLF, indentation and tab expansion, fences in containers and unclosed fences, fence and lazy-line cases cross-checked with `Markdoc.Tokenizer`, seeded fuzz tests (tag lines outside Markdoc's fences, and the same fenced code in an included file as standalone), tabs in included code, linear-time checks on 100k-character lines, `maxIncludes` and the read cache, `maxOutputLength`, `extensions`, cycles, depth, root and symlink escapes (symlinked roots, real-path cycles, `checkRealPaths`), option validation, `onError` / `onInclude`, the `IncludeError` brand (incl. proxies and getters), and that the browser entries never import `node:` built-ins or `src/include.ts`. Symlink and case-insensitive tests are skipped where the file system lacks them.
 - `spec.test.tsx` — `renderSpec` direct: null/undefined/string/missing-component/unknown-component/non-map/depth-cap, children-resolution priority, depth-0-gates-shorthand
 
 Run with `npm test` (includes `type-check` as a prerequisite).
