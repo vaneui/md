@@ -1,17 +1,22 @@
 {
   "name": "@vaneui/md",
   "version": "1.2.0",
-  "description": "Markdown component for VaneUI - A React component that renders markdown using @vaneui/ui components",
+  "description": "Markdown renderer for React that outputs VaneUI components. Built on Markdoc, with frontmatter and fences that embed real components.",
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "homepage": "https://vaneui.com/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vaneui/md.git"
   },
+  "bugs": {
+    "url": "https://github.com/vaneui/md/issues"
+  },
   "keywords": [
     "react",
     "markdown",
+    "markdoc",
+    "markdown-renderer",
     "md",
     "vane",
     "vaneui",

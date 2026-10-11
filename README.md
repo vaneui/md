@@ -404,4 +404,4 @@ npm run playground   # install + run the playground dev server
 
 ## License
 
-ISC
+[MIT](./LICENSE)
