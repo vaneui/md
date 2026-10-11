@@ -1,5 +1,7 @@
+import type { Schema } from "@markdoc/markdoc";
 import { MdNodesConfig, MdComponents } from "../types";
 import * as Components from "../components/md-components";
+import { includeTag, partialTag, transformLink } from "../tags";
 
 // Default node configuration for Markdoc
 export const defaultNodesConfig: MdNodesConfig = {
@@ -87,6 +89,9 @@ export const defaultNodesConfig: MdNodesConfig = {
       href: { type: String, required: true },
       title: { type: String },
     },
+    // Renders like `render` and marks the link text, so a partial used inside
+    // it cannot nest a second link.
+    transform: transformLink,
   },
   code: {
     render: "MdCode",
@@ -103,6 +108,20 @@ export const defaultNodesConfig: MdNodesConfig = {
   error: {
     render: "MdError",
   },
+};
+
+// Default Markdoc tags. `partial` replaces Markdoc's built-in tag with one that
+// renders an error for a missing partial, a cycle (same file with the same
+// variables), excessive nesting or more than 1000 partial tags in one render
+// instead of rendering nothing or overflowing the stack, and unwraps the
+// partial's paragraphs when used inline. `include`
+// renders an error for file-include syntax that was not expanded with
+// `resolveIncludes` (`@vaneui/md/include`) before rendering. While these exact
+// schemas are in use, `<Md>` parses both tags as self-closing. Override either
+// via `config.tags`.
+export const defaultTagsConfig: { partial: Schema; include: Schema } = {
+  partial: partialTag,
+  include: includeTag,
 };
 
 // Default component mapping
@@ -132,4 +151,5 @@ export const defaultComponents: MdComponents = {
   MdHardbreak: Components.MdHardbreak,
   MdSoftbreak: Components.MdSoftbreak,
   MdError: Components.MdError,
+  MdErrorInline: Components.MdErrorInline,
 };

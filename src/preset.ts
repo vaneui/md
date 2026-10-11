@@ -1,4 +1,4 @@
-import type { MdComponents, MdConfig, MdNodesConfig, MdProps } from "./types";
+import type { MdComponents, MdConfig, MdNodesConfig, MdPartial, MdProps } from "./types";
 import type { ComponentRegistry } from "./spec";
 import type { MdRendererTheme } from "./rendererTheme";
 import { mergeRendererTheme } from "./rendererTheme";
@@ -11,7 +11,7 @@ import { strictSanitizePolicy } from "./sanitize";
 /**
  * A distributable bundle of renderer configuration. Compose several with
  * `createMd().use(...)` or the `presets` prop on `<Md>`. A preset can
- * contribute Markdoc config (nodes/tags/functions/variables), renderer swaps
+ * contribute Markdoc config (nodes/tags/functions/variables/partials), renderer swaps
  * (components), vaneui-fence allowlist entries (registry), per-renderer visual
  * defaults (rendererTheme), a highlight hook, a post-transform, a sanitize
  * policy, and co-shipped CSS.
@@ -21,6 +21,8 @@ export interface MdPreset {
   tags?: Record<string, unknown>;
   functions?: Record<string, unknown>;
   variables?: Record<string, unknown>;
+  /** Named partials for `{% partial file="name" /%}` (folded into `config.partials`). */
+  partials?: Record<string, MdPartial>;
   /** Markdoc renderer swaps (folded into `config.components`). */
   components?: MdComponents;
   /** vaneui-fence component allowlist contributions (folded into the `components` prop). */
@@ -60,7 +62,8 @@ function mergeKeyed(
       );
     }
     seen.add(key);
-    target[key] = value;
+    // defineProperty, not assignment, so a key like `__proto__` stays a plain key.
+    Object.defineProperty(target, key, { value, enumerable: true, writable: true, configurable: true });
   }
 }
 
@@ -71,6 +74,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
   const tags: Record<string, unknown> = {};
   const functions: Record<string, unknown> = {};
   const variables: Record<string, unknown> = {};
+  const partials: Record<string, MdPartial> = {};
   const registry: Record<string, unknown> = {};
   const styles: string[] = [];
   const transforms: MdTransform[] = [];
@@ -82,6 +86,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
   const seenTags = new Set<string>();
   const seenFunctions = new Set<string>();
   const seenRegistry = new Set<string>();
+  const seenPartials = new Set<string>();
 
   for (const preset of presets) {
     Object.assign(nodes, preset.nodes);
@@ -90,6 +95,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
     mergeKeyed(tags, preset.tags, seenTags, "tags");
     mergeKeyed(functions, preset.functions, seenFunctions, "functions");
     mergeKeyed(registry, preset.registry as Record<string, unknown> | undefined, seenRegistry, "registry");
+    mergeKeyed(partials, preset.partials, seenPartials, "partials");
     if (preset.rendererTheme) {
       rendererTheme = rendererTheme
         ? mergeRendererTheme(rendererTheme, preset.rendererTheme)
@@ -107,6 +113,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
   if (Object.keys(tags).length) config.tags = tags;
   if (Object.keys(functions).length) config.functions = functions;
   if (Object.keys(variables).length) config.variables = variables;
+  if (Object.keys(partials).length) config.partials = partials;
 
   return {
     components: Object.keys(registry).length ? (registry as ComponentRegistry) : undefined,
@@ -128,6 +135,7 @@ function mergeConfigObjects(a?: MdConfig, b?: MdConfig): MdConfig | undefined {
     tags: { ...a.tags, ...b.tags },
     functions: { ...a.functions, ...b.functions },
     variables: { ...a.variables, ...b.variables },
+    partials: { ...a.partials, ...b.partials },
   };
 }
 

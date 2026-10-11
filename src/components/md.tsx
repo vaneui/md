@@ -1,7 +1,8 @@
 import Markdoc from "@markdoc/markdoc";
 import React, { useContext } from "react";
 import { MdProps, MdConfig } from "../types";
-import { defaultNodesConfig, defaultComponents } from "../config/default-config";
+import { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "../config/default-config";
+import { parseMarkdown, preparePartials, selfClosingTagNames } from "../tags";
 import { MdError } from "./errors/MdError";
 import { HighlightContext, ParserContext, RegistryContext } from "../context";
 import { SanitizeContext } from "../sanitize";
@@ -21,6 +22,7 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
     variables: {...defaultConfig.variables, ...userConfig.variables},
     tags: {...defaultConfig.tags, ...userConfig.tags},
     functions: {...defaultConfig.functions, ...userConfig.functions},
+    partials: {...defaultConfig.partials, ...userConfig.partials},
   };
 }
 
@@ -31,7 +33,12 @@ export const Md: React.FC<MdProps> = (rawProps) => {
   const {content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, sanitize, config: userConfig} =
     resolvedPreset ? applyPresetProps(resolvedPreset, rawProps) : rawProps;
 
-  const ast = Markdoc.parse(content);
+  // Tags merge without the AST, so they are known before parsing: `include`
+  // and `partial` parse as self-closing only while they are the library's own
+  // tags, not replaced through `config.tags` or a preset.
+  const tags = {...defaultTagsConfig, ...userConfig?.tags};
+  const selfClosingTags = selfClosingTagNames(tags);
+  const ast = parseMarkdown(content, {selfClosingTags});
 
   // Markdoc stores raw frontmatter on the document node; type cast because
   // @markdoc/markdoc does not surface this attribute on its public Node type.
@@ -52,6 +59,7 @@ export const Md: React.FC<MdProps> = (rawProps) => {
     {
       nodes: defaultNodesConfig,
       components: defaultComponents,
+      tags,
       variables: {markdoc: {frontmatter: resolvedFrontmatter, frontmatterRaw: rawFrontmatter}},
     },
     userConfig
@@ -63,6 +71,9 @@ export const Md: React.FC<MdProps> = (rawProps) => {
     tags: mergedConfig.tags,
     functions: mergedConfig.functions,
     variables: mergedConfig.variables,
+    // String partials are parsed on first use, through a small cache shared
+    // across renders.
+    partials: preparePartials(mergedConfig.partials, selfClosingTags),
   };
 
   const transformed = Markdoc.transform(ast, markdocConfig);

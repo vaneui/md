@@ -527,6 +527,39 @@ describe('Override every default in defaultRendererTheme — exhaustive', () => 
     expect(errorCard).toHaveAttribute('data-appearance', 'danger');
   });
 
+  // ── mdErrorInline.danger (appearance) — errors inside a paragraph or heading ─
+  const findInlineError = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('span')).find(
+      (el) => el.firstElementChild?.textContent === 'Error:'
+    );
+  const inlineErrorContent = 'Text {% partial file="missing.md" /%} here.';
+
+  test('mdErrorInline.danger renders by default on a phrasing <span>', () => {
+    const { container } = render(<Md content={inlineErrorContent} />);
+    const error = findInlineError(container);
+    expect(error).toHaveAttribute('data-appearance', 'danger');
+    expect(error?.closest('p')).not.toBeNull();
+  });
+
+  test('mdErrorInline.danger → replace with warning (appearance group)', () => {
+    const { container } = render(
+      <Md content={inlineErrorContent} rendererTheme={{ mdErrorInline: { warning: true, className: 'inline-error' } }} />
+    );
+    const error = findInlineError(container);
+    expect(error).toHaveAttribute('data-appearance', 'warning');
+    expect(error).toHaveClass('inline-error');
+  });
+
+  test('mdError (block card) props never reach the inline error span', () => {
+    const { container } = render(
+      <Md content={inlineErrorContent} rendererTheme={{ mdError: { warning: true, className: 'card-only' } }} />
+    );
+    const error = findInlineError(container);
+    expect(error).toHaveAttribute('data-appearance', 'danger');
+    expect(error).not.toHaveClass('card-only');
+    expect(error?.tagName).toBe('SPAN');
+  });
+
   // ── mdTable — Col scroll wrapper + Table slot ──────────────────────────────
   test('mdTable wraps the Table in an overflow-x-auto scroll container', () => {
     const content = ['| a | b |', '|---|---|', '| 1 | 2 |'].join('\n');

@@ -1,4 +1,5 @@
 import React from "react";
+import type { Node } from "@markdoc/markdoc";
 
 // Component type for Markdoc nodes
 export type MdComponent = React.FC<any>;
@@ -67,8 +68,17 @@ export interface MdComponents {
   MdHardbreak?: MdComponent;
   MdSoftbreak?: MdComponent;
   MdError?: MdComponent;
+  MdErrorInline?: MdComponent;
   [key: string]: MdComponent | undefined;
 }
+
+/**
+ * A named partial for the `{% partial file="name" /%}` tag: Markdown source
+ * (parsed when first used, then cached across renders), a document parsed
+ * with `Markdoc.parse` (never modified while rendering), or an array of parsed
+ * documents rendered in order.
+ */
+export type MdPartial = string | Node | Node[];
 
 // Complete configuration object
 export interface MdConfig {
@@ -77,6 +87,21 @@ export interface MdConfig {
   variables?: Record<string, any>;
   tags?: Record<string, any>;
   functions?: Record<string, any>;
+  /**
+   * Named partials for the `{% partial file="name" /%}` tag, keyed by the
+   * `file` value. Each value is Markdown source, a parsed `Markdoc.parse`
+   * document, or an array of parsed documents. A partial renders with the
+   * page's variables (including `$markdoc.frontmatter`) plus the tag's
+   * `variables` attribute. A missing name, a cycle (the same file with
+   * structurally equal variables), nesting deeper than 16, or a partial tag
+   * past the 1000th in one render renders an `MdError` in its place
+   * (`MdErrorInline` where the tag is inline: next to text in a paragraph,
+   * heading, table cell or list item, or in link text, where the partial's
+   * paragraphs are unwrapped into inline content). `<Md>` never reads files:
+   * load the sources yourself, or expand file includes with `resolveIncludes`
+   * from `@vaneui/md/include` before rendering.
+   */
+  partials?: Record<string, MdPartial>;
 }
 
 // Props for the main Md component

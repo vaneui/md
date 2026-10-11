@@ -158,6 +158,8 @@ export interface MdRendererTheme {
   mdS?: SlotPropsOf<TypographyProps>;
   mdParagraph?: SlotPropsOf<TypographyProps>;
   mdText?: SlotPropsOf<TypographyProps>;
+  /** Inline errors (where a tag is inline, as in a paragraph or heading): a `Text tag="span"`, separate from the `mdError` card. */
+  mdErrorInline?: SlotPropsOf<TypographyProps>;
   mdHeading?: SlotPropsOf<TitleProps>;
   mdItem?: SlotPropsOf<ListItemProps>;
   // Other VaneUI primitives
@@ -189,6 +191,7 @@ export const defaultRendererTheme: MdRendererTheme = {
   mdStrong: { fontBold: true },
   mdS: { lineThrough: true },
   mdError: { danger: true },
+  mdErrorInline: { danger: true },
 };
 
 /**
