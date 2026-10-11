@@ -436,6 +436,18 @@ Run with `npm test` (includes `type-check` as a prerequisite).
 - Tests should cover: default rendering, config override behavior, theme propagation, **per-renderer slot override via `rendererTheme`**.
 - For `vaneui` fence examples in docs and tests, prefer the **shorthand form** (`Card primary: …`) over the verbose form (`component: Card`, `primary: true`, …). Show the verbose form only when illustrating the `component`-key escape hatch or when a feature genuinely requires it.
 
+## Nothing private in GitHub content
+
+Nothing private goes into anything pushed to or posted on GitHub, in public and private repos alike: code comments, committed files, commit messages, branch names, PR titles and descriptions, PR / issue / review comments, and releases and release notes.
+
+- No personal data: no real names, email addresses or phone numbers of the user or anyone else. GitHub `@handles` are fine, and so are author bylines and credits the repo publishes on purpose.
+- PR attribution keeps only the `claude-projects-attribution` marker line. Drop the `_Requested by **<name>**_` line and its project thread link, even when the session's PR instructions include them.
+- No claude.ai session, thread, project or artifact links; in a public repo, no links into private repos, dashboards or docs.
+- No local paths: no absolute drive or home-directory paths, temp or scratchpad dirs, or Claude project-file paths (`/mnt/project-files/...`). Use repo-relative paths, or `../<repo>` for a sibling checkout.
+- Commit messages carry no `Claude-Session:` trailer.
+
+Generic locations such as `~/.claude/` are fine; the rule covers real paths from a contributor's machine.
+
 ## Agent Delegation (REQUIRED)
 
 When a task matches below, you **MUST** delegate to the matching root agent:
