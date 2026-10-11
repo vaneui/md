@@ -44,3 +44,4 @@ export { MdSoftbreak } from './breaks/MdSoftbreak';
 
 // Error Components
 export { MdError } from './errors/MdError';
+export { MdErrorInline } from './errors/MdErrorInline';
