@@ -441,8 +441,8 @@ Run with `npm test` (includes `type-check` as a prerequisite).
 
 ## Relationship to Other Projects
 
-- **`@vaneui/ui`** (`C:/GitHub/vaneui/`) — peer dependency. Any VaneUI component API change may affect this project. See `C:/GitHub/vaneui/CLAUDE.md` for VaneUI conventions (boolean props, theme system, sentence case, etc.).
-- **`vaneui-web`** (`C:/GitHub/vaneui-web/`) — consumer. Uses `@vaneui/md` to render documentation markdown. When adding new node renderers, check if vaneui-web exposes them via `DocsMarkdown.tsx`.
+- **`@vaneui/ui`** ([vaneui/vaneui](https://github.com/vaneui/vaneui)) — peer dependency. Any VaneUI component API change may affect this project. See its [CLAUDE.md](https://github.com/vaneui/vaneui/blob/main/CLAUDE.md) for VaneUI conventions (boolean props, theme system, sentence case, etc.).
+- **vaneui.com docs site** ([vaneui/web](https://github.com/vaneui/web)) — consumer. Uses `@vaneui/md` to render documentation markdown. When adding new node renderers, check if the site exposes them via `DocsMarkdown.tsx`.
 
 ## Conventions
 
