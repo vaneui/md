@@ -141,3 +141,7 @@ vite.config.ts.timestamp-*
 # Playground dependencies (not part of npm package)
 playground/node_modules/
 playground/dist/
+
+# Claude Code personal settings and worktrees (per machine, not shared)
+.claude/settings.local.json
+.claude/worktrees/
