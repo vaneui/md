@@ -12,7 +12,7 @@ describe('defaultRegistry', () => {
       'Link', 'NavLink',
       'List', 'ListItem',
       'Divider', 'Img', 'Icon', 'Label',
-      'Blockquote',
+      'Blockquote', 'Progress',
     ];
     for (const name of expectedSafe) {
       expect(defaultRegistry[name]).toBeDefined();
