@@ -21,7 +21,7 @@ For styled output, the host app must render `<Md>` inside `@vaneui/ui`'s `ThemeP
 
 ```bash
 npm run type-check     # tsc --noEmit
-npm run build          # clean + build:js (rollup) + build:css (postcss)
+npm run build          # clean + build:js (rollup) + build:css (postcss) + scripts/check-dist.mjs
 npm run build:js       # type-check + rollup (CJS + ESM)
 npm run build:css      # PostCSS bundle to dist/styles/index.css
 npm test               # type-check + jest
@@ -90,7 +90,7 @@ src/
    `reactWith` is the React object Markdoc renders with: its `createElement` adds `mdContext` to elements whose type is one of `defaultComponents`, and leaves every other component's props alone. Renderer component types stay the same across renders, so nothing remounts on a client re-render.
 7. The client `Md` (`src/components/md-client.tsx`, `@vaneui/md/client`) wraps the body in `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext` and `RendererThemeContext` providers holding the same values, for custom renderers that read them. The main `Md` adds no providers.
 
-**The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner.
+**The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner. `scripts/check-dist.mjs` (last step of `npm run build`) fails the build if a `dist/client.*` bundle lacks the banner, or if any other bundle has it or uses `createContext` / `useContext`.
 
 Every markdown node is rendered via a VaneUI-wrapped component (e.g., `MdHeading` wraps `Title`). Each renderer reads its own slot from `rendererThemeOf(props.mdContext)` (the package defaults when it is used outside `<Md>`), strips `mdContext` from the props it forwards, and spreads the boolean props onto the underlying VaneUI element before any markdown-supplied attributes.
 
@@ -341,7 +341,7 @@ export const MdBlockquote: React.FC<MdRendererBaseProps> = (props) => {
 
 The slot spreads first, then `...rest` from Markdoc, then any hardcoded essential props (semantic `tag`, `src`, `href`). Markdown-supplied attributes always win over theme defaults. `mdContext` must never reach the VaneUI element: in a Server Component its props are serialized to the client, and `mdContext` holds functions.
 
-#### Two ways for consumers to customize
+#### Three ways for consumers to customize
 
 **1. Prop on `<Md>`** — most common:
 
@@ -378,7 +378,9 @@ import { defaultRendererTheme } from "@vaneui/md";
 </RendererThemeContext.Provider>
 ```
 
-The client `Md` uses the provider value as its base theme (it replaces the defaults, as the provider always did), then layers the `rendererTheme` prop on top via `mergeRendererTheme`. The main `Md` ignores the provider.
+The client `Md` uses the provider value as its base theme (it replaces the defaults, as the provider always did), then layers the `rendererTheme` prop on top via `mergeRendererTheme`. `createMd` from `@vaneui/md/client` builds on the client `Md`, so its builders inherit the provider too. The main `Md` and the main `createMd` ignore the provider.
+
+Only elements Markdoc creates for a built-in renderer get `mdContext`. A built-in rendered anywhere else (inside a custom component in `config.components`, or listed in the `vaneui` fence registry) gets none and renders with `defaultRendererTheme`, no highlight and no fence parser, under either entry.
 
 #### Group-aware merge
 
@@ -428,7 +430,7 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 ## Exports
 
 - `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `splitBlocks`, `defaultRendererTheme`, `mergeRendererTheme`, types (incl. `MdRenderContext`). Safe to import from React Server Components.
-- `@vaneui/md/client` — `Md` (context-aware), `MdStream`, `useMdStream`, `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`. `dist/client.*` gets a `"use client"` banner and imports the chunk it shares with the main entry.
+- `@vaneui/md/client` — `Md` (context-aware), `createMd` (builders on the client `Md`), `MdStream`, `useMdStream`, `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`. `dist/client.*` gets a `"use client"` banner and imports the chunk it shares with the main entry.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
 - `@vaneui/md/include` exports `resolveIncludes`, `resolveIncludesAsync`, `IncludeError` and their option and error-code types. **Node only** (imports `node:fs` / `node:path`, marked external in `rollup.config.mjs`); keep it out of `src/index.ts`, which `include.test.ts` checks by walking the browser entries' import graphs. `src/include-paths.ts` and `src/include-blocks.ts` are internal: not exported from any entry, and `rollup.config.mjs` drops their declaration files (and the tests') from `dist`.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (36 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
@@ -442,8 +444,8 @@ Tests live in `src/tests/`:
 - `md.test.tsx` — main rendering, frontmatter parsing, `vaneui` fence rendering, `expandShorthand` integration, fence edge cases, context isolation between instances, rich frontmatter types
 - `partials.test.tsx` — partial sources (string, AST, `Node[]`), scoping and variables, the cross-render parse cache (incl. `MdStream`, no AST mutation, writable `preparePartials` entries, size-based eviction, the large-source skip, collision-free keys), missing / empty-file / cycle / depth errors (incl. reserved keys in `variables`), guarded recursion and structural cycle detection (key order, cyclic data with parent links, deep copies, identity for other objects), the render budget (block and inline fan-out, errors counted, shared across link text, new per transform and per `<Md>`), inline use (paragraph, heading, table cell and list item unwrapping, block-content error, link text without nested links, no DOM nesting warnings), `mdError` / `mdErrorInline` theming and custom `MdError`, validation, presets (incl. `__proto__`), transform and `MdStream` pass-through, the `include` fallback (unclosed, self-closing, closed, stray close, blockquote, inline, list item, code fences, `MdStream`), the self-closing parse rule (no-op for documents without those tags, skipped for overridden tags), and `tags` overrides
 - `include.render.test.tsx`: resolved include content rendered through `<Md>`, including an include inside a list item (whose included code keeps its tab), one inside a blockquote, and a closing fence added for an included file left inside a fence
-- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot, including `mdErrorInline` and that `mdError` card props never reach it), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence and provider inheritance on the client `Md` and `MdStream`, the main `Md` ignoring a provider, `mdContext` reaching only built-in renderers, and stable renderer types across re-renders
-- `server-entry.test.ts` — walks the import graph of `src/index.ts` (helper: `importGraph.ts`, shared with `include.test.ts`) and fails if any reachable module uses `createContext`, `useContext` or other hooks
+- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot, including `mdErrorInline` and that `mdError` card props never reach it), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence and provider inheritance on the client `Md`, client `createMd` and `MdStream`, all five contexts provided by the client `Md`, the main `Md` ignoring a provider, `mdContext` reaching only built-in renderers and never a VaneUI component or the DOM, the `vaneui` fence error theme, and stable renderer types across re-renders
+- `server-entry.test.ts` — walks the import graphs of `src/index.ts` and the other server-importable entries (helper: `importGraph.ts`, shared with `include.test.ts`) and fails if any reachable module uses `createContext`, a `use*` hook, `memo` or a class component, or if the main entry loads a package other than Markdoc, `@vaneui/ui` and React
 - `md-nodes.test.tsx` — individual node renderers
 - `md.theme-defaults.test.tsx` — default theme behavior
 - `md.theme-extraClasses.test.tsx` — extraClasses prop propagation

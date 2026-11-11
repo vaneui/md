@@ -44,15 +44,12 @@ export function renderMd(
   const {content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, sanitize, config: userConfig} =
     resolvedPreset ? applyPresetProps(resolvedPreset, rawProps) : rawProps;
 
-  // Tags merge without the AST, so they are known before parsing: `include`
-  // and `partial` parse as self-closing only while they are the library's own
-  // tags, not replaced through `config.tags` or a preset.
+  // `include`/`partial` parse as self-closing only while they are the library's own tags.
   const tags = {...defaultTagsConfig, ...userConfig?.tags};
   const selfClosingTags = selfClosingTagNames(tags);
   const ast = parseMarkdown(content, {selfClosingTags});
 
-  // Markdoc stores raw frontmatter on the document node; type cast because
-  // @markdoc/markdoc does not surface this attribute on its public Node type.
+  // Markdoc's public Node type does not declare the raw frontmatter attribute.
   const rawFrontmatter = (ast as { attributes?: { frontmatter?: string } }).attributes?.frontmatter;
 
   let resolvedFrontmatter = frontmatter;
@@ -82,8 +79,7 @@ export function renderMd(
     tags: mergedConfig.tags,
     functions: mergedConfig.functions,
     variables: mergedConfig.variables,
-    // String partials are parsed on first use, through a small cache shared
-    // across renders.
+    // String partials are parsed on first use, through a cache shared across renders.
     partials: preparePartials(mergedConfig.partials, selfClosingTags),
   };
 

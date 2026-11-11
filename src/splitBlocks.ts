@@ -1,8 +1,4 @@
-/**
- * Split markdown into top-level blocks on blank lines, but never inside a
- * fenced code block (``` or ~~~), so a fence that is still streaming in is not
- * cut in half. The trailing block may be incomplete.
- */
+/** Split markdown into blocks on blank lines, never inside a ``` or ~~~ fence; the last block may be incomplete. */
 export function splitBlocks(src: string): string[] {
   const lines = src.split("\n");
   const blocks: string[] = [];

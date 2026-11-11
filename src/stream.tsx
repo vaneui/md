@@ -14,17 +14,7 @@ const MemoBlock = React.memo(function MemoBlock(
   return <Md content={block} {...rest} />;
 });
 
-/**
- * A streaming-friendly `<Md>`. Splits `content` into fence-aware blocks and
- * memoizes each, so as content grows only the new or changed trailing block
- * re-parses. Completed blocks stay stable across updates (given stable props),
- * which keeps token-by-token LLM output cheap to render. All other `<Md>` props
- * (presets, highlight, rendererTheme, config, sanitize, transform) are threaded
- * to each block, and each block inherits a parent `RendererThemeContext`.
- *
- * Experimental: block boundaries are heuristic (blank line outside a fence), so
- * a block can still re-flow when a later boundary appears.
- */
+/** Streaming `<Md>`: memoizes fence-aware blocks so only the changed trailing block re-parses (experimental). */
 export const MdStream: React.FC<MdProps> = ({ content, ...rest }) => {
   const blocks = useMdStream(content);
   return (

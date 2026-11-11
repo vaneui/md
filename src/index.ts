@@ -7,8 +7,7 @@ export * from "./components/md-components";
 // Export configuration
 export { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "./config/default-config";
 
-// Spec rendering primitives (registry is on the @vaneui/md/registry subpath
-// so consumers who don't use vaneui fences pay zero bundle cost).
+// Spec rendering primitives (the registry is on the @vaneui/md/registry subpath).
 export { renderSpec, expandShorthand, collapseShorthand } from "./spec";
 export type { ComponentSpec, ComponentRegistry } from "./spec";
 

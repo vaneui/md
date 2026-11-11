@@ -57,9 +57,9 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
 }
 ```
 
-`<Md>` resolves its theme, highlighter, registry, frontmatter parser and sanitize policy once per instance and passes them to its own renderers as an `mdContext` prop. Custom components in `config.components` do not receive that prop.
+`<Md>` resolves its theme, highlighter, registry, frontmatter parser and sanitize policy once per instance and passes them to its own renderers as an `mdContext` prop. Custom components in `config.components` do not receive that prop. A built-in renderer such as `MdFence` rendered inside a custom component, or listed in the `vaneui` fence registry, therefore renders with `defaultRendererTheme`, no highlighter and no fence parser.
 
-`@vaneui/md/client` is the client entry (built with a `"use client"` banner). Its `Md` inherits a parent `RendererThemeContext.Provider` and provides the five React contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`) to custom renderers that read them. `MdStream` and `useMdStream` live there too.
+`@vaneui/md/client` is the client entry (built with a `"use client"` banner). Its `Md` inherits a parent `RendererThemeContext.Provider` and provides the five React contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`) to custom renderers that read them. Its `createMd` builds on that `Md`. `MdStream` and `useMdStream` live there too.
 
 ## Props
 
@@ -405,7 +405,7 @@ import { MdStream } from "@vaneui/md/client";
 ## Exports
 
 - `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `splitBlocks`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, and the types (`MdPreset`, `MdPartial`, `MdTransform`, `MdRenderContext`, `HighlightFn`, `SanitizePolicy`, and more). Safe to import from Server Components.
-- `@vaneui/md/client` — the context-aware `Md`, `MdStream`, `useMdStream`, and the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`). Built with a `"use client"` banner.
+- `@vaneui/md/client` — the context-aware `Md`, `createMd`, `MdStream`, `useMdStream`, and the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`). Built with a `"use client"` banner.
 - `@vaneui/md/shiki` — `shikiHighlighter`, `shikiPreset`. `shiki` is an optional peer dependency.
 - `@vaneui/md/prism` — `prismHighlighter`, `prismPreset`. `prism-react-renderer` is an optional peer dependency.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter`, a thin wrapper over `yaml.parse`. `yaml` is an optional peer dependency.
