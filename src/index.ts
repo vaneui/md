@@ -11,15 +11,16 @@ export { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "./conf
 // so consumers who don't use vaneui fences pay zero bundle cost).
 export { renderSpec, expandShorthand, collapseShorthand } from "./spec";
 export type { ComponentSpec, ComponentRegistry } from "./spec";
-export { RegistryContext, ParserContext, HighlightContext } from "./context";
-export type { FrontmatterParser, HighlightFn } from "./context";
+
+// MdRenderContext is what <Md> passes to its own renderers as `mdContext`; the React contexts are on @vaneui/md/client.
+export type { FrontmatterParser, HighlightFn, MdRenderContext } from "./renderContext";
 
 // Post-transform hook + helpers.
 export { visit, composeTransforms, headingAnchors, rewriteLinks } from "./transform";
 export type { MdTransform, HeadingAnchorsOptions } from "./transform";
 
 // Sanitize policy for untrusted vaneui-fence content.
-export { SanitizeContext, strictSanitizePolicy } from "./sanitize";
+export { strictSanitizePolicy } from "./sanitize";
 export type { SanitizePolicy } from "./sanitize";
 
 // Presets and the createMd() builder.
@@ -28,14 +29,11 @@ export type { MdBuilder } from "./createMd";
 export { mergePresets, untrustedPreset } from "./preset";
 export type { MdPreset } from "./preset";
 
-// Streaming renderer for incremental (LLM) output. Lives on the main entry
-// (not a subpath) because it depends on Md, which is already the main export.
-export { MdStream, useMdStream, splitBlocks } from "./stream";
+// Block splitter behind MdStream (MdStream itself is on @vaneui/md/client).
+export { splitBlocks } from "./splitBlocks";
 
-// Per-renderer visual defaults — one slot per Md* renderer. Override via
-// <Md rendererTheme={...}> or wrap children in <RendererThemeContext.Provider>.
+// Per-renderer visual defaults, one slot per Md* renderer. Override via <Md rendererTheme={...}>.
 export {
-  RendererThemeContext,
   defaultRendererTheme,
   mergeRendererTheme,
 } from "./rendererTheme";

@@ -1,16 +1,22 @@
 import Markdoc from "@markdoc/markdoc";
-import React, { useContext } from "react";
+import React from "react";
 import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "../config/default-config";
 import { parseMarkdown, preparePartials, selfClosingTagNames } from "../tags";
 import { MdError } from "./errors/MdError";
-import { HighlightContext, ParserContext, RegistryContext } from "../context";
-import { SanitizeContext } from "../sanitize";
 import { mergePresets, applyPresetProps } from "../preset";
-import {
-  RendererThemeContext,
-  mergeRendererTheme,
-} from "../rendererTheme";
+import { defaultRendererTheme, mergeRendererTheme, type MdRendererTheme } from "../rendererTheme";
+import type { MdRenderContext } from "../renderContext";
+
+// Only the package's own renderers receive `mdContext`, so custom components never see an unknown prop.
+const builtInRenderers = new Set<unknown>(Object.values(defaultComponents));
+
+// The React object Markdoc renders with: adds `mdContext` to built-in renderers, keeping their component types stable.
+const reactWith = (mdContext: MdRenderContext) => ({
+  Fragment: React.Fragment,
+  createElement: ((type: React.ElementType, props: Record<string, unknown> | null, ...children: React.ReactNode[]) =>
+    React.createElement(type, builtInRenderers.has(type) ? { ...props, mdContext } : props, ...children)) as typeof React.createElement,
+});
 
 // Helper function to merge configurations
 function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
@@ -26,7 +32,12 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-export const Md: React.FC<MdProps> = (rawProps) => {
+/** Renders `<Md>` over `baseTheme`; `wrap` lets the client entry put its providers around the body. */
+export function renderMd(
+  rawProps: MdProps,
+  baseTheme: MdRendererTheme,
+  wrap?: (body: React.ReactNode, mdContext: MdRenderContext) => React.ReactNode,
+): React.ReactNode {
   const resolvedPreset = rawProps.presets && rawProps.presets.length
     ? mergePresets(...rawProps.presets)
     : undefined;
@@ -76,37 +87,28 @@ export const Md: React.FC<MdProps> = (rawProps) => {
     partials: preparePartials(mergedConfig.partials, selfClosingTags),
   };
 
+  const mdContext: MdRenderContext = {
+    theme: mergeRendererTheme(baseTheme, rendererTheme),
+    registry: components ?? {},
+    parseFrontmatter,
+    highlight,
+    sanitize,
+  };
+
   const transformed = Markdoc.transform(ast, markdocConfig);
   const finalTree = transform ? transform(transformed) : transformed;
-  const rendered = Markdoc.renderers.react(finalTree, React, {
+  const rendered = Markdoc.renderers.react(finalTree, reactWith(mdContext), {
     components: mergedConfig.components as any,
   });
 
   const body = parseError ? (
     <>
-      <MdError>{`Frontmatter parse error: ${parseError}`}</MdError>
+      <MdError mdContext={mdContext}>{`Frontmatter parse error: ${parseError}`}</MdError>
       {rendered}
     </>
   ) : rendered;
 
-  // Inherit from any parent RendererThemeContext (default value of which is
-  // defaultRendererTheme), then layer the rendererTheme prop over the top.
-  const inheritedTheme = useContext(RendererThemeContext);
-  const mergedRendererTheme = mergeRendererTheme(inheritedTheme, rendererTheme);
-
-  const tree = (
-    <RegistryContext.Provider value={components ?? {}}>
-      <ParserContext.Provider value={parseFrontmatter}>
-        <HighlightContext.Provider value={highlight}>
-          <SanitizeContext.Provider value={sanitize}>
-            <RendererThemeContext.Provider value={mergedRendererTheme}>
-              {body as React.ReactNode}
-            </RendererThemeContext.Provider>
-          </SanitizeContext.Provider>
-        </HighlightContext.Provider>
-      </ParserContext.Provider>
-    </RegistryContext.Provider>
-  );
+  const tree = wrap ? wrap(body, mdContext) : body;
 
   if (resolvedPreset && resolvedPreset.styles.length > 0) {
     return (
@@ -117,4 +119,7 @@ export const Md: React.FC<MdProps> = (rawProps) => {
     );
   }
   return tree;
-};
+}
+
+/** Renders Markdown into VaneUI components. Uses no React context, so it works in Server Components. */
+export const Md: React.FC<MdProps> = (props) => renderMd(props, defaultRendererTheme);

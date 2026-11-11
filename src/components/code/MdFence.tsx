@@ -1,8 +1,7 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Card } from "@vaneui/ui";
-import { HighlightContext, ParserContext, RegistryContext, type HighlightFn } from "../../context";
-import { SanitizeContext } from "../../sanitize";
-import { RendererThemeContext, type MdRendererProps } from "../../rendererTheme";
+import { rendererThemeOf, type HighlightFn, type MdRenderContext } from "../../renderContext";
+import type { MdRendererProps } from "../../rendererTheme";
 import { renderSpec } from "../../spec";
 import { MdError } from "../errors/MdError";
 
@@ -25,12 +24,12 @@ const renderCodeBlock = (
 );
 
 export const MdFence: React.FC<unknown> = (props) => {
-  const { content, language, ...rest } = props as { content: string; language?: string } & Record<string, unknown>;
-  const registry = useContext(RegistryContext);
-  const parser = useContext(ParserContext);
-  const theme = useContext(RendererThemeContext);
-  const highlight = useContext(HighlightContext);
-  const sanitize = useContext(SanitizeContext);
+  const { content, language, mdContext, ...rest } = props as { content: string; language?: string; mdContext?: MdRenderContext } & Record<string, unknown>;
+  const registry = mdContext?.registry ?? {};
+  const parser = mdContext?.parseFrontmatter;
+  const theme = rendererThemeOf(mdContext);
+  const highlight = mdContext?.highlight;
+  const sanitize = mdContext?.sanitize;
 
   if (language === "vaneui") {
     if (!parser) {
@@ -43,7 +42,7 @@ export const MdFence: React.FC<unknown> = (props) => {
       const message = e instanceof Error ? e.message : String(e);
       return (
         <>
-          <MdError>{`vaneui spec parse error: ${message}`}</MdError>
+          <MdError mdContext={mdContext}>{`vaneui spec parse error: ${message}`}</MdError>
           {renderCodeBlock(content, language, rest, theme.mdFence, highlight)}
         </>
       );

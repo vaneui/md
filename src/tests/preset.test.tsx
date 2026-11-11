@@ -4,7 +4,7 @@ import { Md } from '../components/md';
 import { createMd } from '../createMd';
 import { mergePresets, untrustedPreset, type MdPreset } from '../preset';
 import { parseYamlFrontmatter } from '../yaml';
-import type { HighlightFn } from '../context';
+import type { HighlightFn } from '../renderContext';
 
 const hlA: HighlightFn = (code) => <div data-testid="hlA">{code}</div>;
 const hlB: HighlightFn = (code) => <div data-testid="hlB">{code}</div>;

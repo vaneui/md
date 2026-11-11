@@ -143,7 +143,7 @@ export interface MdProps {
    * When omitted, code fences render as a plain <pre>. Pass `shikiHighlighter`
    * from `@vaneui/md/shiki` or `prismHighlighter` from `@vaneui/md/prism`.
    */
-  highlight?: import("../context").HighlightFn;
+  highlight?: import("../renderContext").HighlightFn;
   /**
    * Post-transform hook. Runs on Markdoc's renderable tree after transform and
    * before rendering, so it can add heading anchors, rewrite links, and so on.

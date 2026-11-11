@@ -1,10 +1,10 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Title } from "@vaneui/ui";
-import { RendererThemeContext } from "../../rendererTheme";
+import { rendererThemeOf, type MdRenderContext, type MdRendererBaseProps } from "../../renderContext";
 
-export const MdHeading: React.FC<React.PropsWithChildren> = (props) => {
-  const { level, children, ...rest } = props as { level: number; children: React.ReactNode } & Record<string, unknown>;
-  const theme = useContext(RendererThemeContext);
+export const MdHeading: React.FC<MdRendererBaseProps> = (props) => {
+  const { level, children, mdContext, ...rest } = props as { level: number; children: React.ReactNode; mdContext?: MdRenderContext } & Record<string, unknown>;
+  const theme = rendererThemeOf(mdContext);
   const tags = ["h1","h2","h3","h4","h5","h6"] as const;
   type HeadingTag = typeof tags[number];
   let tag: HeadingTag = `h1`;

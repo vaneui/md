@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Md } from '../components/md';
 import { parseYamlFrontmatter } from '../yaml';
-import type { HighlightFn } from '../context';
+import type { HighlightFn } from '../renderContext';
 
 const fakeHighlight: HighlightFn = (code, language) => (
   <div data-testid="hl" data-lang={language ?? ''}>{code}</div>

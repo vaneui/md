@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { MdStream, splitBlocks } from '../stream';
+import { MdStream } from '../stream';
+import { splitBlocks } from '../splitBlocks';
 
 describe('splitBlocks', () => {
   it('splits on blank lines', () => {

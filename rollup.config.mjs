@@ -31,21 +31,31 @@ const plugins = () => [
   dropPrivateDeclarations()
 ];
 
+// Only the client entry is a client boundary; the main entry and their shared chunk stay server-safe.
+const clientBanner = (chunk) => (chunk.isEntry && chunk.name === 'client' ? '"use client";' : '');
+
 export default [
   {
-    input: 'src/index.ts',
+    // One build for both entries, so they share one chunk: one copy of Markdoc and of the renderers.
+    input: { index: 'src/index.ts', client: 'src/client.tsx' },
     output: [
       {
-        file: 'dist/index.cjs',
+        dir: 'dist',
         format: 'cjs',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        entryFileNames: '[name].cjs',
+        chunkFileNames: 'shared-[hash].cjs',
+        banner: clientBanner
       },
       {
-        file: 'dist/index.esm.js',
+        dir: 'dist',
         format: 'esm',
         exports: 'named',
-        sourcemap: true
+        sourcemap: true,
+        entryFileNames: '[name].esm.js',
+        chunkFileNames: 'shared-[hash].esm.js',
+        banner: clientBanner
       }
     ],
     plugins: plugins()

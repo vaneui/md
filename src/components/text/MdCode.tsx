@@ -1,9 +1,9 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Code } from "@vaneui/ui";
-import { RendererThemeContext } from "../../rendererTheme";
+import { rendererThemeOf, type MdRenderContext, type MdRendererBaseProps } from "../../renderContext";
 
-export const MdCode: React.FC<React.PropsWithChildren> = (props) => {
-  const { content, children, ...rest } = props as { content?: string; children?: React.ReactNode } & Record<string, unknown>;
-  const theme = useContext(RendererThemeContext);
+export const MdCode: React.FC<MdRendererBaseProps> = (props) => {
+  const { content, children, mdContext, ...rest } = props as { content?: string; children?: React.ReactNode; mdContext?: MdRenderContext } & Record<string, unknown>;
+  const theme = rendererThemeOf(mdContext);
   return <Code {...theme.mdCode} {...rest}>{content || children}</Code>;
 };

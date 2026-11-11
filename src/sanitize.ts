@@ -1,5 +1,3 @@
-import React from "react";
-
 /**
  * Optional policy that tightens the always-on fence sanitize floor for
  * untrusted content. The floor (in renderSpec) already strips
@@ -27,5 +25,3 @@ export interface SanitizePolicy {
 export const strictSanitizePolicy: SanitizePolicy = {
   allowedProtocols: ["http:", "https:", "mailto:", "tel:"],
 };
-
-export const SanitizeContext = React.createContext<SanitizePolicy | undefined>(undefined);

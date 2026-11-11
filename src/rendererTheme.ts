@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import {
   ComponentKeys,
   type BaseProps,
@@ -247,5 +247,3 @@ export function mergeRendererTheme(
   }
   return result as MdRendererTheme;
 }
-
-export const RendererThemeContext = React.createContext<MdRendererTheme>(defaultRendererTheme);

@@ -42,6 +42,11 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs"
     },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.esm.js",
+      "require": "./dist/client.cjs"
+    },
     "./yaml": {
       "types": "./dist/yaml.d.ts",
       "import": "./dist/yaml.esm.js",
