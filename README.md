@@ -43,6 +43,24 @@ To get the document prose rhythm, import the styles once in your app (alongside 
 import "@vaneui/md/styles";
 ```
 
+## Server Components
+
+`<Md>` from `@vaneui/md` uses no React context and no hooks, so it renders inside React Server Components. Markdown known at build time is parsed on the server, and Markdoc and `@vaneui/md` stay out of the browser bundle. `@vaneui/ui` components still render as client components.
+
+```tsx
+// app/blog/[slug]/page.tsx: a server component, no "use client"
+import { Md } from "@vaneui/md";
+
+export default async function Post({ params }: { params: Promise<{ slug: string }> }) {
+  const content = await loadPost((await params).slug);
+  return <Md content={content} />;
+}
+```
+
+`<Md>` resolves its theme, highlighter, registry, frontmatter parser and sanitize policy once per instance and passes them to its own renderers as an `mdContext` prop. Custom components in `config.components` do not receive that prop.
+
+`@vaneui/md/client` is the client entry (built with a `"use client"` banner). Its `Md` inherits a parent `RendererThemeContext.Provider` and provides the five React contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`) to custom renderers that read them. `MdStream` and `useMdStream` live there too.
+
 ## Props
 
 | Prop | Type | Description |
@@ -231,7 +249,9 @@ Each `Md*` renderer has a slot in `MdRendererTheme`. A slot holds boolean props 
 />
 ```
 
-Slot keys mirror the renderer file names (`MdBlockquote` -> `mdBlockquote`, `MdFence` -> `mdFence`). You can also share a theme across instances with `RendererThemeContext.Provider`. The `rendererTheme` prop wins over an outer provider.
+Slot keys mirror the renderer file names (`MdBlockquote` -> `mdBlockquote`, `MdFence` -> `mdFence`). To share a theme across instances, pass the same object, or bake it into a component with `createMd().use({ rendererTheme })`.
+
+In client components, `Md` from `@vaneui/md/client` also inherits an outer `RendererThemeContext.Provider` (from the same entry). The `rendererTheme` prop wins over the provider. `Md` from `@vaneui/md` ignores the provider.
 
 The merge is group-aware for VaneUI's mutually-exclusive categories (size, appearance, variant, shape, border, and so on): setting any key in a group drops the package defaults for that group, so your intent wins over the built-in defaults.
 
@@ -374,17 +394,18 @@ import { Md, headingAnchors } from "@vaneui/md";
 
 ## Streaming
 
-`MdStream` renders growing markdown (for example token-by-token LLM output) by splitting it into fence-aware blocks and memoizing each, so only the changed trailing block re-parses:
+`MdStream` renders growing markdown (for example token-by-token LLM output) by splitting it into fence-aware blocks and memoizing each, so only the changed trailing block re-parses. It is a client component, exported from `@vaneui/md/client`:
 
 ```tsx
-import { MdStream } from "@vaneui/md";
+import { MdStream } from "@vaneui/md/client";
 
 <MdStream content={streamingText} highlight={prismHighlighter()} />
 ```
 
 ## Exports
 
-- `@vaneui/md` — `Md`, `MdStream`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `useMdStream`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`), and the types (`MdPreset`, `MdPartial`, `MdTransform`, `HighlightFn`, `SanitizePolicy`, and more).
+- `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `splitBlocks`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, and the types (`MdPreset`, `MdPartial`, `MdTransform`, `MdRenderContext`, `HighlightFn`, `SanitizePolicy`, and more). Safe to import from Server Components.
+- `@vaneui/md/client` — the context-aware `Md`, `MdStream`, `useMdStream`, and the contexts (`RegistryContext`, `ParserContext`, `HighlightContext`, `RendererThemeContext`, `SanitizeContext`). Built with a `"use client"` banner.
 - `@vaneui/md/shiki` — `shikiHighlighter`, `shikiPreset`. `shiki` is an optional peer dependency.
 - `@vaneui/md/prism` — `prismHighlighter`, `prismPreset`. `prism-react-renderer` is an optional peer dependency.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter`, a thin wrapper over `yaml.parse`. `yaml` is an optional peer dependency.

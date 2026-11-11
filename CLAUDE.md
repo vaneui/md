@@ -35,7 +35,8 @@ npm run playground     # install + run playground dev server
 ```
 src/
 ├── components/              # All markdown renderers
-│   ├── md.tsx               # Main <Md> component (parses + renders + provides contexts)
+│   ├── md.tsx               # renderMd + main <Md> (no React context; passes `mdContext` to built-in renderers)
+│   ├── md-client.tsx        # Client <Md>: inherits RendererThemeContext, provides all five contexts
 │   ├── md-components.tsx    # Barrel exports all MdXxx components
 │   ├── structure/           # MdDocument, MdInline
 │   ├── headings/            # MdHeading
@@ -54,8 +55,12 @@ src/
 │   └── index.css            # PostCSS source, bundled to dist/styles/index.css
 ├── tests/                   # Jest tests (md.test, theme tests, node tests)
 ├── types/                   # MdProps, MdConfig, theme types
-├── context.ts               # RegistryContext + ParserContext + HighlightContext (used by MdFence)
-├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, RendererThemeContext, mergeRendererTheme
+├── renderContext.ts         # MdRenderContext (the `mdContext` prop), rendererThemeOf, FrontmatterParser, HighlightFn
+├── context.ts               # The five React contexts; client entry only
+├── client.tsx               # Client entry (@vaneui/md/client): client Md, MdStream, useMdStream, contexts
+├── stream.tsx               # MdStream, useMdStream (client entry only)
+├── splitBlocks.ts           # splitBlocks, the fence-aware block splitter behind MdStream
+├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, mergeRendererTheme
 ├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
 ├── registry.ts              # defaultRegistry — safe VaneUI component allowlist (subpath: @vaneui/md/registry)
 ├── yaml.ts                  # parseYamlFrontmatter (subpath: @vaneui/md/yaml)
@@ -75,15 +80,19 @@ src/
 3. Resolve effective frontmatter: `frontmatter` prop wins; else if `parseFrontmatter` is supplied, parse `ast.attributes.frontmatter`. On parse error, capture the message and surface via `<MdError>`.
 4. `mergeConfig` merges user config over defaults (nodes, components, variables, tags, functions, partials). Default tags come from `defaultTagsConfig`. `config.partials` goes through `preparePartials`, which parses Markdown-string partials on first use through a module-level LRU cache (at most 100 entries and 2,000,000 characters of name plus source; a name plus source over 250,000 characters is never cached; keyed by the JSON of `[name, source, self-closing tag names]` so no two inputs collide; shared by `partialTag` outside `<Md>`), so re-renders and `MdStream` updates do not re-parse them. Markdoc's `resolve` / `transform` never mutate an AST, so cached ASTs are safe to share. The resolved frontmatter is exposed in markdown as `$markdoc.frontmatter`; the raw string at `$markdoc.frontmatterRaw`.
 5. `Markdoc.transform(ast, config)` → transformed tree
-6. The optional `transform` hook runs, then `Markdoc.renderers.react(finalTree, React, { components })` → React element tree
-7. The output is wrapped in five React context providers:
-   - `RegistryContext` — the spec component registry (used by `MdFence` for `vaneui` fences)
-   - `ParserContext` — the YAML parser (used by `MdFence` for `vaneui` fences)
-   - `HighlightContext` — the `highlight` hook (used by `MdFence` for code blocks)
-   - `SanitizeContext` — the `sanitize` policy (used by `MdFence` for `vaneui` fences)
-   - `RendererThemeContext` — per-renderer visual defaults, computed from `mergeRendererTheme(inheritedTheme, rendererTheme)` so consumers can wrap with their own provider OR pass the prop, and the prop wins on conflicts.
+6. The optional `transform` hook runs, then `Markdoc.renderers.react(finalTree, reactWith(mdContext), { components })` → React element tree. `mdContext` (`MdRenderContext`, `src/renderContext.ts`) holds what `<Md>` resolved once per instance:
+   - `theme` — `mergeRendererTheme(baseTheme, rendererTheme)`; `baseTheme` is `defaultRendererTheme` for the main `Md` and the inherited `RendererThemeContext` value for the client `Md`
+   - `registry` — the spec component registry (`components ?? {}`, used by `MdFence` for `vaneui` fences)
+   - `parseFrontmatter` — the YAML parser (used by `MdFence` for `vaneui` fences)
+   - `highlight` — the `highlight` hook (used by `MdFence` for code blocks)
+   - `sanitize` — the `sanitize` policy (used by `MdFence` for `vaneui` fences)
 
-Every markdown node is rendered via a VaneUI-wrapped component (e.g., `MdHeading` wraps `Title`). Each renderer reads its own slot from `RendererThemeContext` and spreads the boolean props onto the underlying VaneUI element before any markdown-supplied attributes.
+   `reactWith` is the React object Markdoc renders with: its `createElement` adds `mdContext` to elements whose type is one of `defaultComponents`, and leaves every other component's props alone. Renderer component types stay the same across renders, so nothing remounts on a client re-render.
+7. The client `Md` (`src/components/md-client.tsx`, `@vaneui/md/client`) wraps the body in `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext` and `RendererThemeContext` providers holding the same values, for custom renderers that read them. The main `Md` adds no providers.
+
+**The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner.
+
+Every markdown node is rendered via a VaneUI-wrapped component (e.g., `MdHeading` wraps `Title`). Each renderer reads its own slot from `rendererThemeOf(props.mdContext)` (the package defaults when it is used outside `<Md>`), strips `mdContext` from the props it forwards, and spreads the boolean props onto the underlying VaneUI element before any markdown-supplied attributes.
 
 ### Configuration merging
 
@@ -138,7 +147,7 @@ Two ways to reuse Markdown, at two different times:
 
 ### Component spec rendering — `vaneui` fences
 
-A fenced code block tagged ``` ```vaneui ``` is parsed as YAML and materialized as a real VaneUI component tree at body position. Two contexts must be in place (both supplied by `<Md>` via props):
+A fenced code block tagged ``` ```vaneui ``` is parsed as YAML and materialized as a real VaneUI component tree at body position. Two settings must be in place (both supplied by `<Md>` via props and passed to `MdFence` in `mdContext`):
 
 - **`parseFrontmatter`** — the YAML parser (same one used for top-level frontmatter)
 - **`components`** — a string→component registry. Use `defaultRegistry` from `@vaneui/md/registry` for the safe VaneUI allowlist, or supply your own.
@@ -271,7 +280,7 @@ Both forms work in the same tree. The `expandShorthand` pass runs once at the to
 
 - `src/spec.ts` — `expandShorthand(node)` walks the parsed YAML and converts shorthand maps to verbose `ComponentSpec` shape. `renderSpec(spec, registry)` materializes the spec into React elements. Depth capped at 16 levels. `collapseShorthand(spec)` is the inverse of `expandShorthand` — it turns a verbose spec back into the compact shorthand YAML shape so an editor can serialize an edited tree to a `vaneui` fence (`expandShorthand(collapseShorthand(spec))` reproduces the spec).
 - **Stable node identity:** a `ComponentSpec` may carry an `id` (string or number). When present it's used as the React `key` (so an editor can reorder / add / remove nodes without remounting subtrees) and is also passed through to the component as an `id` prop. Without an `id`, keys fall back to the positional index.
-- `src/components/code/MdFence.tsx` — branches on `language === "vaneui"`. Reads parser + registry from React context. Catches parse errors and routes to `<MdError>` + code-block fallback.
+- `src/components/code/MdFence.tsx` — branches on `language === "vaneui"`. Reads parser, registry, highlight and sanitize from its `mdContext` prop. Catches parse errors and routes to `<MdError>` + code-block fallback.
 - `src/registry.ts` — exports `defaultRegistry`, a 36-entry map of safe presentational VaneUI components. Excludes anything requiring callbacks (Modal, Popup, Menu, Input, Checkbox, Overlay, IconButton-as-button).
 
 ### Per-renderer visual defaults — `rendererTheme`
@@ -323,14 +332,14 @@ interface MdRendererTheme {
 
 ```tsx
 // MdBlockquote.tsx
-export const MdBlockquote: React.FC<React.PropsWithChildren> = (props) => {
-  const { children, ...rest } = props as { children: React.ReactNode } & Record<string, unknown>;
-  const theme = useContext(RendererThemeContext);
+export const MdBlockquote: React.FC<MdRendererBaseProps> = (props) => {
+  const { children, mdContext, ...rest } = props as { children: React.ReactNode; mdContext?: MdRenderContext } & Record<string, unknown>;
+  const theme = rendererThemeOf(mdContext);
   return <Card {...theme.mdBlockquote} {...rest}>{children}</Card>;
 };
 ```
 
-The slot spreads first, then `...rest` from Markdoc, then any hardcoded essential props (semantic `tag`, `src`, `href`). Markdown-supplied attributes always win over theme defaults.
+The slot spreads first, then `...rest` from Markdoc, then any hardcoded essential props (semantic `tag`, `src`, `href`). Markdown-supplied attributes always win over theme defaults. `mdContext` must never reach the VaneUI element: in a Server Component its props are serialized to the client, and `mdContext` holds functions.
 
 #### Two ways for consumers to customize
 
@@ -348,10 +357,20 @@ The slot spreads first, then `...rest` from Markdoc, then any hardcoded essentia
 />
 ```
 
-**2. Wrap with `RendererThemeContext.Provider`** — to share a theme across multiple `<Md>` instances or override from a layout:
+**2. A shared preset** — to share a theme across multiple `<Md>` instances, also from Server Components:
 
 ```tsx
-import { RendererThemeContext, defaultRendererTheme } from "@vaneui/md";
+const Doc = createMd().use({ rendererTheme: { mdCode: { primary: true } } });
+<Doc content={a} />
+<Doc content={b} />
+```
+
+**3. Wrap with `RendererThemeContext.Provider`** — client components only, with `Md` from `@vaneui/md/client`:
+
+```tsx
+"use client";
+import { Md, RendererThemeContext } from "@vaneui/md/client";
+import { defaultRendererTheme } from "@vaneui/md";
 
 <RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
   <Md content={a} />
@@ -359,7 +378,7 @@ import { RendererThemeContext, defaultRendererTheme } from "@vaneui/md";
 </RendererThemeContext.Provider>
 ```
 
-The `rendererTheme` prop wins over an outer `RendererThemeContext.Provider` (Md inherits the parent context, then layers the prop on top via `mergeRendererTheme`).
+The client `Md` uses the provider value as its base theme (it replaces the defaults, as the provider always did), then layers the `rendererTheme` prop on top via `mergeRendererTheme`. The main `Md` ignores the provider.
 
 #### Group-aware merge
 
@@ -408,7 +427,8 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 
 ## Exports
 
-- `@vaneui/md` — `Md`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `RegistryContext`, `ParserContext`, `RendererThemeContext`, `defaultRendererTheme`, `mergeRendererTheme`, types
+- `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `splitBlocks`, `defaultRendererTheme`, `mergeRendererTheme`, types (incl. `MdRenderContext`). Safe to import from React Server Components.
+- `@vaneui/md/client` — `Md` (context-aware), `MdStream`, `useMdStream`, `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`. `dist/client.*` gets a `"use client"` banner and imports the chunk it shares with the main entry.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
 - `@vaneui/md/include` exports `resolveIncludes`, `resolveIncludesAsync`, `IncludeError` and their option and error-code types. **Node only** (imports `node:fs` / `node:path`, marked external in `rollup.config.mjs`); keep it out of `src/index.ts`, which `include.test.ts` checks by walking the browser entries' import graphs. `src/include-paths.ts` and `src/include-blocks.ts` are internal: not exported from any entry, and `rollup.config.mjs` drops their declaration files (and the tests') from `dist`.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (36 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
@@ -422,7 +442,8 @@ Tests live in `src/tests/`:
 - `md.test.tsx` — main rendering, frontmatter parsing, `vaneui` fence rendering, `expandShorthand` integration, fence edge cases, context isolation between instances, rich frontmatter types
 - `partials.test.tsx` — partial sources (string, AST, `Node[]`), scoping and variables, the cross-render parse cache (incl. `MdStream`, no AST mutation, writable `preparePartials` entries, size-based eviction, the large-source skip, collision-free keys), missing / empty-file / cycle / depth errors (incl. reserved keys in `variables`), guarded recursion and structural cycle detection (key order, cyclic data with parent links, deep copies, identity for other objects), the render budget (block and inline fan-out, errors counted, shared across link text, new per transform and per `<Md>`), inline use (paragraph, heading, table cell and list item unwrapping, block-content error, link text without nested links, no DOM nesting warnings), `mdError` / `mdErrorInline` theming and custom `MdError`, validation, presets (incl. `__proto__`), transform and `MdStream` pass-through, the `include` fallback (unclosed, self-closing, closed, stray close, blockquote, inline, list item, code fences, `MdStream`), the self-closing parse rule (no-op for documents without those tags, skipped for overridden tags), and `tags` overrides
 - `include.render.test.tsx`: resolved include content rendered through `<Md>`, including an include inside a list item (whose included code keeps its tab), one inside a blockquote, and a closing fence added for an included file left inside a fence
-- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot, including `mdErrorInline` and that `mdError` card props never reach it), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence
+- `md.renderer-theme.test.tsx` — `rendererTheme` prop / `RendererThemeContext` / `mergeRendererTheme`: regression tests for default visuals, per-renderer override coverage (every plumbed slot, including `mdErrorInline` and that `mdError` card props never reach it), group-aware merge for size/appearance/variant/shape/border, multi-instance isolation, prop-vs-context-provider precedence and provider inheritance on the client `Md` and `MdStream`, the main `Md` ignoring a provider, `mdContext` reaching only built-in renderers, and stable renderer types across re-renders
+- `server-entry.test.ts` — walks the import graph of `src/index.ts` (helper: `importGraph.ts`, shared with `include.test.ts`) and fails if any reachable module uses `createContext`, `useContext` or other hooks
 - `md-nodes.test.tsx` — individual node renderers
 - `md.theme-defaults.test.tsx` — default theme behavior
 - `md.theme-extraClasses.test.tsx` — extraClasses prop propagation
@@ -449,8 +470,8 @@ Run with `npm test` (includes `type-check` as a prerequisite).
 - Follow VaneUI boolean props API in component implementations — use `<Card>` not `<div>`, `<Text>` not `<p>`, etc.
 - Custom renderers should be thin — delegate to VaneUI components for styling
 - Keep Markdoc node configs simple; push complexity to the React component
-- **No hardcoded visual props on Md* renderers.** Visual defaults (size, appearance, variant, shape, border, font-style, etc.) MUST live in `defaultRendererTheme` — never as JSX props on the underlying VaneUI element. Renderers spread `theme.<slot>` from `RendererThemeContext`. Only semantic essentials (`tag` for `<em>`/`<strong>`/`<s>`, `src`/`href` from Markdoc node attributes) and dynamic per-render logic (`MdHeading`'s level→size mapping, `MdList`'s ordered→decimal/disc) belong as JSX props.
-- When adding a new Md renderer: add a slot to `MdRendererTheme` named `md{ComponentName}` (e.g., `mdBlockquote` for `MdBlockquote`), decide whether it needs a default in `defaultRendererTheme`, read the slot via `useContext(RendererThemeContext)`, and add a per-renderer override test in `md.renderer-theme.test.tsx`.
+- **No hardcoded visual props on Md* renderers.** Visual defaults (size, appearance, variant, shape, border, font-style, etc.) MUST live in `defaultRendererTheme` — never as JSX props on the underlying VaneUI element. Renderers spread `theme.<slot>` from `rendererThemeOf(mdContext)`. Only semantic essentials (`tag` for `<em>`/`<strong>`/`<s>`, `src`/`href` from Markdoc node attributes) and dynamic per-render logic (`MdHeading`'s level→size mapping, `MdList`'s ordered→decimal/disc) belong as JSX props.
+- When adding a new Md renderer: add a slot to `MdRendererTheme` named `md{ComponentName}` (e.g., `mdBlockquote` for `MdBlockquote`), decide whether it needs a default in `defaultRendererTheme`, take `mdContext` out of its props and read the slot via `rendererThemeOf(mdContext)` (never `useContext`: the main entry must stay server-safe), register it in `defaultComponents` so `<Md>` passes it `mdContext`, and add a per-renderer override test in `md.renderer-theme.test.tsx`.
 - Tests should cover: default rendering, config override behavior, theme propagation, **per-renderer slot override via `rendererTheme`**.
 - For `vaneui` fence examples in docs and tests, prefer the **shorthand form** (`Card primary: …`) over the verbose form (`component: Card`, `primary: true`, …). Show the verbose form only when illustrating the `component`-key escape hatch or when a feature genuinely requires it.
 
