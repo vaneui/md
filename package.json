@@ -84,7 +84,7 @@
     "type-check": "tsc --noEmit",
     "build:js": "npm run type-check && npm run clean && rollup -c --bundleConfigAsCjs",
     "build:css": "postcss src/styles/index.css -o dist/styles/index.css --no-map",
-    "build": "npm run clean && npm run build:js && npm run build:css",
+    "build": "npm run clean && npm run build:js && npm run build:css && node scripts/check-dist.mjs",
     "test": "npm run type-check && node node_modules/jest/bin/jest.js",
     "playground:install": "cd playground && npm install",
     "playground:dev": "cd playground && npm run dev",

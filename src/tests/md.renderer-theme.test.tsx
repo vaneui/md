@@ -2,8 +2,19 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Md } from '../components/md';
-import { Md as ClientMd, MdStream, RendererThemeContext } from '../client';
+import {
+  Md as ClientMd,
+  createMd as createClientMd,
+  MdStream,
+  HighlightContext,
+  ParserContext,
+  RegistryContext,
+  RendererThemeContext,
+  SanitizeContext,
+} from '../client';
 import { MdCode } from '../components/text/MdCode';
+import { MdInline } from '../components/structure/MdInline';
+import { MdBlockquote } from '../components/blocks/MdBlockquote';
 import { createMd } from '../createMd';
 import {
   defaultRendererTheme,
@@ -397,6 +408,48 @@ describe('RendererThemeContext — direct provider usage (@vaneui/md/client)', (
     );
     expect(screen.getByTestId('custom')).toHaveAttribute('data-em', 'true');
   });
+
+  test('the client Md provides registry, parser, highlight and sanitize contexts to custom renderers', () => {
+    const registry = { Badge: () => null };
+    const parser = (raw: string) => ({ raw });
+    const highlight = (code: string) => <code>{code}</code>;
+    const sanitize = { allowedProtocols: ['https:'] };
+    const ReadsContexts: React.FC<React.PropsWithChildren> = ({ children }) => (
+      <p
+        data-testid="contexts"
+        data-registry={String(React.useContext(RegistryContext) === registry)}
+        data-parser={String(React.useContext(ParserContext) === parser)}
+        data-highlight={String(React.useContext(HighlightContext) === highlight)}
+        data-sanitize={String(React.useContext(SanitizeContext) === sanitize)}
+      >
+        {children}
+      </p>
+    );
+    render(
+      <ClientMd
+        content="para"
+        components={registry}
+        parseFrontmatter={parser}
+        highlight={highlight}
+        sanitize={sanitize}
+        config={{ components: { MdParagraph: ReadsContexts } }}
+      />
+    );
+    const el = screen.getByTestId('contexts');
+    for (const name of ['registry', 'parser', 'highlight', 'sanitize']) {
+      expect(el).toHaveAttribute(`data-${name}`, 'true');
+    }
+  });
+
+  test('createMd from the client entry inherits an outer RendererThemeContext.Provider', () => {
+    const Doc = createClientMd();
+    const { container } = render(
+      <RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
+        <Doc content="a `x`" />
+      </RendererThemeContext.Provider>
+    );
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'primary');
+  });
 });
 
 describe('main entry <Md> — no React context', () => {
@@ -437,6 +490,56 @@ describe('main entry <Md> — no React context', () => {
     render(<Md content="para" config={{ components: { MdParagraph: Spy } }} />);
     expect(seen.length).toBeGreaterThan(0);
     seen.forEach((keys) => expect(keys).not.toContain('mdContext'));
+  });
+
+  test('mdContext never reaches a VaneUI component or the DOM', () => {
+    const everyNode = [
+      '---', 'bad: [yaml', '---', '',
+      '# Title', '', 'Text *em* **strong** ~~s~~ `code` [link](/x "T")  ', 'next line', '',
+      '![Alt](/a.png "Img")', '', '> quote', '', '1. one', '2. two', '', '- a', '- b', '', '---', '',
+      '| L | C | R |', '|:--|:-:|--:|', '| a | b | c |', '',
+      '```ts', 'const a = 1;', '```', '', '```vaneui', 'Card: [broken', '```', '',
+      '```vaneui', 'Text: from a fence', '```', '',
+      '{% partial file="missing.md" /%}', '', 'Inline {% partial file="missing.md" /%} error.',
+    ].join('\n');
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { container } = render(
+        <Md
+          content={everyNode}
+          parseFrontmatter={(raw) => { if (raw.includes('[yaml')) throw new Error('bad'); return {}; }}
+          highlight={(code) => <pre>{code}</pre>}
+        />
+      );
+      expect(container.querySelector('[mdcontext], [mdContext]')).toBeNull();
+      expect(errors.mock.calls.filter((call) => call.join(' ').includes('mdContext'))).toEqual([]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  test('the leak check above would catch a leaked mdContext (sanity check)', () => {
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      // React warns once per prop name, so the DOM element and the VaneUI component each get their own name.
+      render(<><MdInline {...({ leakedInline: { theme: {} } } as object)}>x</MdInline><MdBlockquote {...({ leakedCard: { theme: {} } } as object)}>y</MdBlockquote></>);
+      const warned = (name: string) => errors.mock.calls.some((call) => call.join(' ').includes(name));
+      expect([warned('leakedInline'), warned('leakedCard')]).toEqual([true, true]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  test('a vaneui fence parse error uses the mdError slot of the rendererTheme', () => {
+    const { container } = render(
+      <Md
+        content={'```vaneui\nCard: [broken\n```'}
+        parseFrontmatter={() => { throw new Error('bad spec'); }}
+        rendererTheme={{ mdError: { warning: true } }}
+      />
+    );
+    const errorCard = Array.from(container.querySelectorAll('.vane-card')).find((el) => el.textContent?.includes('Error:'));
+    expect(errorCard).toHaveAttribute('data-appearance', 'warning');
   });
 
   test('keeps renderer component types stable across re-renders (no remount)', () => {
