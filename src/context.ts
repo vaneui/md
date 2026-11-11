@@ -1,22 +1,16 @@
 import React from "react";
-import { ComponentRegistry } from "./spec";
+import type { ComponentRegistry } from "./spec";
+import { defaultRendererTheme, type MdRendererTheme } from "./rendererTheme";
+import type { FrontmatterParser, HighlightFn } from "./renderContext";
+import type { SanitizePolicy } from "./sanitize";
 
-export type FrontmatterParser = (raw: string) => Record<string, unknown>;
-
-/**
- * Syntax-highlighting hook for code fences. Called during render (must be
- * synchronous) with the fence body, its language, and any info-string meta.
- * Return the highlighted node to place inside the fence surface. When no
- * hook is provided, MdFence falls back to a plain <pre>.
- */
-export type HighlightFn = (
-  code: string,
-  language: string | undefined,
-  meta?: string,
-) => React.ReactNode;
-
+// Client entry only (@vaneui/md/client): the main entry must stay free of createContext.
 export const RegistryContext = React.createContext<ComponentRegistry>({});
 
 export const ParserContext = React.createContext<FrontmatterParser | undefined>(undefined);
 
 export const HighlightContext = React.createContext<HighlightFn | undefined>(undefined);
+
+export const SanitizeContext = React.createContext<SanitizePolicy | undefined>(undefined);
+
+export const RendererThemeContext = React.createContext<MdRendererTheme>(defaultRendererTheme);

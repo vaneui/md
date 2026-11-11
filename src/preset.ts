@@ -2,7 +2,7 @@ import type { MdComponents, MdConfig, MdNodesConfig, MdPartial, MdProps } from "
 import type { ComponentRegistry } from "./spec";
 import type { MdRendererTheme } from "./rendererTheme";
 import { mergeRendererTheme } from "./rendererTheme";
-import type { HighlightFn } from "./context";
+import type { HighlightFn } from "./renderContext";
 import type { MdTransform } from "./transform";
 import { composeTransforms } from "./transform";
 import type { SanitizePolicy } from "./sanitize";

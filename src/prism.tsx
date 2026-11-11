@@ -1,6 +1,6 @@
 import React from "react";
 import { Highlight, themes, type Language, type PrismTheme } from "prism-react-renderer";
-import type { HighlightFn } from "./context";
+import type { HighlightFn } from "./renderContext";
 import type { MdPreset } from "./preset";
 
 export interface PrismHighlighterOptions {

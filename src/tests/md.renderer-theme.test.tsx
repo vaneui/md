@@ -3,7 +3,20 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Md } from '../components/md';
 import {
+  Md as ClientMd,
+  createMd as createClientMd,
+  MdStream,
+  HighlightContext,
+  ParserContext,
+  RegistryContext,
   RendererThemeContext,
+  SanitizeContext,
+} from '../client';
+import { MdCode } from '../components/text/MdCode';
+import { MdInline } from '../components/structure/MdInline';
+import { MdBlockquote } from '../components/blocks/MdBlockquote';
+import { createMd } from '../createMd';
+import {
   defaultRendererTheme,
   mergeRendererTheme,
   type MdRendererTheme,
@@ -332,7 +345,7 @@ describe('per-renderer override coverage — every plumbed renderer reads its sl
   });
 });
 
-describe('RendererThemeContext — direct provider usage', () => {
+describe('RendererThemeContext — direct provider usage (@vaneui/md/client)', () => {
   test('wrapping with RendererThemeContext.Provider works without the rendererTheme prop', () => {
     const { container } = render(
       <RendererThemeContext.Provider
@@ -341,7 +354,7 @@ describe('RendererThemeContext — direct provider usage', () => {
           mdCode: { primary: true },
         }}
       >
-        <Md content="text with `code` here" />
+        <ClientMd content="text with `code` here" />
       </RendererThemeContext.Provider>
     );
     const codeEl = container.querySelector('.font-mono[data-appearance]');
@@ -353,7 +366,7 @@ describe('RendererThemeContext — direct provider usage', () => {
       <RendererThemeContext.Provider
         value={{ ...defaultRendererTheme, mdCode: { primary: true } }}
       >
-        <Md
+        <ClientMd
           content="text with `code` here"
           rendererTheme={{ mdCode: { success: true } }}
         />
@@ -361,6 +374,179 @@ describe('RendererThemeContext — direct provider usage', () => {
     );
     const codeEl = container.querySelector('.font-mono[data-appearance]');
     expect(codeEl).toHaveAttribute('data-appearance', 'success');
+  });
+
+  test('a provider value replaces the defaults, as before the split', () => {
+    const { container } = render(
+      <RendererThemeContext.Provider value={{ mdBlockquote: { borderL: true } }}>
+        <ClientMd content="> q" />
+      </RendererThemeContext.Provider>
+    );
+    expect(container.querySelector('[data-appearance="secondary"]')).toBeNull();
+  });
+
+  test('MdStream blocks inherit an outer RendererThemeContext.Provider', () => {
+    const { container } = render(
+      <RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
+        <MdStream content={'# A\n\ntext with `code`'} />
+      </RendererThemeContext.Provider>
+    );
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'primary');
+  });
+
+  test('the client Md provides its merged theme to custom renderers that read the context', () => {
+    const ReadsTheme: React.FC<React.PropsWithChildren> = ({ children }) => {
+      const theme = React.useContext(RendererThemeContext);
+      return <p data-testid="custom" data-em={String(theme.mdEm?.fontBold)}>{children}</p>;
+    };
+    render(
+      <ClientMd
+        content="para"
+        rendererTheme={{ mdEm: { fontBold: true } }}
+        config={{ components: { MdParagraph: ReadsTheme } }}
+      />
+    );
+    expect(screen.getByTestId('custom')).toHaveAttribute('data-em', 'true');
+  });
+
+  test('the client Md provides registry, parser, highlight and sanitize contexts to custom renderers', () => {
+    const registry = { Badge: () => null };
+    const parser = (raw: string) => ({ raw });
+    const highlight = (code: string) => <code>{code}</code>;
+    const sanitize = { allowedProtocols: ['https:'] };
+    const ReadsContexts: React.FC<React.PropsWithChildren> = ({ children }) => (
+      <p
+        data-testid="contexts"
+        data-registry={String(React.useContext(RegistryContext) === registry)}
+        data-parser={String(React.useContext(ParserContext) === parser)}
+        data-highlight={String(React.useContext(HighlightContext) === highlight)}
+        data-sanitize={String(React.useContext(SanitizeContext) === sanitize)}
+      >
+        {children}
+      </p>
+    );
+    render(
+      <ClientMd
+        content="para"
+        components={registry}
+        parseFrontmatter={parser}
+        highlight={highlight}
+        sanitize={sanitize}
+        config={{ components: { MdParagraph: ReadsContexts } }}
+      />
+    );
+    const el = screen.getByTestId('contexts');
+    for (const name of ['registry', 'parser', 'highlight', 'sanitize']) {
+      expect(el).toHaveAttribute(`data-${name}`, 'true');
+    }
+  });
+
+  test('createMd from the client entry inherits an outer RendererThemeContext.Provider', () => {
+    const Doc = createClientMd();
+    const { container } = render(
+      <RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
+        <Doc content="a `x`" />
+      </RendererThemeContext.Provider>
+    );
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'primary');
+  });
+});
+
+describe('main entry <Md> — no React context', () => {
+  test('ignores an outer RendererThemeContext.Provider', () => {
+    const { container } = render(
+      <RendererThemeContext.Provider value={{ ...defaultRendererTheme, mdCode: { primary: true } }}>
+        <Md content="text with `code` here" />
+      </RendererThemeContext.Provider>
+    );
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'secondary');
+  });
+
+  test('shares a theme across instances through a createMd preset instead of a provider', () => {
+    const Doc = createMd().use({ rendererTheme: { mdCode: { primary: true } } });
+    const { container } = render(<><Doc content="a `x`" /><Doc content="b `y`" /></>);
+    const codes = container.querySelectorAll('.font-mono[data-appearance]');
+    expect(codes).toHaveLength(2);
+    codes.forEach((el) => expect(el).toHaveAttribute('data-appearance', 'primary'));
+  });
+
+  test('a built-in renderer used on its own falls back to defaultRendererTheme', () => {
+    const { container } = render(<MdCode>solo</MdCode>);
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'secondary');
+  });
+
+  test('a built-in renderer given mdContext uses its theme', () => {
+    const mdContext = { theme: { mdCode: { success: true } }, registry: {} };
+    const { container } = render(<MdCode mdContext={mdContext}>solo</MdCode>);
+    expect(container.querySelector('.font-mono[data-appearance]')).toHaveAttribute('data-appearance', 'success');
+  });
+
+  test('custom components never receive the mdContext prop', () => {
+    const seen: string[][] = [];
+    const Spy: React.FC<React.PropsWithChildren> = (props) => {
+      seen.push(Object.keys(props));
+      return <p>{props.children}</p>;
+    };
+    render(<Md content="para" config={{ components: { MdParagraph: Spy } }} />);
+    expect(seen.length).toBeGreaterThan(0);
+    seen.forEach((keys) => expect(keys).not.toContain('mdContext'));
+  });
+
+  test('mdContext never reaches a VaneUI component or the DOM', () => {
+    const everyNode = [
+      '---', 'bad: [yaml', '---', '',
+      '# Title', '', 'Text *em* **strong** ~~s~~ `code` [link](/x "T")  ', 'next line', '',
+      '![Alt](/a.png "Img")', '', '> quote', '', '1. one', '2. two', '', '- a', '- b', '', '---', '',
+      '| L | C | R |', '|:--|:-:|--:|', '| a | b | c |', '',
+      '```ts', 'const a = 1;', '```', '', '```vaneui', 'Card: [broken', '```', '',
+      '```vaneui', 'Text: from a fence', '```', '',
+      '{% partial file="missing.md" /%}', '', 'Inline {% partial file="missing.md" /%} error.',
+    ].join('\n');
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { container } = render(
+        <Md
+          content={everyNode}
+          parseFrontmatter={(raw) => { if (raw.includes('[yaml')) throw new Error('bad'); return {}; }}
+          highlight={(code) => <pre>{code}</pre>}
+        />
+      );
+      expect(container.querySelector('[mdcontext], [mdContext]')).toBeNull();
+      expect(errors.mock.calls.filter((call) => call.join(' ').includes('mdContext'))).toEqual([]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  test('the leak check above would catch a leaked mdContext (sanity check)', () => {
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      // React warns once per prop name, so the DOM element and the VaneUI component each get their own name.
+      render(<><MdInline {...({ leakedInline: { theme: {} } } as object)}>x</MdInline><MdBlockquote {...({ leakedCard: { theme: {} } } as object)}>y</MdBlockquote></>);
+      const warned = (name: string) => errors.mock.calls.some((call) => call.join(' ').includes(name));
+      expect([warned('leakedInline'), warned('leakedCard')]).toEqual([true, true]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  test('a vaneui fence parse error uses the mdError slot of the rendererTheme', () => {
+    const { container } = render(
+      <Md
+        content={'```vaneui\nCard: [broken\n```'}
+        parseFrontmatter={() => { throw new Error('bad spec'); }}
+        rendererTheme={{ mdError: { warning: true } }}
+      />
+    );
+    const errorCard = Array.from(container.querySelectorAll('.vane-card')).find((el) => el.textContent?.includes('Error:'));
+    expect(errorCard).toHaveAttribute('data-appearance', 'warning');
+  });
+
+  test('keeps renderer component types stable across re-renders (no remount)', () => {
+    const { container, rerender } = render(<Md content="> quote" rendererTheme={{ mdBlockquote: { primary: true } }} />);
+    const before = container.querySelector('[data-appearance]');
+    rerender(<Md content="> quote" rendererTheme={{ mdBlockquote: { primary: true } }} />);
+    expect(container.querySelector('[data-appearance]')).toBe(before);
   });
 });
 

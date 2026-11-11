@@ -1,7 +1,7 @@
 import React from "react";
 import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
-import type { HighlightFn } from "./context";
+import type { HighlightFn } from "./renderContext";
 import type { MdPreset } from "./preset";
 
 type SyncCoreOptions = Parameters<typeof createHighlighterCoreSync>[0];

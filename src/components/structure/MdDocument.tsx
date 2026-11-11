@@ -1,15 +1,12 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Col } from "@vaneui/ui";
-import { RendererThemeContext } from "../../rendererTheme";
+import { rendererThemeOf, type MdRenderContext, type MdRendererBaseProps } from "../../renderContext";
 
-export const MdDocument: React.FC<React.PropsWithChildren> = (props) => {
-  const theme = useContext(RendererThemeContext);
-  const { className, ...rest } = props as { className?: string } & Record<string, unknown>;
+export const MdDocument: React.FC<MdRendererBaseProps> = (props) => {
+  const { className, mdContext, ...rest } = props as { className?: string; mdContext?: MdRenderContext } & Record<string, unknown>;
+  const theme = rendererThemeOf(mdContext);
   const slotClassName = (theme.mdDocument as { className?: string } | undefined)?.className;
-  // `noGap` hands all inter-block spacing to the `.vaneui-md` prose-rhythm CSS
-  // layer (styles/index.css) so headings/paragraphs get an asymmetric,
-  // size-scaled rhythm instead of one uniform flex gap. A consumer can still
-  // override via the mdDocument slot (e.g. `{ gap: true }`).
+  // `noGap` leaves block spacing to the `.vaneui-md` prose-rhythm CSS; the mdDocument slot can override it.
   return (
     <Col
       noGap
