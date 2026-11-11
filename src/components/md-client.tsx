@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import type { MdProps } from "../types";
 import { renderMd } from "./md";
+import { createMdFor } from "../createMd";
 import {
   HighlightContext,
   ParserContext,
@@ -26,3 +27,6 @@ export const Md: React.FC<MdProps> = (props) => {
     </RegistryContext.Provider>
   ));
 };
+
+/** `createMd` whose builders inherit a parent `RendererThemeContext`, like the client `Md`. */
+export const createMd = createMdFor(Md);
