@@ -1,6 +1,6 @@
 {
   "name": "@vaneui/md",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Markdown renderer for React that outputs VaneUI components. Built on Markdoc, with frontmatter and fences that embed real components.",
   "author": "",
   "license": "MIT",
