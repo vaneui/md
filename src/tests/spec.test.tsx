@@ -450,9 +450,9 @@ describe('sanitizeSpecProps — URL props', () => {
     '\x00javascript:alert(1)',
     '\x1f \t\n javascript:alert(1)',
     'JaVa\tScRiPt:alert(1)',
-    ' javascript:alert(1)',
-    ' javascript:alert(1)',
-    '﻿javascript:alert(1)',
+    '\u00a0javascript:alert(1)',
+    '\u2028javascript:alert(1)',
+    '\ufeffjavascript:alert(1)',
     'vb\tscript:msgbox(1)',
     'd\tata:text/html,<script>alert(1)</script>',
     '\x01data:text/html;base64,PHNjcmlwdD4=',

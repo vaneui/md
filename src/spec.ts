@@ -108,7 +108,7 @@ const URL_LIST_SEPARATORS: ReadonlyMap<string, RegExp> = new Map([
  * control, whitespace and zero-width characters. Removing more than a browser
  * does can only make a harmless URL look like it has a scheme, never hide one.
  */
-const URL_IGNORED = /[\u0000- \u007f-\u009f\s​-‍⁠﻿]+/g;
+const URL_IGNORED = /[\u0000- \u007f-\u009f\s\u200b-\u200d\u2060\ufeff]+/g;
 const URL_SCHEME = /^([a-z][a-z0-9+.-]*):/i;
 const IMAGE_DATA_URL = /^data:image\//i;
 const SCRIPT_SCHEMES: ReadonlySet<string> = new Set(["javascript:", "vbscript:"]);
