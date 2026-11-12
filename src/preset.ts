@@ -157,5 +157,5 @@ export function applyPresetProps(resolved: ResolvedPreset, props: MdProps): MdPr
   };
 }
 
-/** A preset that applies a conservative sanitize policy for untrusted content. */
+/** A preset for untrusted content: applies `strictSanitizePolicy` (prop allow-list, navigation URL schemes only) to `vaneui` fences. */
 export const untrustedPreset: MdPreset = { sanitize: strictSanitizePolicy };

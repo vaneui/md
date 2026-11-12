@@ -151,9 +151,10 @@ export interface MdProps {
    */
   transform?: import("../transform").MdTransform;
   /**
-   * Optional policy that tightens the always-on vaneui-fence sanitize floor
-   * for untrusted content (URL-scheme allowlist, extra blocked props, or a
-   * narrowed component allowlist). Use `strictSanitizePolicy` or the
+   * Optional policy on top of the always-on vaneui-fence sanitize floor. The
+   * floor alone stops a fence from running script or injecting markup; a
+   * policy adds a prop allow-list, a URL-scheme allowlist, extra blocked props
+   * or a narrowed component allowlist. Use `strictSanitizePolicy` or the
    * `untrustedPreset` for user- or AI-authored content.
    */
   sanitize?: import("../sanitize").SanitizePolicy;

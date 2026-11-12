@@ -232,7 +232,7 @@ children:
 
 ### Registry safety
 
-`defaultRegistry` (`@vaneui/md/registry`) is a curated allowlist of presentational components. A name not in the registry renders nothing rather than throwing, and stateful or callback components (modals, popups, inputs, and similar) are excluded. Supply your own map to widen or narrow the set. Recursion is capped to keep deeply nested specs bounded.
+`defaultRegistry` (`@vaneui/md/registry`) is a curated allowlist of presentational components. A name not in the registry renders nothing rather than throwing, and stateful or callback components (modals, popups, inputs, and similar) are excluded. Supply your own map to widen or narrow the set. Recursion is capped to keep deeply nested specs bounded. The props a fence passes are checked as well: see [Safe rendering of untrusted content](#safe-rendering-of-untrusted-content).
 
 ## Per-renderer visual defaults: `rendererTheme`
 
@@ -366,7 +366,21 @@ Presets merge left to right. Two presets that define the same `tags`, `component
 
 ## Safe rendering of untrusted content
 
-The `vaneui` fence resolves component names through the registry allowlist, and props are always sanitized: `dangerouslySetInnerHTML`, event handlers, and `ref` are stripped, and `javascript:`, `vbscript:`, and non-image `data:` URLs are dropped from `href`/`src`. To tighten further for user- or AI-authored content, pass a `sanitize` policy or use `untrustedPreset`:
+A `vaneui` fence resolves component names through the registry allowlist, and the props it passes go through two levels of checks.
+
+### The floor, always on
+
+With or without a policy, a fence cannot run script or inject markup:
+
+- `tag` is honoured only for inert elements: text, heading, list, sectioning, table and phrasing elements such as `section`, `h2`, `li` or `span`. Any other value is dropped, so `script`, `style`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `form`, form controls, `template`, `svg` and `math` never render through it.
+- `dangerouslySetInnerHTML`, `ref`, `srcDoc`, `httpEquiv` and every prop whose name starts with `on` are dropped, in any spelling (`srcdoc`, `ONCLICK`, `http-equiv`).
+- `javascript:`, `vbscript:` and non-image `data:` URLs are dropped from URL props such as `href` and `src`.
+
+Every other prop passes at this level, including `className`, `id`, `style` objects and the props of your own registry components. That suits documents you write yourself. It is not enough for content from users or a model: a fence can still restyle or reposition a component, set ids, and pass any prop a registry component accepts.
+
+### The untrusted level
+
+For user- or AI-authored content, use `untrustedPreset` (or pass `strictSanitizePolicy` as the `sanitize` prop):
 
 ```tsx
 import { Md, untrustedPreset } from "@vaneui/md";
@@ -374,7 +388,47 @@ import { Md, untrustedPreset } from "@vaneui/md";
 <Md content={userMarkdown} presets={[untrustedPreset]} parseFrontmatter={parseYamlFrontmatter} components={registry} />
 ```
 
-A `SanitizePolicy` can set `allowedProtocols`, `blockedProps`, and `allowComponents`.
+It turns on a prop allow-list. Only these props pass, with string, number or boolean values:
+
+- the boolean props of `@vaneui/ui` (`primary`, `lg`, `filled`, and so on)
+- `children` and `text`
+- `href`, `src`, `alt`, `title`, `value`, `max` and `aria-*`
+- `colSpan`, `rowSpan`, `scope`, `width`, `height`, `target` (`_blank`, `_self`, `_parent` or `_top` only), `rel`, `start`, `reversed`, `lang`, `dir`
+- `external`, `active`, `polite` and `loading`, the functional booleans of the default registry components
+
+`tag`, `style`, `className`, `id` and every other prop are dropped, including the props of your own registry components. URL props accept only `http:`, `https:`, `mailto:`, `tel:` and relative URLs.
+
+### `SanitizePolicy`
+
+| Field | Effect |
+|---|---|
+| `allowedProtocols` | URL schemes that pass on URL props (lowercase, with the colon). Relative URLs always pass. |
+| `blockedProps` | Extra prop names to drop. Wins over `allowedProps`. |
+| `allowComponents` | Component names that may render. Others render nothing. |
+| `knownPropsOnly` | Turns on the prop allow-list described above. |
+| `allowedProps` | Extra prop names that pass the allow-list, with any value: `className`, or the props of your own components. |
+| `allowedTags` | Lowercase element names `tag` may take. Replaces the built-in list, and re-enables `tag` under the allow-list. |
+
+To widen the untrusted level on purpose, spread `strictSanitizePolicy`:
+
+```tsx
+import { Md, strictSanitizePolicy } from "@vaneui/md";
+
+<Md
+  content={userMarkdown}
+  sanitize={{ ...strictSanitizePolicy, allowedProps: ["className"], allowedTags: ["section", "aside"] }}
+  parseFrontmatter={parseYamlFrontmatter}
+  components={registry}
+/>
+```
+
+No policy switches the floor off: `allowedProps: ["onClick"]` or `allowedTags: ["script"]` changes nothing. The `sanitize` prop replaces a preset's policy instead of merging with it, so start from the policy you want to keep.
+
+### What the policy does not cover
+
+- It applies to the props of `vaneui` fences. Markdoc syntax in the Markdown body is not restricted by it: annotations can still set an `id` and classes on a node (`# Title {% #top .wide %}`), and the document can read every variable and call every tag and function you put in `config`.
+- The boolean props stay available at the untrusted level, including layout props such as `fixed` or `absolute`. Add them to `blockedProps` if untrusted content must not take elements out of the flow.
+- A component in your own registry receives the props that pass. If it turns a prop into markup, an element name or a URL by itself, check that prop in the component.
 
 ## Post-transform hook
 

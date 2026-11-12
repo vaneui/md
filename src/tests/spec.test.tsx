@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { renderSpec, expandShorthand, collapseShorthand, sanitizeSpecProps, ComponentRegistry } from '../spec';
+import { strictSanitizePolicy } from '../sanitize';
 
 const Plain: React.FC<React.PropsWithChildren<{ 'data-testid'?: string }>> = ({
   children,
@@ -244,5 +245,195 @@ describe('SanitizePolicy — configurable tightening over the floor', () => {
       { allowedProtocols: ['https:'] },
     );
     expect(out).toEqual({ keep: true });
+  });
+});
+
+describe('sanitizeSpecProps — the floor in every spelling', () => {
+  it('drops srcDoc, httpEquiv, dangerouslySetInnerHTML and ref whatever their casing or separators', () => {
+    const out = sanitizeSpecProps({
+      srcDoc: '<p>x</p>',
+      srcdoc: '<p>x</p>',
+      SRCDOC: '<p>x</p>',
+      httpEquiv: 'refresh',
+      'http-equiv': 'refresh',
+      'HTTP-EQUIV': 'refresh',
+      dangerouslysetinnerhtml: { __html: 'x' },
+      Ref: 'x',
+      keep: 1,
+    });
+    expect(out).toEqual({ keep: 1 });
+  });
+
+  it('drops every on* prop in any casing, and keeps props that only contain "on"', () => {
+    const out = sanitizeSpecProps({
+      onClick: 'x',
+      onclick: 'x',
+      ONCLICK: 'x',
+      OnLoad: 'x',
+      'on-click': 'x',
+      onfoo: 'x',
+      tone: 'calm',
+      icon: 'star',
+      on: true,
+    });
+    expect(out).toEqual({ tone: 'calm', icon: 'star', on: true });
+  });
+
+  it('honours tag only for inert element names and returns it in lower case', () => {
+    expect(sanitizeSpecProps({ tag: 'section' })).toEqual({ tag: 'section' });
+    expect(sanitizeSpecProps({ tag: 'H2' })).toEqual({ tag: 'h2' });
+    for (const tag of ['script', 'SCRIPT', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base', 'form', 'input',
+      'button', 'template', 'svg', 'math', 'my-widget', '', 'constructor', '__proto__', 'toString']) {
+      expect(sanitizeSpecProps({ tag })).toEqual({});
+    }
+    expect(sanitizeSpecProps({ tag: { toString: 'div' } })).toEqual({});
+    expect(sanitizeSpecProps({ tag: ['div'] })).toEqual({});
+    expect(sanitizeSpecProps({ tag: 1 })).toEqual({});
+  });
+
+  it('never copies a __proto__ key onto the result or its prototype', () => {
+    const props = JSON.parse('{"__proto__": {"dangerouslySetInnerHTML": {"__html": "x"}, "polluted": true}, "keep": 1}');
+    const out = sanitizeSpecProps(props);
+    expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
+    expect(Object.keys(out)).toEqual(['keep']);
+    expect((out as any).polluted).toBeUndefined();
+    expect((out as any).dangerouslySetInnerHTML).toBeUndefined();
+  });
+});
+
+describe('SanitizePolicy — allow-list mode and widening it on purpose', () => {
+  it('strictSanitizePolicy turns allow-list mode on', () => {
+    expect(strictSanitizePolicy.knownPropsOnly).toBe(true);
+    expect(strictSanitizePolicy.allowedProtocols).toEqual(['http:', 'https:', 'mailto:', 'tel:']);
+  });
+
+  it('knownPropsOnly passes boolean props, content, listed attributes and aria-*, and drops the rest', () => {
+    const out = sanitizeSpecProps(
+      {
+        primary: true,
+        lg: true,
+        fontBold: false,
+        children: 'c',
+        text: 't',
+        href: '/a',
+        src: '/a.png',
+        alt: 'alt',
+        title: 'title',
+        value: 3,
+        max: 9,
+        colSpan: 2,
+        rowSpan: 2,
+        scope: 'col',
+        width: 10,
+        height: 10,
+        rel: 'nofollow',
+        'aria-label': 'label',
+        'aria-hidden': true,
+        tag: 'section',
+        style: { position: 'fixed' },
+        className: 'fixed',
+        id: 'x',
+        name: 'x',
+        htmlFor: 'x',
+        'data-x': 'x',
+        'aria-Label': 'x',
+        'aria-': 'x',
+        HREF: '/a',
+        unknown: 1,
+        constructor: 'x',
+        toString: 'x',
+      },
+      { knownPropsOnly: true },
+    );
+    expect(out).toEqual({
+      primary: true,
+      lg: true,
+      fontBold: false,
+      children: 'c',
+      text: 't',
+      href: '/a',
+      src: '/a.png',
+      alt: 'alt',
+      title: 'title',
+      value: 3,
+      max: 9,
+      colSpan: 2,
+      rowSpan: 2,
+      scope: 'col',
+      width: 10,
+      height: 10,
+      rel: 'nofollow',
+      'aria-label': 'label',
+      'aria-hidden': true,
+    });
+  });
+
+  it('knownPropsOnly keeps only window targets', () => {
+    const policy = { knownPropsOnly: true };
+    expect(sanitizeSpecProps({ target: '_blank' }, policy)).toEqual({ target: '_blank' });
+    expect(sanitizeSpecProps({ target: '_self' }, policy)).toEqual({ target: '_self' });
+    expect(sanitizeSpecProps({ target: 'checkout-frame' }, policy)).toEqual({});
+    expect(sanitizeSpecProps({ target: 'checkout-frame' })).toEqual({ target: 'checkout-frame' });
+  });
+
+  it('allowedProps passes extra props with any value, but never past the floor', () => {
+    const policy = {
+      ...strictSanitizePolicy,
+      allowedProps: ['className', 'items', 'onClick', 'srcDoc', 'dangerouslySetInnerHTML', 'ref'],
+    };
+    const out = sanitizeSpecProps(
+      {
+        className: 'mine',
+        items: [1, 2],
+        onClick: 'x',
+        srcDoc: 'x',
+        dangerouslySetInnerHTML: { __html: 'x' },
+        ref: 'x',
+        id: 'dropped',
+      },
+      policy,
+    );
+    expect(out).toEqual({ className: 'mine', items: [1, 2] });
+  });
+
+  it('allowedProps has no effect outside allow-list mode, where unknown props pass anyway', () => {
+    expect(sanitizeSpecProps({ a: 1, b: 2 }, { allowedProps: ['a'] })).toEqual({ a: 1, b: 2 });
+  });
+
+  it('blockedProps wins over allowedProps and the known list', () => {
+    const policy = { knownPropsOnly: true, allowedProps: ['className'], blockedProps: ['className', 'href'] };
+    expect(sanitizeSpecProps({ className: 'x', href: '/a', title: 't' }, policy)).toEqual({ title: 't' });
+  });
+
+  it('allowedTags replaces the built-in tag list, and re-enables tag in allow-list mode', () => {
+    const policy = { allowedTags: ['section', 'form', 'my-widget', 'script', 'iframe', 'svg'] };
+    expect(sanitizeSpecProps({ tag: 'section' }, policy)).toEqual({ tag: 'section' });
+    expect(sanitizeSpecProps({ tag: 'form' }, policy)).toEqual({ tag: 'form' });
+    expect(sanitizeSpecProps({ tag: 'my-widget' }, policy)).toEqual({ tag: 'my-widget' });
+    expect(sanitizeSpecProps({ tag: 'div' }, policy)).toEqual({});
+    for (const tag of ['script', 'SCRIPT', 'iframe', 'svg']) expect(sanitizeSpecProps({ tag }, policy)).toEqual({});
+
+    expect(sanitizeSpecProps({ tag: 'section' }, { knownPropsOnly: true })).toEqual({});
+    expect(sanitizeSpecProps({ tag: 'section' }, { knownPropsOnly: true, allowedTags: ['section'] })).toEqual({ tag: 'section' });
+    expect(sanitizeSpecProps({ tag: 'div' }, { knownPropsOnly: true, allowedTags: ['section'] })).toEqual({});
+  });
+
+  it('listing "tag" in allowedProps re-enables it with the built-in tag list', () => {
+    const policy = { knownPropsOnly: true, allowedProps: ['tag'] };
+    expect(sanitizeSpecProps({ tag: 'section' }, policy)).toEqual({ tag: 'section' });
+    expect(sanitizeSpecProps({ tag: 'script' }, policy)).toEqual({});
+    expect(sanitizeSpecProps({ tag: 'form' }, policy)).toEqual({});
+  });
+
+  it('a widened strict policy renders className and a listed tag through renderSpec', () => {
+    const policy = { ...strictSanitizePolicy, allowedProps: ['className'], allowedTags: ['section'] };
+    const { container } = render(
+      <>{renderSpec({ Plain: { tag: 'section', className: 'mine', id: 'x', style: { color: 'red' }, children: 'hi' } }, registry, { sanitize: policy })}</>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.className).toBe('mine');
+    expect(el).not.toHaveAttribute('id');
+    expect(el).not.toHaveAttribute('style');
+    expect(el).toHaveAttribute('tag', 'section');
   });
 });
