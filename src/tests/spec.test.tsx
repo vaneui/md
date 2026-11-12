@@ -437,3 +437,88 @@ describe('SanitizePolicy — allow-list mode and widening it on purpose', () => 
     expect(el).toHaveAttribute('tag', 'section');
   });
 });
+
+describe('sanitizeSpecProps — URL props', () => {
+  const DANGEROUS = [
+    'javascript:alert(1)',
+    'java\tscript:alert(1)',
+    'java\nscript:alert(1)',
+    'java\rscript:alert(1)',
+    'j\ta\nv\ra\tscript:alert(1)',
+    'javascript\t:alert(1)',
+    '\x01javascript:alert(1)',
+    '\x00javascript:alert(1)',
+    '\x1f \t\n javascript:alert(1)',
+    'JaVa\tScRiPt:alert(1)',
+    ' javascript:alert(1)',
+    ' javascript:alert(1)',
+    '﻿javascript:alert(1)',
+    'vb\tscript:msgbox(1)',
+    'd\tata:text/html,<script>alert(1)</script>',
+    '\x01data:text/html;base64,PHNjcmlwdD4=',
+    'data:text\t/html,<svg onload=alert(1)>',
+  ];
+  const URL_ATTRIBUTES = [
+    'href', 'src', 'srcSet', 'srcset', 'imageSrcSet', 'poster', 'action', 'formAction', 'formaction', 'xlinkHref',
+    'xlink:href', 'ping', 'cite', 'background', 'data', 'codeBase', 'manifest', 'longDesc', 'HREF', 'Src',
+  ];
+
+  it.each(DANGEROUS.map((url) => [JSON.stringify(url), url]))('drops %s from href, with and without a policy', (_label, url) => {
+    expect(sanitizeSpecProps({ href: url })).toEqual({});
+    expect(sanitizeSpecProps({ href: url }, { allowedProtocols: ['https:'] })).toEqual({});
+    expect(sanitizeSpecProps({ href: url }, strictSanitizePolicy)).toEqual({});
+  });
+
+  it.each(URL_ATTRIBUTES.map((name) => [name]))('checks the URL in %s', (name) => {
+    expect(sanitizeSpecProps({ [name]: 'java\tscript:alert(1)' })).toEqual({});
+    expect(sanitizeSpecProps({ [name]: '\x01javascript:alert(1)' })).toEqual({});
+    expect(sanitizeSpecProps({ [name]: 'data:text/html,x' })).toEqual({});
+    expect(sanitizeSpecProps({ [name]: 'https://example.com/a' })).toEqual({ [name]: 'https://example.com/a' });
+    expect(sanitizeSpecProps({ [name]: 'ftp://example.com/a' }, { allowedProtocols: ['https:'] })).toEqual({});
+    expect(sanitizeSpecProps({ [name]: '/relative' }, { allowedProtocols: ['https:'] })).toEqual({ [name]: '/relative' });
+  });
+
+  it('checks every candidate of srcSet and every URL of ping', () => {
+    expect(sanitizeSpecProps({ srcSet: '/a.png 1x, /b.png 2x' })).toEqual({ srcSet: '/a.png 1x, /b.png 2x' });
+    expect(sanitizeSpecProps({ srcSet: '/a.png 1x, java\tscript:alert(1) 2x' })).toEqual({});
+    expect(sanitizeSpecProps({ srcSet: 'https://a.example/a.png 1x, ftp://b.example/b.png 2x' }, { allowedProtocols: ['https:'] })).toEqual({});
+    expect(sanitizeSpecProps({ ping: 'https://a.example/p https://b.example/p' })).toEqual({ ping: 'https://a.example/p https://b.example/p' });
+    expect(sanitizeSpecProps({ ping: 'https://a.example/p javascript:alert(1)' })).toEqual({});
+  });
+
+  it('reads an array or object the way an attribute would, as its string form', () => {
+    expect(sanitizeSpecProps({ href: ['javascript:alert(1)'] })).toEqual({});
+    expect(sanitizeSpecProps({ href: ['java\tscript:alert(1)'] })).toEqual({});
+    expect(sanitizeSpecProps({ src: [['data:text/html,x']] })).toEqual({});
+    expect(sanitizeSpecProps({ href: { toString: 'not a function' } })).toEqual({});
+    expect(sanitizeSpecProps({ data: [1, 2, 3], src: ['/a.png'] })).toEqual({ data: [1, 2, 3], src: ['/a.png'] });
+    expect(sanitizeSpecProps({ data: { rows: 2 } })).toEqual({ data: { rows: 2 } });
+    expect(sanitizeSpecProps({ href: 5, src: true, action: null })).toEqual({ href: 5, src: true, action: null });
+  });
+
+  it('keeps the value as written when the URL is allowed', () => {
+    expect(sanitizeSpecProps({ href: ' https://example.com/a b ' })).toEqual({ href: ' https://example.com/a b ' });
+    expect(sanitizeSpecProps({ href: 'ht\ttps://example.com' }, { allowedProtocols: ['https:'] })).toEqual({ href: 'ht\ttps://example.com' });
+    expect(sanitizeSpecProps({ href: '\x01mailto:a@example.com' }, strictSanitizePolicy)).toEqual({ href: '\x01mailto:a@example.com' });
+    expect(sanitizeSpecProps({ href: '//example.com/a', src: 'a.png', cite: '#note', action: '?q=java script:' }, strictSanitizePolicy)).toEqual({
+      href: '//example.com/a',
+      src: 'a.png',
+    });
+    expect(sanitizeSpecProps({ cite: '#note', action: '?q=javascript:alert(1)', poster: './javascript:x' })).toEqual({
+      cite: '#note',
+      action: '?q=javascript:alert(1)',
+      poster: './javascript:x',
+    });
+    expect(sanitizeSpecProps({ src: 'data:image/png;base64,AAAA', href: 'DATA:IMAGE/gif;base64,AAAA' })).toEqual({
+      src: 'data:image/png;base64,AAAA',
+      href: 'DATA:IMAGE/gif;base64,AAAA',
+    });
+  });
+
+  it('a long run of whitespace before a scheme is checked in linear time', () => {
+    const start = performance.now();
+    expect(sanitizeSpecProps({ href: `${' \t'.repeat(200_000)}javascript:alert(1)` })).toEqual({});
+    expect(sanitizeSpecProps({ srcSet: `${','.repeat(200_000)}javascript:alert(1)` })).toEqual({});
+    expect(performance.now() - start).toBeLessThan(1000);
+  });
+});

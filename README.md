@@ -374,7 +374,7 @@ With or without a policy, a fence cannot run script or inject markup:
 
 - `tag` is honoured only for inert elements: text, heading, list, sectioning, table and phrasing elements such as `section`, `h2`, `li` or `span`. Any other value is dropped, so `script`, `style`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `form`, form controls, `template`, `svg` and `math` never render through it.
 - `dangerouslySetInnerHTML`, `ref`, `srcDoc`, `httpEquiv` and every prop whose name starts with `on` are dropped, in any spelling (`srcdoc`, `ONCLICK`, `http-equiv`).
-- `javascript:`, `vbscript:` and non-image `data:` URLs are dropped from URL props such as `href` and `src`.
+- `javascript:`, `vbscript:` and non-image `data:` URLs are dropped from every URL-bearing prop (`href`, `src`, `srcSet`, `poster`, `action`, `formAction`, `xlinkHref`, `ping`, `cite`, `background`, `data` and the like). The scheme is read the way a browser reads it, ignoring control characters and whitespace, so `java<Tab>script:` is caught too.
 
 Every other prop passes at this level, including `className`, `id`, `style` objects and the props of your own registry components. That suits documents you write yourself. It is not enough for content from users or a model: a fence can still restyle or reposition a component, set ids, and pass any prop a registry component accepts.
 

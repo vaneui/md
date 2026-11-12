@@ -58,3 +58,20 @@ describe('vaneui fence, server-rendered HTML, trusted documents', () => {
     expect(article).toMatch(/style="max-width:320px"/);
   });
 });
+
+describe.each(LEVELS)('URL props in a vaneui fence, server-rendered HTML, %s', (_level, presets) => {
+  const URLS = ['"java\\tscript:alert(1)"', '"\\x01javascript:alert(1)"', '"java\\nscript:alert(1)"', '"  JAVASCRIPT:alert(1)"', '"vb\\tscript:x"', '"d\\tata:text/html,x"'];
+
+  test.each(URLS.map((url) => [url]))('href: %s never reaches the markup', (url) => {
+    const out = renderToStaticMarkup(
+      <Md
+        content={fence(`Col:\n  - Button:\n      href: ${url}\n      text: go\n  - Link:\n      href: ${url}\n      text: go\n  - Img:\n      src: ${url}\n      alt: x`)}
+        parseFrontmatter={parseYamlFrontmatter}
+        components={defaultRegistry}
+        presets={presets as any}
+      />,
+    );
+    expect(out).not.toMatch(/\s(?:href|src)=/i);
+    expect(out).not.toMatch(/script:|data:/i);
+  });
+});

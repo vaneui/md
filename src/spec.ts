@@ -28,8 +28,9 @@ const SHORTHAND_HEAD = /^[A-Z]/;
 //    markup: `tag` is honoured only for an allow-list of inert elements;
 //    `dangerouslySetInnerHTML`, `ref`, `srcDoc`, `httpEquiv` and every `on*`
 //    prop are dropped in any spelling; URL-bearing props must not carry a
-//    script-executing protocol. Every other prop passes, because an app's own
-//    registry components take props this package cannot know.
+//    script-executing protocol, read the way a browser reads the URL. Every
+//    other prop passes, because an app's own registry components take props
+//    this package cannot know.
 // 2. Allow-list mode (`SanitizePolicy.knownPropsOnly`, on in
 //    `strictSanitizePolicy`) for untrusted content: only known props pass.
 
@@ -85,10 +86,32 @@ const SAFE_TARGETS: ReadonlySet<string> = new Set(["_blank", "_self", "_parent",
 
 const ARIA_ATTRIBUTE = /^aria-[a-z]+$/;
 
-const URL_PROPS = new Set(["href", "src", "poster", "action", "formAction"]);
-const DANGEROUS_PROTOCOL = /^\s*(?:javascript|vbscript):/i;
-const NON_IMAGE_DATA_URL = /^\s*data:(?!image\/)/i;
-const URL_SCHEME = /^\s*([a-z][a-z0-9+.-]*:)/i;
+/**
+ * URL-bearing attributes, by normalized name (so `formAction`, `formaction`
+ * and `xlink:href` all match).
+ */
+const URL_PROPS: ReadonlySet<string> = new Set([
+  "href", "src", "srcset", "imagesrcset", "poster", "action", "formaction", "xlinkhref", "ping", "cite", "background",
+  "data", "codebase", "manifest", "longdesc", "lowsrc", "dynsrc",
+]);
+
+/** URL attributes that hold a list, and what separates its entries. The value is checked as a whole and entry by entry. */
+const URL_LIST_SEPARATORS: ReadonlyMap<string, RegExp> = new Map([
+  ["srcset", /,/],
+  ["imagesrcset", /,/],
+  ["ping", /[\t\n\f\r ]/],
+]);
+
+/**
+ * Characters a browser removes from a URL before it reads the scheme (leading
+ * control characters and spaces, tabs and newlines anywhere), plus the other
+ * control, whitespace and zero-width characters. Removing more than a browser
+ * does can only make a harmless URL look like it has a scheme, never hide one.
+ */
+const URL_IGNORED = /[\u0000- \u007f-\u009f\s​-‍⁠﻿]+/g;
+const URL_SCHEME = /^([a-z][a-z0-9+.-]*):/i;
+const IMAGE_DATA_URL = /^data:image\//i;
+const SCRIPT_SCHEMES: ReadonlySet<string> = new Set(["javascript:", "vbscript:"]);
 
 /**
  * Lower case, letters and digits only, so `srcDoc`, `srcdoc`, `SRCDOC` and
@@ -138,15 +161,40 @@ function isKnownProp(key: string, value: unknown, policy: SanitizePolicy): boole
   return true;
 }
 
-function isSafeUrl(value: unknown, policy?: SanitizePolicy): boolean {
-  if (typeof value !== "string") return true;
-  if (DANGEROUS_PROTOCOL.test(value) || NON_IMAGE_DATA_URL.test(value)) return false;
-  if (policy?.allowedProtocols) {
-    const match = URL_SCHEME.exec(value);
-    // Scheme-less (relative) URLs are always allowed; a scheme must be listed.
-    if (match && !policy.allowedProtocols.includes(match[1].toLowerCase())) return false;
+/** One URL: no script-executing scheme, no `data:` other than an image, and a scheme the policy allows. */
+function isSafeUrl(url: string, policy?: SanitizePolicy): boolean {
+  const compact = url.replace(URL_IGNORED, "");
+  const match = URL_SCHEME.exec(compact);
+  // Scheme-less (relative) URLs are always allowed.
+  if (!match) return true;
+  const scheme = `${match[1].toLowerCase()}:`;
+  if (SCRIPT_SCHEMES.has(scheme)) return false;
+  if (scheme === "data:" && !IMAGE_DATA_URL.test(compact)) return false;
+  // With a policy, a scheme must be listed.
+  return !policy?.allowedProtocols || policy.allowedProtocols.includes(scheme);
+}
+
+/**
+ * Whether the value of a URL-bearing prop may pass. Numbers, booleans and
+ * `null` are not URLs. An array or object is read as the string an attribute
+ * would get, so `[javascript:...]` cannot slip through as a list.
+ */
+function isSafeUrlValue(name: string, value: unknown, policy?: SanitizePolicy): boolean {
+  let text: string;
+  if (typeof value === "string") {
+    text = value;
+  } else if (typeof value === "object" && value !== null) {
+    try {
+      text = String(value);
+    } catch {
+      return false;
+    }
+  } else {
+    return true;
   }
-  return true;
+  if (!isSafeUrl(text, policy)) return false;
+  const separator = URL_LIST_SEPARATORS.get(name);
+  return !separator || text.split(separator).every((url) => isSafeUrl(url, policy));
 }
 
 /**
@@ -170,7 +218,8 @@ export function sanitizeSpecProps(
       continue;
     }
     if (allowListMode && !isKnownProp(key, value, policy)) continue;
-    if (URL_PROPS.has(key) && !isSafeUrl(value, policy)) continue;
+    const name = normalizeName(key);
+    if (URL_PROPS.has(name) && !isSafeUrlValue(name, value, policy)) continue;
     safe[key] = value;
   }
   return safe;

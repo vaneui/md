@@ -247,3 +247,27 @@ describe('vaneui fence at the untrusted level: only known props pass', () => {
     expect(el.props).toEqual({ children: null });
   });
 });
+
+describe.each(LEVELS)('URL props in a vaneui fence, %s', (_level, presets) => {
+  const URLS = ['"java\\tscript:alert(1)"', '"\\x01javascript:alert(1)"', '"java\\nscript:alert(1)"', '"  JAVASCRIPT:alert(1)"', '"vb\\tscript:x"', '"d\\tata:text/html,x"'];
+
+  test.each(URLS.map((url) => [url]))('href: %s never reaches the link', (url) => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(
+      <Md
+        content={fence(`Col:\n  - Button:\n      href: ${url}\n      text: go\n  - Link:\n      href: ${url}\n      text: go\n  - Img:\n      src: ${url}\n      alt: x`)}
+        parseFrontmatter={parseYamlFrontmatter}
+        components={defaultRegistry}
+        presets={presets as any}
+      />,
+    );
+    for (const el of container.querySelectorAll('*')) {
+      expect(el).not.toHaveAttribute('href');
+      expect(el).not.toHaveAttribute('src');
+    }
+    // Without its href the Button stays a <button>.
+    expect(container.querySelector('button')?.textContent).toBe('go');
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});
