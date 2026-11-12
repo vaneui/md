@@ -1,4 +1,4 @@
-import Markdoc, { type Config } from "@markdoc/markdoc";
+import Markdoc, { type Config, type RenderableTreeNodes } from "@markdoc/markdoc";
 import React from "react";
 import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "../config/default-config";
@@ -18,7 +18,7 @@ const builtInRenderers = new Set<unknown>(Object.values(defaultComponents));
  * as it does in Markdoc's own HTML renderer. React's own objects (elements,
  * portals) carry a symbol and are left alone.
  */
-function isPlainData(child: unknown): boolean {
+export function isPlainData(child: unknown): boolean {
   if (typeof child !== "object" || child === null || Array.isArray(child)) return false;
   if (typeof (child as { $$typeof?: unknown }).$$typeof === "symbol") return false;
   const proto: unknown = Object.getPrototypeOf(child);
@@ -51,12 +51,22 @@ function mergeConfig(defaultConfig: MdConfig, userConfig?: MdConfig): MdConfig {
   };
 }
 
-/** Renders `<Md>` over `baseTheme`; `wrap` lets the client entry put its providers around the body. */
-export function renderMd(
-  rawProps: MdProps,
-  baseTheme: MdRendererTheme,
-  wrap?: (body: React.ReactNode, mdContext: MdRenderContext) => React.ReactNode,
-): React.ReactNode {
+/** What `<Md>` works out from its props before React renders anything. */
+export interface PreparedMd {
+  /** The transformed document, after the `transform` hook. */
+  tree: RenderableTreeNodes;
+  /** What the built-in renderers read: theme, fence registry, parser, highlighter, sanitize policy. */
+  mdContext: MdRenderContext;
+  /** The renderer components by name: `config.components` over the defaults. */
+  components: Record<string, unknown>;
+  /** The message of a frontmatter parse error, shown above the document. */
+  parseError?: string;
+  /** Style sheets the presets contribute. */
+  styles: readonly string[];
+}
+
+/** Parses and transforms `content` the way `<Md>` does: presets, frontmatter, config merge, the `transform` hook. */
+export function prepareMd(rawProps: MdProps, baseTheme: MdRendererTheme): PreparedMd {
   const resolvedPreset = rawProps.presets && rawProps.presets.length
     ? mergePresets(...rawProps.presets)
     : undefined;
@@ -111,11 +121,34 @@ export function renderMd(
   };
 
   const transformed = Markdoc.transform(ast, markdocConfig);
-  const finalTree = transform ? transform(transformed) : transformed;
-  const rendered = Markdoc.renderers.react(finalTree, reactWith(mdContext), {
-    components: mergedConfig.components as any,
-  });
+  return {
+    tree: transform ? transform(transformed) : transformed,
+    mdContext,
+    components: mergedConfig.components ?? {},
+    parseError,
+    styles: resolvedPreset?.styles ?? [],
+  };
+}
 
+/** Renders a transformed tree, or one block of it, to React elements the way `<Md>` does. */
+export function renderTree(
+  tree: RenderableTreeNodes,
+  mdContext: MdRenderContext,
+  components: Record<string, unknown>,
+): React.ReactNode {
+  return Markdoc.renderers.react(tree, reactWith(mdContext), {components: components as any});
+}
+
+/**
+ * Puts what goes around the rendered document: a frontmatter error above it,
+ * the client entry's providers (`wrap`), and the presets' style sheets.
+ */
+export function finishMd(
+  prepared: PreparedMd,
+  rendered: React.ReactNode,
+  wrap?: (body: React.ReactNode, mdContext: MdRenderContext) => React.ReactNode,
+): React.ReactNode {
+  const {mdContext, parseError, styles} = prepared;
   const body = parseError ? (
     <>
       <MdError mdContext={mdContext}>{`Frontmatter parse error: ${parseError}`}</MdError>
@@ -125,15 +158,25 @@ export function renderMd(
 
   const tree = wrap ? wrap(body, mdContext) : body;
 
-  if (resolvedPreset && resolvedPreset.styles.length > 0) {
+  if (styles.length > 0) {
     return (
       <>
-        <style>{resolvedPreset.styles.join("\n")}</style>
+        <style>{styles.join("\n")}</style>
         {tree}
       </>
     );
   }
   return tree;
+}
+
+/** Renders `<Md>` over `baseTheme`; `wrap` lets the client entry put its providers around the body. */
+export function renderMd(
+  rawProps: MdProps,
+  baseTheme: MdRendererTheme,
+  wrap?: (body: React.ReactNode, mdContext: MdRenderContext) => React.ReactNode,
+): React.ReactNode {
+  const prepared = prepareMd(rawProps, baseTheme);
+  return finishMd(prepared, renderTree(prepared.tree, prepared.mdContext, prepared.components), wrap);
 }
 
 /** Renders Markdown into VaneUI components. Uses no React context, so it works in Server Components. */

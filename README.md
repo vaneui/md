@@ -301,7 +301,7 @@ A partial renders with the page's variables (including `$markdoc.frontmatter`) p
 
 Unlike Markdoc's built-in tag, a missing name renders an error instead of nothing, and a partial that comes back with the same variables while it is still rendering, directly or through other partials, renders an error naming the cycle (for example `Partial cycle: a.md -> b.md -> a.md`). Variables count as the same when their content is equal: arrays and plain objects compare by value, even when they link back to themselves (tree nodes that point to their parent), and anything else compares by identity. Any other nesting is capped at 16 levels.
 
-One render handles at most 1000 partial tags, counting the ones that render an error, so a partial that uses itself more than once cannot multiply into millions of renders within those 16 levels. The first tag over the limit renders an error and later partial tags render nothing. Each `MdStream` block is a render of its own.
+One render handles at most 1000 partial tags, counting the ones that render an error, so a partial that uses itself more than once cannot multiply into millions of renders within those 16 levels. The first tag over the limit renders an error and later partial tags render nothing.
 
 All of these errors render in place instead of throwing, and the rest of the page still renders.
 
@@ -448,13 +448,24 @@ import { Md, headingAnchors } from "@vaneui/md";
 
 ## Streaming
 
-`MdStream` renders growing markdown (for example token-by-token LLM output) by splitting it into fence-aware blocks and memoizing each, so only the changed trailing block re-parses. It is a client component, exported from `@vaneui/md/client`:
+`MdStream` renders growing Markdown, for example token-by-token model output. It is a client component, exported from `@vaneui/md/client`, and takes the same props as `<Md>`:
 
 ```tsx
 import { MdStream } from "@vaneui/md/client";
+import { prismHighlighter } from "@vaneui/md/prism";
 
-<MdStream content={streamingText} highlight={prismHighlighter()} />
+const highlight = prismHighlighter();
+
+<MdStream content={streamingText} highlight={highlight} />
 ```
+
+The output is the same as `<Md>` for the same source at every step: the source is rendered as one document in one wrapper, so a loose list keeps its numbering, `{% if %}` hides its content, and reference links, frontmatter variables, partials and a `transform` hook work across blocks.
+
+On every update `MdStream` parses and transforms the whole source, then React renders again only the top-level blocks (a paragraph, a list, a table, a code fence) whose transformed content changed. An unchanged block keeps its DOM nodes and component state, and its code is not highlighted again. That parse takes time in proportion to the length of the source (around 10ms per 10,000 characters measured in Node), so for long outputs update once per animation frame instead of once per token.
+
+Blocks are compared by content, so passing a new `config` or `rendererTheme` object with the same content on every render is fine. Functions and components are compared by identity: create `highlight`, `transform`, `parseFrontmatter` and the components in `config.components` once (outside the component or in a memo), or every block renders again on every update.
+
+`splitBlocks(source)` (main entry) and `useMdStream(content)` (client entry) return the source text of each top-level block as the tokenizer reads it: a whole list, blockquote, table or code fence, or a block tag with everything up to its closing tag, each an exact slice of the source. Use them to count or measure blocks. Rendering each block as its own `<Md>` is not the same document, because reference links, variables and conditions span blocks.
 
 ## Exports
 
