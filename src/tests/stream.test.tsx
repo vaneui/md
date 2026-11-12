@@ -128,6 +128,7 @@ const parity: Array<[name: string, content: string, props?: Partial<MdProps>]> =
   ['a transform hook over the whole document', '# Setup\n\nText.\n\n## Setup\n\n## Other', { transform: headingAnchors({ link: true }) }],
   ['headings, rules and inline marks', '# One\ntext right under\n\n---\n\nSome *em*, **strong**, `code`, ~~s~~ and a [link](/x).\n\n![alt](/img.png "t")'],
   ['an unexpanded include', 'Before.\n\n{% include "x.md" %}\n\nInside.\n\n{% /include %}\n\nAfter.'],
+  ['a tag syntax error and a tag left open', 'Before.\n\nBroken {% if= %} tag, {% for item in items %} and {% endfor %}.\n\n{% foo bar= %}\n\nAfter.'],
   ['an unclosed block tag', 'Before.\n\n{% if $show %}\n\nShown.\n\nMore.', { config: { variables: { show: true } } }],
   ['a custom renderer and a renderer theme', '# A\n\n> quote\n\ntext with `code`', { rendererTheme: { mdCode: { primary: true }, mdBlockquote: { success: true } }, config: { components: { MdHeading: (props: { children?: React.ReactNode }) => <h1 className="custom">{props.children}</h1> } } }],
   ['a document node without a wrapper', '# A\n\nText.\n\nMore.', { config: { nodes: { document: { children: ['heading', 'paragraph'] } } } }],

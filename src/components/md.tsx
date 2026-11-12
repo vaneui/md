@@ -70,13 +70,13 @@ export function prepareMd(rawProps: MdProps, baseTheme: MdRendererTheme): Prepar
   const resolvedPreset = rawProps.presets && rawProps.presets.length
     ? mergePresets(...rawProps.presets)
     : undefined;
-  const {content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, sanitize, config: userConfig} =
+  const {content, frontmatter, parseFrontmatter, components, rendererTheme, highlight, transform, sanitize, tagSyntax, config: userConfig} =
     resolvedPreset ? applyPresetProps(resolvedPreset, rawProps) : rawProps;
 
   // `include`/`partial` parse as self-closing only while they are the library's own tags.
   const tags = {...defaultTagsConfig, ...userConfig?.tags};
   const selfClosingTags = selfClosingTagNames(tags);
-  const ast = parseMarkdown(content, {selfClosingTags});
+  const ast = parseMarkdown(content, {selfClosingTags, tagSyntax});
 
   // Markdoc's public Node type does not declare the raw frontmatter attribute.
   const rawFrontmatter = (ast as { attributes?: { frontmatter?: string } }).attributes?.frontmatter;

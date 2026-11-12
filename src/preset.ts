@@ -31,6 +31,8 @@ export interface MdPreset {
   highlight?: HighlightFn;
   transform?: MdTransform;
   sanitize?: SanitizePolicy;
+  /** `false` turns Markdoc's tag syntax off (see the `tagSyntax` prop). The last preset that sets it wins. */
+  tagSyntax?: boolean;
   styles?: string;
 }
 
@@ -40,6 +42,7 @@ export interface ResolvedPreset {
   highlight?: HighlightFn;
   transform?: MdTransform;
   sanitize?: SanitizePolicy;
+  tagSyntax?: boolean;
   config?: MdConfig;
   styles: string[];
 }
@@ -81,6 +84,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
   let rendererTheme: MdRendererTheme | undefined;
   let highlight: HighlightFn | undefined;
   let sanitize: SanitizePolicy | undefined;
+  let tagSyntax: boolean | undefined;
 
   const seenComponents = new Set<string>();
   const seenTags = new Set<string>();
@@ -103,6 +107,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
     }
     if (preset.highlight) highlight = preset.highlight;
     if (preset.sanitize) sanitize = preset.sanitize;
+    if (typeof preset.tagSyntax === "boolean") tagSyntax = preset.tagSyntax;
     if (preset.transform) transforms.push(preset.transform);
     if (preset.styles) styles.push(preset.styles);
   }
@@ -121,6 +126,7 @@ export function mergePresets(...presets: MdPreset[]): ResolvedPreset {
     highlight,
     transform: composeTransforms(transforms),
     sanitize,
+    tagSyntax,
     config: Object.keys(config).length ? config : undefined,
     styles,
   };
@@ -152,6 +158,7 @@ export function applyPresetProps(resolved: ResolvedPreset, props: MdProps): MdPr
     rendererTheme: props.rendererTheme ?? resolved.rendererTheme,
     highlight: props.highlight ?? resolved.highlight,
     sanitize: props.sanitize ?? resolved.sanitize,
+    tagSyntax: props.tagSyntax ?? resolved.tagSyntax,
     transform: composeTransforms(transforms),
     config: mergeConfigObjects(resolved.config, props.config),
   };

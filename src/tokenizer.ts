@@ -76,10 +76,57 @@ export function guardInlineNesting<T extends object>(tokenizer: T): T {
   return tokenizer;
 }
 
-let tokenizer: Tokenizer | undefined;
+/**
+ * The rules Markdoc adds to the Markdown parser for `{% %}` syntax: block tags
+ * plus fence annotations and tags inside fences (`annotations`, a block rule
+ * and a core rule), and inline tags, variables and annotations (`containers`).
+ */
+const TAG_RULES = ["annotations", TAG_RULE];
 
-/** Tokenizes Markdown with the package's one shared, guarded Markdoc tokenizer. */
-export function tokenize(source: string): Token[] {
+/** Token types that only tag syntax produces. */
+const TAG_TOKEN = /^(?:tag|tag_open|tag_close|annotation|error)$/;
+
+const hasTagTokens = (tokens: Token[]): boolean =>
+  tokens.some((token) => TAG_TOKEN.test(token.type) || (Array.isArray(token.children) && hasTagTokens(token.children)));
+
+/**
+ * Turns `{% %}` syntax off in a tokenizer, so it reads plain Markdown and
+ * leaves `{% ... %}` in the text. Returns false when the tokenizer does not
+ * have the shape this relies on (the Markdown parser's `disable`) or still
+ * produces tag tokens afterwards.
+ */
+function disableTagSyntax(tokenizer: Tokenizer): boolean {
+  try {
+    const parser = (tokenizer as unknown as { parser?: { disable?(names: string[], ignoreInvalid: boolean): unknown } }).parser;
+    if (!parser || typeof parser.disable !== "function") return false;
+    parser.disable(TAG_RULES, true);
+    return !hasTagTokens(tokenizer.tokenize('{% a %}\n\ntext {% $b %} {% c d= %}\n\n```js {% e=1 %}\n{% f %}\n```\n'));
+  } catch {
+    return false;
+  }
+}
+
+export interface TokenizeOptions {
+  /** `false` reads `{% ... %}` as plain text: no tags, variables, functions or annotations. Default `true`. */
+  tagSyntax?: boolean;
+}
+
+let tokenizer: Tokenizer | undefined;
+let plainTokenizer: Tokenizer | undefined;
+
+/** Tokenizes Markdown with the package's shared, guarded Markdoc tokenizer (one with tag syntax, one without). */
+export function tokenize(source: string, options: TokenizeOptions = {}): Token[] {
   tokenizer ??= guardInlineNesting(new Markdoc.Tokenizer());
-  return tokenizer.tokenize(source);
+  if (options.tagSyntax !== false) return tokenizer.tokenize(source);
+  if (!plainTokenizer) {
+    const plain = new Markdoc.Tokenizer();
+    if (disableTagSyntax(plain)) {
+      plainTokenizer = plain;
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn("[@vaneui/md] tagSyntax: false is not supported by the installed @markdoc/markdoc; tags stay on.");
+      plainTokenizer = tokenizer;
+    }
+  }
+  return plainTokenizer.tokenize(source);
 }

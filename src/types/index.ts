@@ -165,5 +165,14 @@ export interface MdProps {
    * reusable preconfigured component.
    */
   presets?: import("../preset").MdPreset[];
+  /**
+   * `false` turns Markdoc's tag syntax off: `{% ... %}` stays in the text
+   * as written, so no tags, variables, functions or annotations are read
+   * (and none of `config.tags`, `config.functions`, `config.variables` or
+   * `config.partials` can be reached from the content). Use it for prose
+   * that contains `{%` for other reasons, such as template code in technical
+   * or model-written text. Frontmatter is still read. Default `true`.
+   */
+  tagSyntax?: boolean;
   config?: MdConfig;
 }

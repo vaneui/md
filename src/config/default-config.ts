@@ -1,7 +1,7 @@
 import type { Schema } from "@markdoc/markdoc";
 import { MdNodesConfig, MdComponents } from "../types";
 import * as Components from "../components/md-components";
-import { includeTag, partialTag, transformLink } from "../tags";
+import { includeTag, partialTag, transformError, transformLink } from "../tags";
 
 // Default node configuration for Markdoc
 export const defaultNodesConfig: MdNodesConfig = {
@@ -107,6 +107,8 @@ export const defaultNodesConfig: MdNodesConfig = {
   },
   error: {
     render: "MdError",
+    // Adds the parser's message, and renders `MdErrorInline` where the error is inline.
+    transform: transformError,
   },
 };
 

@@ -1135,7 +1135,7 @@ describe('self-closing parse rule for include and partial', () => {
 
   it.each([
     ['frontmatter', '---\ntitle: Hi\n---\n\n# {% $markdoc.frontmatter.title %}\n\nBody text.'],
-    ['fences containing tags', '```md\n{% callout %}\nhi\n{% /callout %}\n{% note %}\n```\n\nAfter the fence.'],
+    ['fences containing tags', '```md\n{% callout %}\nhi\n{% /callout %}\n{% note /%}\n```\n\nAfter the fence.'],
     ['tables', '| a | b |\n|---|---|\n| 1 | {% $x %} |\n| **2** | `c` |'],
     ['if/else', '{% if $a %}\nA\n{% else /%}\nB {% $b %}\n{% /if %}'],
     ['lists', '- one\n- two {% .highlight %}\n  1. nested\n  2. more\n\n3. ordered'],

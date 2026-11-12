@@ -71,6 +71,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
 | `components` | `Record<string, React.ComponentType>` | String to component map used to resolve names in `vaneui` fences. Use `defaultRegistry` from `@vaneui/md/registry`, or supply your own. |
 | `rendererTheme` | `MdRendererTheme` | Per-renderer visual defaults (one slot per `Md*` renderer). |
 | `config` | `MdConfig` | Override Markdoc `nodes`, `components`, `tags`, `functions`, or `variables`, and register named `partials` for the `{% partial %}` tag. |
+| `tagSyntax` | `boolean` | `false` leaves `{% ... %}` in the text as written instead of reading it as Markdoc tags. Default `true`. See [Tag syntax in the content](#tag-syntax-in-the-content). |
 
 ## Frontmatter
 
@@ -321,6 +322,25 @@ Partials are named snippets you hand to `<Md>`, which never reads files. To pull
 
 Both tags are ordinary Markdoc tag schemas, exported together as `defaultTagsConfig`. Pass your own `partial` or `include` in `config.tags` to replace either one.
 
+## Tag syntax in the content
+
+Markdoc reads `{% ... %}` in the content as a tag, a variable, a function call or an annotation. Text from other sources often contains the same characters for other reasons: template code such as `{% for item in items %}` in technical writing, or in model output.
+
+Syntax the parser cannot read renders an error in place, with the parser's message, and the rest of the page still renders:
+
+- Inside a paragraph, a heading, a table cell, a list item or link text it renders through `MdErrorInline`, a `<span>`, so the paragraph stays valid HTML.
+- On its own line it renders through `MdError`, a card.
+
+A tag that is never closed ends where its paragraph, list item or blockquote ends, so `{% endfor %}` in a sentence (which Markdoc reads as the opening of a tag named `endfor`) no longer pulls the blocks after it into the paragraph. `Markdoc.validate` reports it as `missing-closing` on the tag. A block tag left open at the top level still takes the rest of the document.
+
+To render such text as written, turn tag syntax off:
+
+```tsx
+<Md content={text} tagSyntax={false} />
+```
+
+With `tagSyntax={false}` every `{% ... %}` stays in the text. No tag, variable, function, annotation or partial is read, so the content cannot reach anything in `config.tags`, `config.functions`, `config.variables` or `config.partials`, and cannot set an `id` or a class with an annotation. Markdown itself, frontmatter, code fences and `vaneui` fences work as before. The default is `true`, and a preset can set it: `createMd().use({ tagSyntax: false })`. `parseMarkdown(source, { tagSyntax: false })` does the same for code that parses on its own.
+
 ## Syntax highlighting
 
 Code fences render as a plain `<pre>` by default. Pass a `highlight` hook to render highlighted code. Two engines ship as optional subpaths; install the one you use.
@@ -426,7 +446,7 @@ No policy switches the floor off: `allowedProps: ["onClick"]` or `allowedTags: [
 
 ### What the policy does not cover
 
-- It applies to the props of `vaneui` fences. Markdoc syntax in the Markdown body is not restricted by it: annotations can still set an `id` and classes on a node (`# Title {% #top .wide %}`), and the document can read every variable and call every tag and function you put in `config`.
+- It applies to the props of `vaneui` fences. Markdoc syntax in the Markdown body is not restricted by it: annotations can still set an `id` and classes on a node (`# Title {% #top .wide %}`), and the document can read every variable and call every tag and function you put in `config`. If the content needs no tags, pass `tagSyntax={false}` as well, which turns all of that off (see [Tag syntax in the content](#tag-syntax-in-the-content)).
 - The boolean props stay available at the untrusted level, including layout props such as `fixed` or `absolute`. Add them to `blockedProps` if untrusted content must not take elements out of the flow.
 - A component in your own registry receives the props that pass. If it turns a prop into markup, an element name or a URL by itself, check that prop in the component.
 
