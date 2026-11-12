@@ -11,11 +11,30 @@ import type { MdRenderContext } from "../renderContext";
 // Only the package's own renderers receive `mdContext`, so custom components never see an unknown prop.
 const builtInRenderers = new Set<unknown>(Object.values(defaultComponents));
 
-// The React object Markdoc renders with: adds `mdContext` to built-in renderers, keeping their component types stable.
+/**
+ * Plain data that Markdoc left in the tree as a child: the value of a variable
+ * that holds an object (`{% $markdoc %}`), or of a name every object inherits
+ * (`{% $__proto__ %}`). React throws on such a child, so it renders as nothing,
+ * as it does in Markdoc's own HTML renderer. React's own objects (elements,
+ * portals) carry a symbol and are left alone.
+ */
+function isPlainData(child: unknown): boolean {
+  if (typeof child !== "object" || child === null || Array.isArray(child)) return false;
+  if (typeof (child as { $$typeof?: unknown }).$$typeof === "symbol") return false;
+  const proto: unknown = Object.getPrototypeOf(child);
+  return proto === Object.prototype || proto === null;
+}
+
+// The React object Markdoc renders with: adds `mdContext` to built-in renderers, keeping their component types stable,
+// and drops children React cannot render.
 const reactWith = (mdContext: MdRenderContext) => ({
   Fragment: React.Fragment,
   createElement: ((type: React.ElementType, props: Record<string, unknown> | null, ...children: React.ReactNode[]) =>
-    React.createElement(type, builtInRenderers.has(type) ? { ...props, mdContext } : props, ...children)) as typeof React.createElement,
+    React.createElement(
+      type,
+      builtInRenderers.has(type) ? { ...props, mdContext } : props,
+      ...(children.some(isPlainData) ? children.map((child) => (isPlainData(child) ? null : child)) : children),
+    )) as typeof React.createElement,
 });
 
 // Helper function to merge configurations

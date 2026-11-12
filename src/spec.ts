@@ -211,6 +211,20 @@ export function expandShorthand(node: unknown): unknown {
   return Object.fromEntries(entries.map(([k, v]) => [k, expandShorthand(v)]));
 }
 
+/**
+ * The component a registry holds under `name`, or `undefined`. Only the
+ * registry's own entries count: a name from a fence can be `constructor`,
+ * `toString` or `__proto__`, which every plain object inherits, and those are
+ * not components.
+ */
+function registeredComponent(registry: ComponentRegistry, name: string): React.ElementType | undefined {
+  if (!Object.prototype.hasOwnProperty.call(registry, name)) return undefined;
+  const value: unknown = registry[name];
+  const renderable =
+    typeof value === "function" || (typeof value === "object" && value !== null) || (typeof value === "string" && value !== "");
+  return renderable ? (value as React.ElementType) : undefined;
+}
+
 export interface RenderSpecOptions {
   /** React key for this node (usually the positional index from the parent). */
   key?: React.Key;
@@ -239,7 +253,7 @@ export function renderSpec(
     return null;
   }
 
-  const Component = registry[obj.component];
+  const Component = registeredComponent(registry, obj.component);
   if (!Component) return null;
 
   const { component: _ignored, text, children, ...props } = obj;

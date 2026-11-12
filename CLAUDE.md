@@ -88,7 +88,7 @@ src/
    - `highlight` — the `highlight` hook (used by `MdFence` for code blocks)
    - `sanitize` — the `sanitize` policy (used by `MdFence` for `vaneui` fences)
 
-   `reactWith` is the React object Markdoc renders with: its `createElement` adds `mdContext` to elements whose type is one of `defaultComponents`, and leaves every other component's props alone. Renderer component types stay the same across renders, so nothing remounts on a client re-render.
+   `reactWith` is the React object Markdoc renders with: its `createElement` adds `mdContext` to elements whose type is one of `defaultComponents`, and leaves every other component's props alone. It also drops children that are plain data (the value of `{% $markdoc %}` or `{% $__proto__ %}`), which React would throw on. Renderer component types stay the same across renders, so nothing remounts on a client re-render.
 7. The client `Md` (`src/components/md-client.tsx`, `@vaneui/md/client`) wraps the body in `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext` and `RendererThemeContext` providers holding the same values, for custom renderers that read them. The main `Md` adds no providers.
 
 **The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner. `scripts/check-dist.mjs` (last step of `npm run build`) fails the build if a `dist/client.*` bundle lacks the banner, or if any other bundle has it or uses `createContext` / `useContext`.
@@ -215,7 +215,7 @@ Failure modes:
 |---|---|
 | `parseFrontmatter` not provided | Entire fence renders as a normal code block (visible YAML) |
 | Malformed YAML in fence | `<MdError>` rendered above the original code block; sibling content unaffected |
-| Component name not in registry (incl. empty `{}` registry) | That node renders as nothing (silent no-op); body content after the fence still renders |
+| Component name not in registry (incl. empty `{}` registry, and names every object inherits such as `constructor` or `__proto__`: only the registry's own entries count) | That node renders as nothing (silent no-op); body content after the fence still renders |
 | `parseFrontmatter` returns a non-map (string/array/number) | The spec is silently skipped (no component to render) |
 
 #### Shorthand syntax (primary form)
@@ -459,6 +459,7 @@ Tests live in `src/tests/`:
 - `yaml.test.tsx` — `parseYamlFrontmatter` direct: normal/empty/null/string/array/number/malformed inputs
 - `registry.test.tsx` — `defaultRegistry` allowlist: safe components present, callback-required components absent, every entry is a valid component type
 - `include.test.ts`: `resolveIncludes` / `resolveIncludesAsync` (node environment): every tag form, blockquote prefixes, relative / nested / root-relative paths, the `include-paths` helpers under `path.win32`, frontmatter, BOM and CRLF, indentation and tab expansion, fences in containers and unclosed fences, fence and lazy-line cases cross-checked with `Markdoc.Tokenizer`, seeded fuzz tests (tag lines outside Markdoc's fences, and the same fenced code in an included file as standalone), tabs in included code, linear-time checks on 100k-character lines, `maxIncludes` and the read cache, `maxOutputLength`, `extensions`, cycles, depth, root and symlink escapes (symlinked roots, real-path cycles, `checkRealPaths`), option validation, `onError` / `onInclude`, the `IncludeError` brand (incl. proxies and getters), and that the browser entries never import `node:` built-ins or `src/include.ts`. Symlink and case-insensitive tests are skipped where the file system lacks them.
+- `inherited-keys.test.tsx`: `constructor`, `toString`, `__proto__`, `valueOf` and `hasOwnProperty` as a fence `component` (top level and nested), as a tag, function, partial and variable name; registry entries that are not components; object-valued variables render nothing
 - `spec.test.tsx` — `renderSpec` direct: null/undefined/string/missing-component/unknown-component/non-map/depth-cap, children-resolution priority, depth-0-gates-shorthand; `sanitizeSpecProps`: the floor in every spelling, the `tag` allow-list, `__proto__` keys, allow-list mode (`knownPropsOnly`) and widening it with `allowedProps` / `allowedTags`
 - `sanitize.test.tsx` (jsdom) and `sanitize.server.test.tsx` (node environment, `renderToStaticMarkup` / `renderToString`): every payload in `fencePayloads.ts` (script, iframe `srcDoc`, style, meta refresh, base, form, event handlers, `dangerouslySetInnerHTML`, `__proto__`, each forbidden `tag` in several casings) renders no forbidden element or attribute, at the floor and with `untrustedPreset`, in a client render and in server HTML; `Object.prototype` names as `tag`; trusted fences (`className`, `id`, `style`, a safe `tag`, a custom registry component's own props) render as before; what passes and what is dropped at the untrusted level
 
