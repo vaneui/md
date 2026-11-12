@@ -499,6 +499,28 @@ Blocks are compared by content, so passing a new `config` or `rendererTheme` obj
 
 `splitBlocks(source)` (main entry) and `useMdStream(content)` (client entry) return the source text of each top-level block as the tokenizer reads it: a whole list, blockquote, table or code fence, or a block tag with everything up to its closing tag, each an exact slice of the source. Use them to count or measure blocks. Rendering each block as its own `<Md>` is not the same document, because reference links, variables and conditions span blocks.
 
+## Upgrading from 1.2
+
+1.3.0 made the main entry safe to import from React Server Components. Everything that needs React context or hooks moved to a new client entry, `@vaneui/md/client`, and is no longer exported from `@vaneui/md`:
+
+| Name | Import it from |
+|---|---|
+| `MdStream`, `useMdStream` | `@vaneui/md/client` |
+| `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext` | `@vaneui/md/client` |
+
+```diff
+-import { Md, MdStream, RendererThemeContext } from "@vaneui/md";
++import { Md, MdStream, RendererThemeContext } from "@vaneui/md/client";
+```
+
+Three things behave differently after the move:
+
+- `Md` and `createMd` from `@vaneui/md` no longer read a `RendererThemeContext.Provider` above them, and no longer provide the contexts to custom renderers. Import `Md` and `createMd` from `@vaneui/md/client` to keep both, or pass the theme with the `rendererTheme` prop or a preset.
+- The built-in renderers get their theme, highlighter and fence parser from `<Md>` as a prop instead of from context. A built-in renderer such as `MdFence` that you render yourself, inside a custom component or through the `vaneui` fence registry, renders with `defaultRendererTheme`, no highlighter and no fence parser, with either entry.
+- `@vaneui/md/client` is a client module (`"use client"`). A Server Component cannot pass it function props such as `highlight`, `transform` or `parseFrontmatter`: render it from a client component, or use `Md` from `@vaneui/md`.
+
+`splitBlocks`, `createMd`, the `Md*` renderers, the presets and the types stay on the main entry. The changes of every release are in [CHANGELOG.md](./CHANGELOG.md).
+
 ## Exports
 
 - `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `mergePresets`, `untrustedPreset`, `splitBlocks`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `visit`, `headingAnchors`, `rewriteLinks`, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `defaultRendererTheme`, `mergeRendererTheme`, `strictSanitizePolicy`, and the types (`MdPreset`, `MdPartial`, `MdTransform`, `MdRenderContext`, `HighlightFn`, `SanitizePolicy`, and more). Safe to import from Server Components.

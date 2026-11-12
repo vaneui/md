@@ -496,6 +496,7 @@ Run with `npm test` (includes `type-check` as a prerequisite).
 - When adding a new Md renderer: add a slot to `MdRendererTheme` named `md{ComponentName}` (e.g., `mdBlockquote` for `MdBlockquote`), decide whether it needs a default in `defaultRendererTheme`, take `mdContext` out of its props and read the slot via `rendererThemeOf(mdContext)` (never `useContext`: the main entry must stay server-safe), register it in `defaultComponents` so `<Md>` passes it `mdContext`, and add a per-renderer override test in `md.renderer-theme.test.tsx`.
 - Tests should cover: default rendering, config override behavior, theme propagation, **per-renderer slot override via `rendererTheme`**.
 - For `vaneui` fence examples in docs and tests, prefer the **shorthand form** (`Card primary: …`) over the verbose form (`component: Card`, `primary: true`, …). Show the verbose form only when illustrating the `component`-key escape hatch or when a feature genuinely requires it.
+- Record every change a consumer can notice in `CHANGELOG.md` under `Unreleased` (Security, Changed, Added, Fixed), saying what happened before the change. A release moves that section under its version with the date of the release commit. The changelog ships in the package (`files`). When a release moves or removes an export, add an upgrade note to the README, like "Upgrading from 1.2".
 
 ## Nothing private in GitHub content
 
