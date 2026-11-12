@@ -62,6 +62,7 @@ src/
 ├── splitBlocks.ts           # splitBlocks: the source text of each top-level block, from the token stream
 ├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, mergeRendererTheme
 ├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
+├── transform.ts             # MdTransform, visit, composeTransforms, headingAnchors (slug ids: any script, inline code text, repeats numbered -1, -2), rewriteLinks
 ├── registry.ts              # defaultRegistry — safe VaneUI component allowlist (subpath: @vaneui/md/registry)
 ├── yaml.ts                  # parseYamlFrontmatter (subpath: @vaneui/md/yaml)
 ├── tags.ts                  # partialTag, includeTag (defaultTagsConfig), parseMarkdown (self-closing tags, closeOpenTags), transformError, selfClosingTagNames, preparePartials + partial parse cache
@@ -463,6 +464,7 @@ Tests live in `src/tests/`:
 
 **Module-level units:**
 - `prism.test.tsx`, `shiki.test.tsx` (Shiki mocked): the highlight adapters, including that line breaks at the end of the code are dropped and that 80,000 blank lines before the last line are trimmed in well under a second (under `runWithTimeout`)
+- `transform.test.tsx`: the `transform` hook helpers; `headingAnchors` ids (ASCII headings keep the ids of the earlier slug, letters and digits of any script, inline code text, numbered repeats that never collide, ids set in the document, empty slugs, a custom `slug`, link mode, the same ids on every render)
 - `yaml.test.tsx` — `parseYamlFrontmatter` direct: normal/empty/null/string/array/number/malformed inputs
 - `registry.test.tsx` — `defaultRegistry` allowlist: safe components present, callback-required components absent, every entry is a valid component type
 - `include.test.ts`: `resolveIncludes` / `resolveIncludesAsync` (node environment): every tag form, blockquote prefixes, relative / nested / root-relative paths, the `include-paths` helpers under `path.win32`, frontmatter, BOM and CRLF, indentation and tab expansion, fences in containers and unclosed fences, fence and lazy-line cases cross-checked with `Markdoc.Tokenizer`, seeded fuzz tests (tag lines outside Markdoc's fences, and the same fenced code in an included file as standalone), tabs in included code, linear-time checks on 100k-character lines, `maxIncludes` and the read cache, `maxOutputLength`, `extensions`, cycles, depth, root and symlink escapes (symlinked roots, real-path cycles, `checkRealPaths`), option validation, `onError` / `onInclude`, the `IncludeError` brand (incl. proxies and getters), and that the browser entries never import `node:` built-ins or `src/include.ts`. Symlink and case-insensitive tests are skipped where the file system lacks them.

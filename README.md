@@ -460,7 +460,19 @@ import { Md, headingAnchors } from "@vaneui/md";
 <Md content={md} transform={headingAnchors()} />
 ```
 
-`headingAnchors` accepts `{ slug, link, name }`. Pass `slug` to match your own anchor convention (for example a docs site whose table of contents computes ids a specific way), `link: true` to wrap each heading in a plain `<a href="#id">`, and `name` when you render headings under a non-default component name.
+`headingAnchors` gives every heading without an id one made from its text, inline code included:
+
+| Heading | `id` |
+|---|---|
+| `## Getting started` | `getting-started` |
+| ``## Using `useTheme` hook`` | `using-usetheme-hook` |
+| `## Привет мир` | `привет-мир` |
+| `## 你好` | `你好` |
+| a second `## Setup` | `setup-1` (then `setup-2`, and so on) |
+
+The slug is lower case, drops punctuation and turns whitespace and `_` into `-`. It keeps the letters and digits of every script. An id is used once per document: repeats are numbered, counting the ids headings already carry (`## Title {% #my-id %}`). A heading with nothing left to slug (only punctuation or emoji) gets no id.
+
+It accepts `{ slug, link, name }`. Pass `slug` to match your own anchor convention (for example a docs site whose table of contents computes ids a specific way; repeats of the slug it returns are still numbered), `link: true` to wrap each heading in a plain `<a href="#id">`, and `name` when you render headings under a non-default component name.
 
 ```tsx
 <Md content={md} transform={headingAnchors({ slug: myToId, link: true })} />
