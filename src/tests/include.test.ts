@@ -101,7 +101,7 @@ function markdocFences(source: string): Array<[string, string]> {
   return markdocTokenizer
     .tokenize(source)
     .filter((token) => token.type === 'fence')
-    .map((token) => [token.info, token.content]);
+    .map((token) => [token.info ?? '', token.content ?? '']);
 }
 
 /**

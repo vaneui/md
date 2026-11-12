@@ -7,6 +7,7 @@ import Markdoc, {
   type ValidationError,
 } from "@markdoc/markdoc";
 import type { MdPartial } from "./types";
+import { tokenize, type Token } from "./tokenizer";
 
 // Variables keys for the partial tag's own state. Markdown cannot read them
 // (Markdoc variable names only allow letters, digits, `_` and `-`), and the tag
@@ -55,10 +56,6 @@ interface PartialChainEntry {
   variables: Record<string, unknown>;
 }
 
-type Token = ReturnType<InstanceType<typeof Markdoc.Tokenizer>["tokenize"]>[number];
-
-let tokenizer: InstanceType<typeof Markdoc.Tokenizer> | undefined;
-
 /**
  * `include` and `partial` never take children. Markdoc still pairs an opening
  * tag with a later closing tag, so `{% include "x.md" %}` (GitBook style, never
@@ -105,8 +102,7 @@ export interface ParseMarkdownOptions {
  */
 export function parseMarkdown(source: string, options: ParseMarkdownOptions = {}): Node {
   const { file, selfClosingTags = SELF_CLOSING_TAGS } = options;
-  tokenizer ??= new Markdoc.Tokenizer();
-  let tokens = tokenizer.tokenize(source);
+  let tokens = tokenize(source);
   if (selfClosingTags.length > 0) tokens = selfCloseTags(tokens, new Set(selfClosingTags));
   return Markdoc.parse(tokens, file);
 }

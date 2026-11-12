@@ -1,4 +1,4 @@
-import Markdoc from "@markdoc/markdoc";
+import Markdoc, { type Config } from "@markdoc/markdoc";
 import React from "react";
 import { MdProps, MdConfig } from "../types";
 import { defaultNodesConfig, defaultComponents, defaultTagsConfig } from "../config/default-config";
@@ -73,7 +73,7 @@ export function renderMd(
     userConfig
   );
 
-  // Create Markdoc config
+  // Create Markdoc config. `MdConfig` types node children as plain strings, Markdoc as node type names.
   const markdocConfig = {
     nodes: mergedConfig.nodes,
     tags: mergedConfig.tags,
@@ -81,7 +81,7 @@ export function renderMd(
     variables: mergedConfig.variables,
     // String partials are parsed on first use, through a cache shared across renders.
     partials: preparePartials(mergedConfig.partials, selfClosingTags),
-  };
+  } as Config;
 
   const mdContext: MdRenderContext = {
     theme: mergeRendererTheme(baseTheme, rendererTheme),

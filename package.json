@@ -110,7 +110,7 @@
     }
   },
   "dependencies": {
-    "@markdoc/markdoc": "^0.5.2"
+    "@markdoc/markdoc": "^0.5.11"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.2",
@@ -124,6 +124,7 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.4",
     "jsdom": "^26.1.0",
+    "markdoc-0.5.10": "npm:@markdoc/markdoc@0.5.10",
     "postcss": "^8.4.47",
     "postcss-cli": "^11.0.0",
     "postcss-import": "^16.1.0",

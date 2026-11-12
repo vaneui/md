@@ -638,7 +638,8 @@ describe('partials: render budget', () => {
     return Array.from({ length: count }, () => `{% partial file="${file}" /%}`).join(' ');
   }
 
-  const config = { nodes: defaultNodesConfig, tags: defaultTagsConfig, partials: { 'w.md': 'w' } };
+  // `MdNodesConfig` types node children as plain strings, Markdoc's `Config` as node type names.
+  const config = { nodes: defaultNodesConfig as Config['nodes'], tags: defaultTagsConfig, partials: { 'w.md': 'w' } };
 
   it('stops a block partial that fans out exponentially, with one error and no crash', () => {
     const tag = '{% partial file="fan.md" variables={x: [$x]} /%}';
