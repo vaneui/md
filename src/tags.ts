@@ -1,9 +1,9 @@
 import Markdoc, {
-  Tag,
   type Config,
   type Node,
   type RenderableTreeNodes,
   type Schema,
+  type Tag,
   type ValidationError,
 } from "@markdoc/markdoc";
 import type { MdPartial } from "./types";
@@ -271,7 +271,7 @@ export function preparePartials(
  * phrasing content is valid, `MdError` otherwise.
  */
 function errorTag(message: string, inline: boolean): Tag {
-  return new Tag(inline ? "MdErrorInline" : "MdError", {}, [message]);
+  return new Markdoc.Tag(inline ? "MdErrorInline" : "MdError", {}, [message]);
 }
 
 /**
@@ -431,7 +431,7 @@ export function transformLink(node: Node, config: Config): RenderableTreeNodes {
   const children = node.transformChildren(textConfig);
   const render = node.findSchema(config)?.render;
   if (!render) return children;
-  return new Tag(render, node.transformAttributes(config), children);
+  return new Markdoc.Tag(render, node.transformAttributes(config), children);
 }
 
 /**

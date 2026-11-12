@@ -1,4 +1,5 @@
-import { Tag, type RenderableTreeNode } from "@markdoc/markdoc";
+// Only the default export is read at run time: Node cannot import names from Markdoc's CommonJS build.
+import Markdoc, { type RenderableTreeNode, type Tag } from "@markdoc/markdoc";
 
 /**
  * A post-transform hook. Runs on Markdoc's renderable tree after
@@ -21,7 +22,7 @@ export function visit(
     for (const child of node) visit(child, test, visitor);
     return;
   }
-  if (!Tag.isTag(node)) return;
+  if (!Markdoc.Tag.isTag(node)) return;
   const matches = typeof test === "string" ? node.name === test : test(node);
   if (matches) visitor(node);
   visit(node.children as RenderableTreeNode, test, visitor);
@@ -40,7 +41,7 @@ export function composeTransforms(
 function textContent(node: RenderableTreeNode): string {
   if (typeof node === "string") return node;
   if (Array.isArray(node)) return node.map(textContent).join("");
-  if (!Tag.isTag(node)) return "";
+  if (!Markdoc.Tag.isTag(node)) return "";
   if (node.children.length > 0) return textContent(node.children as RenderableTreeNode);
   const content: unknown = node.attributes?.content;
   return typeof content === "string" ? content : "";
@@ -121,7 +122,7 @@ export function headingAnchors(options: HeadingAnchorsOptions = {}): MdTransform
         tag.attributes.id = id;
       }
       if (link && id) {
-        tag.children = [new Tag("a", { href: `#${id}` }, tag.children as RenderableTreeNode[])];
+        tag.children = [new Markdoc.Tag("a", { href: `#${id}` }, tag.children as RenderableTreeNode[])];
       }
     });
     return tree;

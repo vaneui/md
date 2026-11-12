@@ -19,6 +19,14 @@ const dropPrivateDeclarations = () => ({
   }
 });
 
+/**
+ * Markdoc is a dependency, so the installed copy is the one that runs: it is
+ * never bundled, and a consumer can update it on its own. The source reads it
+ * only through its default export, because Node cannot import names from
+ * Markdoc's CommonJS build (`scripts/check-dist.mjs` loads every entry).
+ */
+const external = ['@markdoc/markdoc'];
+
 const plugins = () => [
   peerDepsExternal(),
   resolve({
@@ -36,8 +44,9 @@ const clientBanner = (chunk) => (chunk.isEntry && chunk.name === 'client' ? '"us
 
 export default [
   {
-    // One build for both entries, so they share one chunk: one copy of Markdoc and of the renderers.
+    // One build for both entries, so they share one chunk: one copy of the renderers and of the parse code.
     input: { index: 'src/index.ts', client: 'src/client.tsx' },
+    external,
     output: [
       {
         dir: 'dist',
@@ -62,6 +71,7 @@ export default [
   },
   {
     input: 'src/yaml.ts',
+    external,
     output: [
       {
         file: 'dist/yaml.cjs',
@@ -80,6 +90,7 @@ export default [
   },
   {
     input: 'src/registry.ts',
+    external,
     output: [
       {
         file: 'dist/registry.cjs',
@@ -101,6 +112,7 @@ export default [
     // sanitizeSpecProps). No createContext, so this subpath is safe to import
     // from a React Server Component / server-only module.
     input: 'src/spec.ts',
+    external,
     output: [
       {
         file: 'dist/spec.cjs',
@@ -121,7 +133,7 @@ export default [
     // Node-only load-time include expansion. Node built-ins stay external so
     // the shared `resolve({ browser: true })` plugin never tries to shim them.
     input: 'src/include.ts',
-    external: ['node:fs', 'node:fs/promises', 'node:path', 'fs', 'fs/promises', 'path'],
+    external: [...external, 'node:fs', 'node:fs/promises', 'node:path', 'fs', 'fs/promises', 'path'],
     output: [
       {
         file: 'dist/include.cjs',
@@ -140,6 +152,7 @@ export default [
   },
   {
     input: 'src/shiki.tsx',
+    external,
     output: [
       {
         file: 'dist/shiki.cjs',
@@ -158,6 +171,7 @@ export default [
   },
   {
     input: 'src/prism.tsx',
+    external,
     output: [
       {
         file: 'dist/prism.cjs',

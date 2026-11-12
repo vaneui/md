@@ -10,8 +10,8 @@ For styled output, the host app must render `<Md>` inside `@vaneui/ui`'s `ThemeP
 
 ## Stack
 
-- TypeScript, React 19 (peer range: 16.8+)
-- Markdoc (`@markdoc/markdoc` ^0.5.11) for parsing + AST transformation. Releases before 0.5.11 carry a Markdown tokenizer that loops forever on about 100 unclosed inline tags in one paragraph, so the range must not go lower.
+- TypeScript, React 19 (peer range: 18 or 19, the range `@vaneui/ui` supports)
+- Markdoc (`@markdoc/markdoc` ^0.5.11) for parsing + AST transformation. Releases before 0.5.11 carry a Markdown tokenizer that loops forever on about 100 unclosed inline tags in one paragraph, so the range must not go lower. Markdoc is a runtime dependency and stays external in every bundle (`external` in `rollup.config.mjs`), so the installed copy is the one that runs. Read it only through its default export (`Markdoc.Tag`, `Markdoc.parse`, never `import { Tag }` as a value): Node cannot import names from Markdoc's CommonJS build, and the default export has the same members whether it is that build's `module.exports` or the ESM build's class.
 - Rollup for JS bundling (CJS + ESM dual output)
 - PostCSS for CSS bundling
 - Jest + ts-jest + jsdom for testing
@@ -96,7 +96,7 @@ src/
 
 `MdStream` (`src/stream.tsx`) runs the same steps on the whole source on every update, so its output equals `<Md>`'s: `prepareMd` (steps 1 to 5 and the `transform` hook), then each child of the transformed document goes through `renderTree` inside its own memoized `Block`, and the wrapper element is created by Markdoc's renderer around those blocks (it passes children that are not tags through). A block renders again only when its part of the transformed tree changed (`sameValue`: arrays, plain objects and Markdoc tags by content, everything else by identity), or when `mdContext` or the merged `components` changed in content (`useSame` keeps the earlier object otherwise, which also keeps the provider values stable). Nothing is parsed per block: reference links, conditions, variables, the partial budget and `transform` hooks span blocks. `splitBlocks` is not used by `MdStream`; it and `useMdStream` return block source text for consumers.
 
-**The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner. `scripts/check-dist.mjs` (last step of `npm run build`) fails the build if a `dist/client.*` bundle lacks the banner, or if any other bundle has it or uses `createContext` / `useContext`.
+**The main entry must stay usable from React Server Components:** nothing reachable from `src/index.ts` may call `createContext`, `useContext` or other hooks (`server-entry.test.ts` walks the import graph to enforce it). Context, hooks and `MdStream` belong in the client entry (`src/client.tsx`), which rollup builds together with the main entry so both share one chunk, and which gets the `"use client"` banner. `scripts/check-dist.mjs` (last step of `npm run build`) fails the build if a `dist/client.*` bundle lacks the banner, if any other bundle has it or uses `createContext` / `useContext`, if no bundle loads `@markdoc/markdoc` (it was bundled) or one imports names from it, or if an entry does not load in plain Node with `require` (`.cjs`) or `import` (`.esm.js`).
 
 Every markdown node is rendered via a VaneUI-wrapped component (e.g., `MdHeading` wraps `Title`). Each renderer reads its own slot from `rendererThemeOf(props.mdContext)` (the package defaults when it is used outside `<Md>`), strips `mdContext` from the props it forwards, and spreads the boolean props onto the underlying VaneUI element before any markdown-supplied attributes.
 
