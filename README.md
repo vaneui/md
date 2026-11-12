@@ -510,6 +510,8 @@ Blocks are compared by content, so passing a new `config` or `rendererTheme` obj
 - `@vaneui/md/include` (Node only) exports `resolveIncludes`, `resolveIncludesAsync` and `IncludeError` for expanding `{% include %}` tags at load time, plus the option and error-code types.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer. It adds spacing rules built on VaneUI tokens; it does not re-bundle `@vaneui/ui` CSS. Import it alongside your VaneUI CSS.
 
+Every JavaScript entry is built as an ES module and as CommonJS, each with its own type declarations (`.d.mts` for `import`, `.d.cts` for `require`), so the types resolve under TypeScript's `node16`, `nodenext` and `bundler` module resolution.
+
 ## Development
 
 Development and CI run on Node 24 (`.nvmrc`). The published package sets no `engines` field, because `dist` also runs on older Node releases.
@@ -518,7 +520,8 @@ Development and CI run on Node 24 (`.nvmrc`). The published package sets no `eng
 npm install
 npm run type-check   # tsc --noEmit
 npm test             # type-check + jest
-npm run build        # clean + rollup (CJS + ESM) + postcss
+npm run build        # clean + rollup (CJS + ESM) + types for both module systems + postcss + dist checks
+npm run check:package  # publint and Are the Types Wrong on the packed tarball (after a build)
 npm run playground   # install + run the playground dev server
 ```
 

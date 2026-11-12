@@ -23,14 +23,18 @@ Development and CI use Node 24 (`.nvmrc`, the workflows). `package.json` has no 
 
 ```bash
 npm run type-check     # tsc --noEmit
-npm run build          # clean + build:js (rollup) + build:css (postcss) + scripts/check-dist.mjs
+npm run build          # clean + build:js (rollup) + build:types + build:css (postcss) + scripts/check-dist.mjs
 npm run build:js       # type-check + rollup (CJS + ESM)
+npm run build:types    # scripts/generate-dual-types.mjs: a .d.mts and a .d.cts next to every .d.ts in dist
 npm run build:css      # PostCSS bundle to dist/styles/index.css
 npm test               # type-check + jest
+npm run check:package  # publint + @arethetypeswrong/cli on the packed tarball (run after a build)
 npm run playground     # install + run playground dev server
 ```
 
-**Always run `npm run build` + `npm test` before reporting work complete.** Both must pass.
+**Always run `npm run build` + `npm test` before reporting work complete.** Both must pass. After a change to `package.json` (`exports`, `files`, dependencies), the rollup config or the entry list, also run `npm run check:package`.
+
+**Types for both module systems.** The package is `"type": "module"`, so each `exports` entry has an `import` condition (`.d.mts` + `.esm.js`) and a `require` condition (`.d.cts` + `.cjs`). `scripts/generate-dual-types.mjs` copies every `.d.ts` rollup emits to both variants and rewrites relative specifiers to `.mjs` / `.cjs`, which TypeScript resolves to the `.d.mts` / `.d.cts` next to them, so the types resolve under `node16` / `nodenext` as well as `bundler`. A new entry needs its own `exports` block with both conditions. `.attw.json` skips the CSS entry and ignores the `node10` resolution mode, which cannot see `exports` subpaths.
 
 ## Project Structure
 
