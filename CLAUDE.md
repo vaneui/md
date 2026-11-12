@@ -416,7 +416,7 @@ This is why a consumer's `primary: true` doesn't end up on the JSX alongside the
 Genuinely dynamic per-render logic that can't be expressed as static defaults stays in the renderer:
 
 - `MdHeading` — level (1–6) → size (`xl`–`xs`) mapping
-- `MdList` — `ordered` attribute → `decimal` vs `disc`
+- `MdList` — `ordered` attribute → `listDecimal` vs `listDisc`; `start` (the first number of an ordered list that does not start at 1) → the `<ol start>` attribute
 - `MdImage` — `src`, `alt`, `title` come from Markdoc node attributes
 - `MdLink` — `href`, `title` from Markdoc
 

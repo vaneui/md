@@ -42,6 +42,8 @@ export const defaultNodesConfig: MdNodesConfig = {
     render: "MdList",
     attributes: {
       ordered: { type: Boolean },
+      // The first number of an ordered list that does not start at 1.
+      start: { type: Number },
     },
   },
   item: {
