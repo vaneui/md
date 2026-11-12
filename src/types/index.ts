@@ -151,9 +151,10 @@ export interface MdProps {
    */
   transform?: import("../transform").MdTransform;
   /**
-   * Optional policy that tightens the always-on vaneui-fence sanitize floor
-   * for untrusted content (URL-scheme allowlist, extra blocked props, or a
-   * narrowed component allowlist). Use `strictSanitizePolicy` or the
+   * Optional policy on top of the always-on vaneui-fence sanitize floor. The
+   * floor alone stops a fence from running script or injecting markup; a
+   * policy adds a prop allow-list, a URL-scheme allowlist, extra blocked props
+   * or a narrowed component allowlist. Use `strictSanitizePolicy` or the
    * `untrustedPreset` for user- or AI-authored content.
    */
   sanitize?: import("../sanitize").SanitizePolicy;
@@ -164,5 +165,14 @@ export interface MdProps {
    * reusable preconfigured component.
    */
   presets?: import("../preset").MdPreset[];
+  /**
+   * `false` turns Markdoc's tag syntax off: `{% ... %}` stays in the text
+   * as written, so no tags, variables, functions or annotations are read
+   * (and none of `config.tags`, `config.functions`, `config.variables` or
+   * `config.partials` can be reached from the content). Use it for prose
+   * that contains `{%` for other reasons, such as template code in technical
+   * or model-written text. Frontmatter is still read. Default `true`.
+   */
+  tagSyntax?: boolean;
   config?: MdConfig;
 }

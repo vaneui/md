@@ -1,12 +1,13 @@
 import Markdoc, {
-  Tag,
   type Config,
   type Node,
   type RenderableTreeNodes,
   type Schema,
+  type Tag,
   type ValidationError,
 } from "@markdoc/markdoc";
 import type { MdPartial } from "./types";
+import { tokenize, type Token } from "./tokenizer";
 
 // Variables keys for the partial tag's own state. Markdown cannot read them
 // (Markdoc variable names only allow letters, digits, `_` and `-`), and the tag
@@ -55,10 +56,6 @@ interface PartialChainEntry {
   variables: Record<string, unknown>;
 }
 
-type Token = ReturnType<InstanceType<typeof Markdoc.Tokenizer>["tokenize"]>[number];
-
-let tokenizer: InstanceType<typeof Markdoc.Tokenizer> | undefined;
-
 /**
  * `include` and `partial` never take children. Markdoc still pairs an opening
  * tag with a later closing tag, so `{% include "x.md" %}` (GitBook style, never
@@ -87,6 +84,66 @@ function selfCloseTags(tokens: Token[], names: ReadonlySet<string>): Token[] {
   return result ?? tokens;
 }
 
+/** A closing token for the tag `open` leaves open, which gets the error Markdoc reports for it. */
+function closingToken(open: Token): Token {
+  const tag: unknown = open.meta?.tag;
+  open.errors = [
+    ...(open.errors ?? []),
+    { id: "missing-closing", level: "critical", message: `Node '${String(tag)}' is missing closing` },
+  ];
+  // Built from the opening token, so it has the tokenizer's own token shape.
+  const close: Token = Object.create(Object.getPrototypeOf(open) as object);
+  return Object.assign(close, open, {
+    type: "tag_close",
+    nesting: -1,
+    meta: { tag },
+    attrs: null,
+    map: null,
+    children: null,
+    content: "",
+    errors: undefined,
+  });
+}
+
+/**
+ * Closes every tag that is still open where the content around it ends: the
+ * end of a run of inline content (a paragraph, a heading, a table cell), of
+ * the tag-aware content of a fence, or of a container (a list item, a
+ * blockquote). Markdoc pairs closing tokens by position, so a tag left open
+ * there (`{% endfor %}` in a sentence, which reads as the opening of a tag
+ * named `endfor`) made the paragraph swallow an empty paragraph and every
+ * block after it. The tag now ends with its container and keeps the
+ * `missing-closing` error for `Markdoc.validate`. A block tag left open at
+ * the top level still takes the rest of the document, as before. Returns
+ * `tokens` itself when nothing was added.
+ */
+function closeOpenTags(tokens: Token[], closeAtEnd: boolean): Token[] {
+  const open: Token[] = [];
+  let result: Token[] | undefined;
+  const closeTags = (index: number) => {
+    while (open.length > 0 && open[open.length - 1].type === "tag_open") {
+      result ??= tokens.slice(0, index);
+      result.push(closingToken(open.pop() as Token));
+    }
+  };
+  tokens.forEach((token, index) => {
+    if (token.children) token.children = closeOpenTags(token.children, true);
+    if (token.type === "tag_close") {
+      // Markdoc pairs a closing tag only with the innermost open tag of the same name.
+      const last = open[open.length - 1];
+      if (last?.type === "tag_open" && last.meta?.tag === token.meta?.tag) open.pop();
+    } else if ((token.nesting ?? 0) < 0) {
+      closeTags(index);
+      open.pop();
+    } else if ((token.nesting ?? 0) > 0) {
+      open.push(token);
+    }
+    result?.push(token);
+  });
+  if (closeAtEnd) closeTags(tokens.length);
+  return result ?? tokens;
+}
+
 export interface ParseMarkdownOptions {
   /** File name recorded in node locations (`Markdoc.parse`'s `file`). */
   file?: string;
@@ -96,19 +153,31 @@ export interface ParseMarkdownOptions {
    * passes only the names whose schema is still the library's own.
    */
   selfClosingTags?: readonly string[];
+  /**
+   * `false` reads `{% ... %}` as plain text: no tags, variables, functions or
+   * annotations. Frontmatter is still read. Default `true`.
+   */
+  tagSyntax?: boolean;
 }
 
 /**
  * `Markdoc.parse`, except that the `include` and `partial` tags (or the
- * `selfClosingTags` given) are always parsed as self-closing. A document
- * without those tags parses exactly as with `Markdoc.parse`.
+ * `selfClosingTags` given) are always parsed as self-closing, and a tag left
+ * open inside a paragraph, a list item or a blockquote ends there instead of
+ * breaking the nesting of the blocks around it. A document whose tags are all
+ * closed, and that uses neither of the two tags, parses exactly as with
+ * `Markdoc.parse`.
  */
 export function parseMarkdown(source: string, options: ParseMarkdownOptions = {}): Node {
-  const { file, selfClosingTags = SELF_CLOSING_TAGS } = options;
-  tokenizer ??= new Markdoc.Tokenizer();
-  let tokens = tokenizer.tokenize(source);
+  return Markdoc.parse(markdownTokens(source, options), options.file);
+}
+
+/** The tokens `parseMarkdown` builds the document from: self-closing tags applied, open tags closed. */
+export function markdownTokens(source: string, options: Omit<ParseMarkdownOptions, "file"> = {}): Token[] {
+  const { selfClosingTags = SELF_CLOSING_TAGS, tagSyntax } = options;
+  let tokens = tokenize(source, { tagSyntax });
   if (selfClosingTags.length > 0) tokens = selfCloseTags(tokens, new Set(selfClosingTags));
-  return Markdoc.parse(tokens, file);
+  return closeOpenTags(tokens, false);
 }
 
 /**
@@ -206,7 +275,18 @@ export function preparePartials(
  * phrasing content is valid, `MdError` otherwise.
  */
 function errorTag(message: string, inline: boolean): Tag {
-  return new Tag(inline ? "MdErrorInline" : "MdError", {}, [message]);
+  return new Markdoc.Tag(inline ? "MdErrorInline" : "MdError", {}, [message]);
+}
+
+/**
+ * Transform of the default `error` node, which Markdoc creates for tag syntax
+ * it cannot read: `{% foo bar= %}`, or template syntax from another language
+ * such as `{% for item in items %}`. Renders the parser's message, as
+ * `MdErrorInline` where the syntax is inline and as `MdError` on its own line.
+ */
+export function transformError(node: Node): Tag {
+  const message = node.errors.find((error) => typeof error?.message === "string" && error.message !== "")?.message;
+  return errorTag(message ? `Tag syntax error: ${message}` : "Tag syntax error", node.inline);
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -355,7 +435,7 @@ export function transformLink(node: Node, config: Config): RenderableTreeNodes {
   const children = node.transformChildren(textConfig);
   const render = node.findSchema(config)?.render;
   if (!render) return children;
-  return new Tag(render, node.transformAttributes(config), children);
+  return new Markdoc.Tag(render, node.transformAttributes(config), children);
 }
 
 /**
