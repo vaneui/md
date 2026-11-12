@@ -512,6 +512,8 @@ Blocks are compared by content, so passing a new `config` or `rendererTheme` obj
 
 ## Development
 
+Development and CI run on Node 24 (`.nvmrc`). The published package sets no `engines` field, because `dist` also runs on older Node releases.
+
 ```bash
 npm install
 npm run type-check   # tsc --noEmit

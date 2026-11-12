@@ -19,6 +19,8 @@ For styled output, the host app must render `<Md>` inside `@vaneui/ui`'s `ThemeP
 
 ## Commands
 
+Development and CI use Node 24 (`.nvmrc`, the workflows). `package.json` has no `engines` field on purpose: the published code runs on older Node releases, and an `engines` pin made installs warn or fail there.
+
 ```bash
 npm run type-check     # tsc --noEmit
 npm run build          # clean + build:js (rollup) + build:css (postcss) + scripts/check-dist.mjs
