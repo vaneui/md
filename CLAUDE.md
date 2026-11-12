@@ -65,7 +65,7 @@ src/
 ├── context.ts               # The five React contexts; client entry only
 ├── client.tsx               # Client entry (@vaneui/md/client): client Md, MdStream, useMdStream, contexts
 ├── stream.tsx               # MdStream (one document, memoized top-level blocks), useMdStream (client entry only)
-├── splitBlocks.ts           # splitBlocks: the source text of each top-level block, from the token stream
+├── splitBlocks.ts           # splitBlocks: the source text of each top-level block, from the tokens parseMarkdown uses (`markdownTokens`)
 ├── rendererTheme.ts         # MdRendererTheme, defaultRendererTheme, mergeRendererTheme
 ├── spec.ts                  # ComponentSpec, renderSpec, expandShorthand, collapseShorthand
 ├── transform.ts             # MdTransform, visit, composeTransforms, headingAnchors (slug ids: any script, inline code text, repeats numbered -1, -2), rewriteLinks

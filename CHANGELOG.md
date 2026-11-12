@@ -49,7 +49,7 @@ Changed.
 - `MdStream` parses and transforms the whole source on every update, and React renders again
   only the top-level blocks whose content changed. Before, it parsed each blank-line chunk by
   itself. For long outputs, update once per animation frame.
-- `splitBlocks` and `useMdStream` return the top-level blocks as the tokenizer reads them: a
+- `splitBlocks` and `useMdStream` return the top-level blocks as `<Md>` parses them: a
   whole list, blockquote, table or code fence, or a block tag with its content, each an exact
   slice of the source. Before, they returned the chunks between blank lines.
 - `headingAnchors` ids change for headings with inline code, letters outside ASCII or a

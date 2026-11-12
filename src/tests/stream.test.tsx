@@ -51,6 +51,23 @@ describe('splitBlocks', () => {
     ]);
   });
 
+  it('ends a tag left open in a quote, a list item, a paragraph or a fence where <Md> ends it', () => {
+    const cases = [
+      '> {% note %}\n> quoted',
+      '- {% note %}\n  item',
+      'text {% note %} more',
+      '```js\n{% note %}\n```',
+    ];
+    for (const first of cases) {
+      const src = `${first}\n\nafter one\n\nafter two`;
+      expect(splitBlocks(src)).toEqual([first, 'after one', 'after two']);
+      // The same three blocks are the children of the document `<Md>` renders.
+      const { container, unmount } = render(<ServerMd content={src} />);
+      expect(container.firstElementChild?.children).toHaveLength(3);
+      unmount();
+    }
+  });
+
   it('separates blocks that follow each other without a blank line', () => {
     expect(splitBlocks('# Title\nText\n```js\ncode\n```\nMore')).toEqual(['# Title', 'Text', '```js\ncode\n```', 'More']);
   });

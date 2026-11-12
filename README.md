@@ -497,7 +497,7 @@ On every update `MdStream` parses and transforms the whole source, then React re
 
 Blocks are compared by content, so passing a new `config` or `rendererTheme` object with the same content on every render is fine. Functions and components are compared by identity: create `highlight`, `transform`, `parseFrontmatter` and the components in `config.components` once (outside the component or in a memo), or every block renders again on every update.
 
-`splitBlocks(source)` (main entry) and `useMdStream(content)` (client entry) return the source text of each top-level block as the tokenizer reads it: a whole list, blockquote, table or code fence, or a block tag with everything up to its closing tag, each an exact slice of the source. Use them to count or measure blocks. Rendering each block as its own `<Md>` is not the same document, because reference links, variables and conditions span blocks.
+`splitBlocks(source)` (main entry) and `useMdStream(content)` (client entry) return the source text of each top-level block as `<Md>` parses it: a whole list, blockquote, table or code fence, or a block tag with everything up to its closing tag, each an exact slice of the source. Use them to count or measure blocks. Rendering each block as its own `<Md>` is not the same document, because reference links, variables and conditions span blocks.
 
 ## Upgrading from 1.2
 

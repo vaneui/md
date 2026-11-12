@@ -1,18 +1,16 @@
-import { tokenize } from "./tokenizer";
-
-/** Tags that never take children: an opening one does not hold the blocks after it. */
-const SELF_CLOSING_TAGS: ReadonlySet<string> = new Set(["include", "partial"]);
+import { markdownTokens } from "./tags";
 
 /**
- * Splits Markdown into its top-level blocks, as the Markdoc tokenizer reads
- * them: a paragraph, a heading, a whole list, a whole blockquote, a table, a
- * code fence, or a block tag with everything up to its closing tag. Each block
- * is an exact slice of `src` without the blank lines around it.
+ * Splits Markdown into its top-level blocks, as `<Md>` parses them: a
+ * paragraph, a heading, a whole list, a whole blockquote, a table, a code
+ * fence, or a block tag with everything up to its closing tag. Each block is
+ * an exact slice of `src` without the blank lines around it.
  *
  * The frontmatter is the first block. Lines that belong to no block (link
  * reference definitions) stay with the block before them. The last block may
- * be incomplete: an unclosed fence or an unclosed tag takes the rest of the
- * source.
+ * be incomplete: an unclosed fence, or a block tag left open at the top level,
+ * takes the rest of the source. A tag left open inside a list item or a
+ * blockquote ends with it, and `include` and `partial` tags hold no blocks.
  *
  * Rendering each block as its own document is not the same as rendering the
  * source: reference links, variables and conditions span blocks. `MdStream`
@@ -33,14 +31,10 @@ export function splitBlocks(src: string): string[] {
   // The first line of every block: a token that opens while no other block is open.
   const firstLines: number[] = [0];
   let depth = 0;
-  for (const token of tokenize(src)) {
-    const tag: unknown = token.meta?.tag;
-    const isTagEdge = token.type === "tag_open" || token.type === "tag_close";
-    const selfClosing = isTagEdge && typeof tag === "string" && SELF_CLOSING_TAGS.has(tag);
-    const nesting = selfClosing ? 0 : token.nesting ?? 0;
+  for (const token of markdownTokens(src)) {
+    const nesting = token.nesting ?? 0;
     const line = token.map?.[0];
-    const opens = nesting >= 0 && !(selfClosing && token.type === "tag_close");
-    if (depth === 0 && opens && typeof line === "number" && line > firstLines[firstLines.length - 1] && line < lineCount) {
+    if (depth === 0 && nesting >= 0 && typeof line === "number" && line > firstLines[firstLines.length - 1] && line < lineCount) {
       firstLines.push(line);
     }
     depth = Math.max(0, depth + nesting);

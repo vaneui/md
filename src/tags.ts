@@ -169,11 +169,15 @@ export interface ParseMarkdownOptions {
  * `Markdoc.parse`.
  */
 export function parseMarkdown(source: string, options: ParseMarkdownOptions = {}): Node {
-  const { file, selfClosingTags = SELF_CLOSING_TAGS, tagSyntax } = options;
+  return Markdoc.parse(markdownTokens(source, options), options.file);
+}
+
+/** The tokens `parseMarkdown` builds the document from: self-closing tags applied, open tags closed. */
+export function markdownTokens(source: string, options: Omit<ParseMarkdownOptions, "file"> = {}): Token[] {
+  const { selfClosingTags = SELF_CLOSING_TAGS, tagSyntax } = options;
   let tokens = tokenize(source, { tagSyntax });
   if (selfClosingTags.length > 0) tokens = selfCloseTags(tokens, new Set(selfClosingTags));
-  tokens = closeOpenTags(tokens, false);
-  return Markdoc.parse(tokens, file);
+  return closeOpenTags(tokens, false);
 }
 
 /**
