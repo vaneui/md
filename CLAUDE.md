@@ -68,6 +68,8 @@ src/
 ├── tokenizer.ts             # tokenize: the one shared Markdoc tokenizer, wrapped by guardInlineNesting (internal)
 ├── include.ts               # resolveIncludes / resolveIncludesAsync / IncludeError (Node-only subpath: @vaneui/md/include)
 ├── include-blocks.ts        # BlockScanner: which lines are fenced code, read like Markdoc (internal to include.ts)
+├── prism.tsx, shiki.tsx     # Highlight adapters (subpaths @vaneui/md/prism and @vaneui/md/shiki)
+├── trimNewlines.ts          # trimTrailingNewlines, a linear-time trim for the highlight adapters (internal)
 ├── setupTests.ts
 └── index.ts                 # Public barrel export
 ```
@@ -436,7 +438,7 @@ The two systems compose cleanly: `rendererTheme` sets JSX props on the underlyin
 - `@vaneui/md` — `Md`, `createMd`, all `Md*` renderers, `defaultNodesConfig`, `defaultComponents`, `defaultTagsConfig`, `renderSpec`, `expandShorthand`, `collapseShorthand`, `splitBlocks`, `defaultRendererTheme`, `mergeRendererTheme`, types (incl. `MdRenderContext`). Safe to import from React Server Components.
 - `@vaneui/md/client` — `Md` (context-aware), `createMd` (builders on the client `Md`), `MdStream`, `useMdStream`, `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext`. `dist/client.*` gets a `"use client"` banner and imports the chunk it shares with the main entry.
 - `@vaneui/md/yaml` — `parseYamlFrontmatter` (one-line wrapper over `yaml.parse`). `yaml` is an optional peer dependency.
-- `@vaneui/md/include` exports `resolveIncludes`, `resolveIncludesAsync`, `IncludeError` and their option and error-code types. **Node only** (imports `node:fs` / `node:path`, marked external in `rollup.config.mjs`); keep it out of `src/index.ts`, which `include.test.ts` checks by walking the browser entries' import graphs. `src/include-paths.ts` and `src/include-blocks.ts` are internal: not exported from any entry, and `rollup.config.mjs` drops their declaration files (and the tests') from `dist`.
+- `@vaneui/md/include` exports `resolveIncludes`, `resolveIncludesAsync`, `IncludeError` and their option and error-code types. **Node only** (imports `node:fs` / `node:path`, marked external in `rollup.config.mjs`); keep it out of `src/index.ts`, which `include.test.ts` checks by walking the browser entries' import graphs. `src/include-paths.ts`, `src/include-blocks.ts` and `src/trimNewlines.ts` are internal: not exported from any entry, and `rollup.config.mjs` drops their declaration files (and the tests') from `dist`.
 - `@vaneui/md/registry` — `defaultRegistry`, the safe VaneUI component allowlist (36 components). Pulled in only when imported, so consumers who don't render `vaneui` fences pay zero bundle cost.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer (`dist/styles/index.css`). **Rules-only**: it does NOT bundle `@vaneui/ui`'s CSS (that is a peer dependency the consumer already loads via `@vaneui/ui/css` or `@vaneui/ui/vars`), it only adds spacing rules that build on VaneUI's tokens (`--spacing`, `--gap`). Import it alongside your vaneui CSS to get the document rhythm; omit it to fall back to the raw block flow.
 
@@ -459,6 +461,7 @@ Tests live in `src/tests/`:
 - `md.theme-structure.test.tsx` — theme structure validation
 
 **Module-level units:**
+- `prism.test.tsx`, `shiki.test.tsx` (Shiki mocked): the highlight adapters, including that line breaks at the end of the code are dropped and that 80,000 blank lines before the last line are trimmed in well under a second (under `runWithTimeout`)
 - `yaml.test.tsx` — `parseYamlFrontmatter` direct: normal/empty/null/string/array/number/malformed inputs
 - `registry.test.tsx` — `defaultRegistry` allowlist: safe components present, callback-required components absent, every entry is a valid component type
 - `include.test.ts`: `resolveIncludes` / `resolveIncludesAsync` (node environment): every tag form, blockquote prefixes, relative / nested / root-relative paths, the `include-paths` helpers under `path.win32`, frontmatter, BOM and CRLF, indentation and tab expansion, fences in containers and unclosed fences, fence and lazy-line cases cross-checked with `Markdoc.Tokenizer`, seeded fuzz tests (tag lines outside Markdoc's fences, and the same fenced code in an included file as standalone), tabs in included code, linear-time checks on 100k-character lines, `maxIncludes` and the read cache, `maxOutputLength`, `extensions`, cycles, depth, root and symlink escapes (symlinked roots, real-path cycles, `checkRealPaths`), option validation, `onError` / `onInclude`, the `IncludeError` brand (incl. proxies and getters), and that the browser entries never import `node:` built-ins or `src/include.ts`. Symlink and case-insensitive tests are skipped where the file system lacks them.

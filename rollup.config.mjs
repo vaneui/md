@@ -8,7 +8,7 @@ import peerDepsExternal from 'rollup-plugin-peer-deps-external';
  * src. Internal modules and the tests are not part of the public types, so
  * theirs are left out of dist (no public declaration imports them).
  */
-const privateDeclarations = /^(?:include-paths|include-blocks|setupTests)\.d\.ts$|^tests\//;
+const privateDeclarations = /^(?:include-paths|include-blocks|trimNewlines|setupTests)\.d\.ts$|^tests\//;
 
 const dropPrivateDeclarations = () => ({
   name: 'drop-private-declarations',
