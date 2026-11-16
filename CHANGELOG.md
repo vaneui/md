@@ -8,6 +8,10 @@ the release commit.
 
 ## Unreleased
 
+## 1.4.0
+
+`2026-11-16`
+
 Fixes from a review of 1.3.0. A `vaneui` fence or Markdoc syntax in untrusted Markdown can no
 longer run script or stop the render, `MdStream` renders the same document as `<Md>`, and the
 published package installs on older Node releases and resolves its types under TypeScript's
