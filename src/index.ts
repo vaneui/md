@@ -28,7 +28,7 @@ export type { MdBuilder } from "./createMd";
 export { mergePresets, untrustedPreset } from "./preset";
 export type { MdPreset } from "./preset";
 
-// Block splitter behind MdStream (MdStream itself is on @vaneui/md/client).
+// The source text of each top-level block (MdStream itself is on @vaneui/md/client).
 export { splitBlocks } from "./splitBlocks";
 
 // Per-renderer visual defaults, one slot per Md* renderer. Override via <Md rendererTheme={...}>.

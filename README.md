@@ -71,6 +71,7 @@ export default async function Post({ params }: { params: Promise<{ slug: string 
 | `components` | `Record<string, React.ComponentType>` | String to component map used to resolve names in `vaneui` fences. Use `defaultRegistry` from `@vaneui/md/registry`, or supply your own. |
 | `rendererTheme` | `MdRendererTheme` | Per-renderer visual defaults (one slot per `Md*` renderer). |
 | `config` | `MdConfig` | Override Markdoc `nodes`, `components`, `tags`, `functions`, or `variables`, and register named `partials` for the `{% partial %}` tag. |
+| `tagSyntax` | `boolean` | `false` leaves `{% ... %}` in the text as written instead of reading it as Markdoc tags. Default `true`. See [Tag syntax in the content](#tag-syntax-in-the-content). |
 
 ## Frontmatter
 
@@ -232,7 +233,7 @@ children:
 
 ### Registry safety
 
-`defaultRegistry` (`@vaneui/md/registry`) is a curated allowlist of presentational components. A name not in the registry renders nothing rather than throwing, and stateful or callback components (modals, popups, inputs, and similar) are excluded. Supply your own map to widen or narrow the set. Recursion is capped to keep deeply nested specs bounded.
+`defaultRegistry` (`@vaneui/md/registry`) is a curated allowlist of presentational components. A name not in the registry renders nothing rather than throwing, and stateful or callback components (modals, popups, inputs, and similar) are excluded. Supply your own map to widen or narrow the set. Recursion is capped to keep deeply nested specs bounded. The props a fence passes are checked as well: see [Safe rendering of untrusted content](#safe-rendering-of-untrusted-content).
 
 ## Per-renderer visual defaults: `rendererTheme`
 
@@ -301,7 +302,7 @@ A partial renders with the page's variables (including `$markdoc.frontmatter`) p
 
 Unlike Markdoc's built-in tag, a missing name renders an error instead of nothing, and a partial that comes back with the same variables while it is still rendering, directly or through other partials, renders an error naming the cycle (for example `Partial cycle: a.md -> b.md -> a.md`). Variables count as the same when their content is equal: arrays and plain objects compare by value, even when they link back to themselves (tree nodes that point to their parent), and anything else compares by identity. Any other nesting is capped at 16 levels.
 
-One render handles at most 1000 partial tags, counting the ones that render an error, so a partial that uses itself more than once cannot multiply into millions of renders within those 16 levels. The first tag over the limit renders an error and later partial tags render nothing. Each `MdStream` block is a render of its own.
+One render handles at most 1000 partial tags, counting the ones that render an error, so a partial that uses itself more than once cannot multiply into millions of renders within those 16 levels. The first tag over the limit renders an error and later partial tags render nothing.
 
 All of these errors render in place instead of throwing, and the rest of the page still renders.
 
@@ -320,6 +321,25 @@ Presets can contribute `partials` as well. An explicit `config.partials` entry w
 Partials are named snippets you hand to `<Md>`, which never reads files. To pull in another file by relative path, as with GitBook's `{% include "../shared/note.md" %}`, expand includes before rendering with `resolveIncludes` from `@vaneui/md/include` (see [Including other files](#including-other-files)). Include syntax that reaches `<Md>` unexpanded renders an error pointing there, and the content after it still renders.
 
 Both tags are ordinary Markdoc tag schemas, exported together as `defaultTagsConfig`. Pass your own `partial` or `include` in `config.tags` to replace either one.
+
+## Tag syntax in the content
+
+Markdoc reads `{% ... %}` in the content as a tag, a variable, a function call or an annotation. Text from other sources often contains the same characters for other reasons: template code such as `{% for item in items %}` in technical writing, or in model output.
+
+Syntax the parser cannot read renders an error in place, with the parser's message, and the rest of the page still renders:
+
+- Inside a paragraph, a heading, a table cell, a list item or link text it renders through `MdErrorInline`, a `<span>`, so the paragraph stays valid HTML.
+- On its own line it renders through `MdError`, a card.
+
+A tag that is never closed ends where its paragraph, list item or blockquote ends, so `{% endfor %}` in a sentence (which Markdoc reads as the opening of a tag named `endfor`) no longer pulls the blocks after it into the paragraph. `Markdoc.validate` reports it as `missing-closing` on the tag. A block tag left open at the top level still takes the rest of the document.
+
+To render such text as written, turn tag syntax off:
+
+```tsx
+<Md content={text} tagSyntax={false} />
+```
+
+With `tagSyntax={false}` every `{% ... %}` stays in the text. No tag, variable, function, annotation or partial is read, so the content cannot reach anything in `config.tags`, `config.functions`, `config.variables` or `config.partials`, and cannot set an `id` or a class with an annotation. Markdown itself, frontmatter, code fences and `vaneui` fences work as before. The default is `true`, and a preset can set it: `createMd().use({ tagSyntax: false })`. `parseMarkdown(source, { tagSyntax: false })` does the same for code that parses on its own.
 
 ## Syntax highlighting
 
@@ -366,7 +386,21 @@ Presets merge left to right. Two presets that define the same `tags`, `component
 
 ## Safe rendering of untrusted content
 
-The `vaneui` fence resolves component names through the registry allowlist, and props are always sanitized: `dangerouslySetInnerHTML`, event handlers, and `ref` are stripped, and `javascript:`, `vbscript:`, and non-image `data:` URLs are dropped from `href`/`src`. To tighten further for user- or AI-authored content, pass a `sanitize` policy or use `untrustedPreset`:
+A `vaneui` fence resolves component names through the registry allowlist, and the props it passes go through two levels of checks.
+
+### The floor, always on
+
+With or without a policy, a fence cannot run script or inject markup:
+
+- `tag` is honoured only for inert elements: text, heading, list, sectioning, table and phrasing elements such as `section`, `h2`, `li` or `span`. Any other value is dropped, so `script`, `style`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `form`, form controls, `template`, `svg` and `math` never render through it.
+- `dangerouslySetInnerHTML`, `ref`, `srcDoc`, `httpEquiv` and every prop whose name starts with `on` are dropped, in any spelling (`srcdoc`, `ONCLICK`, `http-equiv`).
+- `javascript:`, `vbscript:` and non-image `data:` URLs are dropped from every URL-bearing prop (`href`, `src`, `srcSet`, `poster`, `action`, `formAction`, `xlinkHref`, `ping`, `cite`, `background`, `data` and the like). The scheme is read the way a browser reads it, ignoring control characters and whitespace, so `java<Tab>script:` is caught too.
+
+Every other prop passes at this level, including `className`, `id`, `style` objects and the props of your own registry components. That suits documents you write yourself. It is not enough for content from users or a model: a fence can still restyle or reposition a component, set ids, and pass any prop a registry component accepts.
+
+### The untrusted level
+
+For user- or AI-authored content, use `untrustedPreset` (or pass `strictSanitizePolicy` as the `sanitize` prop):
 
 ```tsx
 import { Md, untrustedPreset } from "@vaneui/md";
@@ -374,7 +408,47 @@ import { Md, untrustedPreset } from "@vaneui/md";
 <Md content={userMarkdown} presets={[untrustedPreset]} parseFrontmatter={parseYamlFrontmatter} components={registry} />
 ```
 
-A `SanitizePolicy` can set `allowedProtocols`, `blockedProps`, and `allowComponents`.
+It turns on a prop allow-list. Only these props pass, with string, number or boolean values:
+
+- the boolean props of `@vaneui/ui` (`primary`, `lg`, `filled`, and so on)
+- `children` and `text`
+- `href`, `src`, `alt`, `title`, `value`, `max` and `aria-*`
+- `colSpan`, `rowSpan`, `scope`, `width`, `height`, `target` (`_blank`, `_self`, `_parent` or `_top` only), `rel`, `start`, `reversed`, `lang`, `dir`
+- `external`, `active`, `polite` and `loading`, the functional booleans of the default registry components
+
+`tag`, `style`, `className`, `id` and every other prop are dropped, including the props of your own registry components. URL props accept only `http:`, `https:`, `mailto:`, `tel:` and relative URLs.
+
+### `SanitizePolicy`
+
+| Field | Effect |
+|---|---|
+| `allowedProtocols` | URL schemes that pass on URL props (lowercase, with the colon). Relative URLs always pass. |
+| `blockedProps` | Extra prop names to drop. Wins over `allowedProps`. |
+| `allowComponents` | Component names that may render. Others render nothing. |
+| `knownPropsOnly` | Turns on the prop allow-list described above. |
+| `allowedProps` | Extra prop names that pass the allow-list, with any value: `className`, or the props of your own components. |
+| `allowedTags` | Lowercase element names `tag` may take. Replaces the built-in list, and re-enables `tag` under the allow-list. |
+
+To widen the untrusted level on purpose, spread `strictSanitizePolicy`:
+
+```tsx
+import { Md, strictSanitizePolicy } from "@vaneui/md";
+
+<Md
+  content={userMarkdown}
+  sanitize={{ ...strictSanitizePolicy, allowedProps: ["className"], allowedTags: ["section", "aside"] }}
+  parseFrontmatter={parseYamlFrontmatter}
+  components={registry}
+/>
+```
+
+No policy switches the floor off: `allowedProps: ["onClick"]` or `allowedTags: ["script"]` changes nothing. The `sanitize` prop replaces a preset's policy instead of merging with it, so start from the policy you want to keep.
+
+### What the policy does not cover
+
+- It applies to the props of `vaneui` fences. Markdoc syntax in the Markdown body is not restricted by it: annotations can still set an `id` and classes on a node (`# Title {% #top .wide %}`), and the document can read every variable and call every tag and function you put in `config`. If the content needs no tags, pass `tagSyntax={false}` as well, which turns all of that off (see [Tag syntax in the content](#tag-syntax-in-the-content)).
+- The boolean props stay available at the untrusted level, including layout props such as `fixed` or `absolute`. Add them to `blockedProps` if untrusted content must not take elements out of the flow.
+- A component in your own registry receives the props that pass. If it turns a prop into markup, an element name or a URL by itself, check that prop in the component.
 
 ## Post-transform hook
 
@@ -386,7 +460,19 @@ import { Md, headingAnchors } from "@vaneui/md";
 <Md content={md} transform={headingAnchors()} />
 ```
 
-`headingAnchors` accepts `{ slug, link, name }`. Pass `slug` to match your own anchor convention (for example a docs site whose table of contents computes ids a specific way), `link: true` to wrap each heading in a plain `<a href="#id">`, and `name` when you render headings under a non-default component name.
+`headingAnchors` gives every heading without an id one made from its text, inline code included:
+
+| Heading | `id` |
+|---|---|
+| `## Getting started` | `getting-started` |
+| ``## Using `useTheme` hook`` | `using-usetheme-hook` |
+| `## Привет мир` | `привет-мир` |
+| `## 你好` | `你好` |
+| a second `## Setup` | `setup-1` (then `setup-2`, and so on) |
+
+The slug is lower case, drops punctuation and turns whitespace and `_` into `-`. It keeps the letters and digits of every script. An id is used once per document: repeats are numbered, counting the ids headings already carry (`## Title {% #my-id %}`). A heading with nothing left to slug (only punctuation or emoji) gets no id.
+
+It accepts `{ slug, link, name }`. Pass `slug` to match your own anchor convention (for example a docs site whose table of contents computes ids a specific way; repeats of the slug it returns are still numbered), `link: true` to wrap each heading in a plain `<a href="#id">`, and `name` when you render headings under a non-default component name.
 
 ```tsx
 <Md content={md} transform={headingAnchors({ slug: myToId, link: true })} />
@@ -394,13 +480,46 @@ import { Md, headingAnchors } from "@vaneui/md";
 
 ## Streaming
 
-`MdStream` renders growing markdown (for example token-by-token LLM output) by splitting it into fence-aware blocks and memoizing each, so only the changed trailing block re-parses. It is a client component, exported from `@vaneui/md/client`:
+`MdStream` renders growing Markdown, for example token-by-token model output. It is a client component, exported from `@vaneui/md/client`, and takes the same props as `<Md>`:
 
 ```tsx
 import { MdStream } from "@vaneui/md/client";
+import { prismHighlighter } from "@vaneui/md/prism";
 
-<MdStream content={streamingText} highlight={prismHighlighter()} />
+const highlight = prismHighlighter();
+
+<MdStream content={streamingText} highlight={highlight} />
 ```
+
+The output is the same as `<Md>` for the same source at every step: the source is rendered as one document in one wrapper, so a loose list keeps its numbering, `{% if %}` hides its content, and reference links, frontmatter variables, partials and a `transform` hook work across blocks.
+
+On every update `MdStream` parses and transforms the whole source, then React renders again only the top-level blocks (a paragraph, a list, a table, a code fence) whose transformed content changed. An unchanged block keeps its DOM nodes and component state, and its code is not highlighted again. That parse takes time in proportion to the length of the source (around 10ms per 10,000 characters measured in Node), so for long outputs update once per animation frame instead of once per token.
+
+Blocks are compared by content, so passing a new `config` or `rendererTheme` object with the same content on every render is fine. Functions and components are compared by identity: create `highlight`, `transform`, `parseFrontmatter` and the components in `config.components` once (outside the component or in a memo), or every block renders again on every update.
+
+`splitBlocks(source)` (main entry) and `useMdStream(content)` (client entry) return the source text of each top-level block as `<Md>` parses it: a whole list, blockquote, table or code fence, or a block tag with everything up to its closing tag, each an exact slice of the source. Use them to count or measure blocks. Rendering each block as its own `<Md>` is not the same document, because reference links, variables and conditions span blocks.
+
+## Upgrading from 1.2
+
+1.3.0 made the main entry safe to import from React Server Components. Everything that needs React context or hooks moved to a new client entry, `@vaneui/md/client`, and is no longer exported from `@vaneui/md`:
+
+| Name | Import it from |
+|---|---|
+| `MdStream`, `useMdStream` | `@vaneui/md/client` |
+| `RegistryContext`, `ParserContext`, `HighlightContext`, `SanitizeContext`, `RendererThemeContext` | `@vaneui/md/client` |
+
+```diff
+-import { Md, MdStream, RendererThemeContext } from "@vaneui/md";
++import { Md, MdStream, RendererThemeContext } from "@vaneui/md/client";
+```
+
+Three things behave differently after the move:
+
+- `Md` and `createMd` from `@vaneui/md` no longer read a `RendererThemeContext.Provider` above them, and no longer provide the contexts to custom renderers. Import `Md` and `createMd` from `@vaneui/md/client` to keep both, or pass the theme with the `rendererTheme` prop or a preset.
+- The built-in renderers get their theme, highlighter and fence parser from `<Md>` as a prop instead of from context. A built-in renderer such as `MdFence` that you render yourself, inside a custom component or through the `vaneui` fence registry, renders with `defaultRendererTheme`, no highlighter and no fence parser, with either entry.
+- `@vaneui/md/client` is a client module (`"use client"`). A Server Component cannot pass it function props such as `highlight`, `transform` or `parseFrontmatter`: render it from a client component, or use `Md` from `@vaneui/md`.
+
+`splitBlocks`, `createMd`, the `Md*` renderers, the presets and the types stay on the main entry. The changes of every release are in [CHANGELOG.md](./CHANGELOG.md).
 
 ## Exports
 
@@ -413,13 +532,18 @@ import { MdStream } from "@vaneui/md/client";
 - `@vaneui/md/include` (Node only) exports `resolveIncludes`, `resolveIncludesAsync` and `IncludeError` for expanding `{% include %}` tags at load time, plus the option and error-code types.
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer. It adds spacing rules built on VaneUI tokens; it does not re-bundle `@vaneui/ui` CSS. Import it alongside your VaneUI CSS.
 
+Every JavaScript entry is built as an ES module and as CommonJS, each with its own type declarations (`.d.mts` for `import`, `.d.cts` for `require`), so the types resolve under TypeScript's `node16`, `nodenext` and `bundler` module resolution.
+
 ## Development
+
+Development and CI run on Node 24 (`.nvmrc`). The published package sets no `engines` field, because `dist` also runs on older Node releases.
 
 ```bash
 npm install
 npm run type-check   # tsc --noEmit
 npm test             # type-check + jest
-npm run build        # clean + rollup (CJS + ESM) + postcss
+npm run build        # clean + rollup (CJS + ESM) + types for both module systems + postcss + dist checks
+npm run check:package  # publint and Are the Types Wrong on the packed tarball (after a build)
 npm run playground   # install + run the playground dev server
 ```
 

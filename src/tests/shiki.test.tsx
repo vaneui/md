@@ -17,6 +17,7 @@ jest.mock('shiki/core', () => ({
 
 import { Md } from '../components/md';
 import { shikiHighlighter } from '../shiki';
+import { runWithTimeout } from './runWithTimeout';
 
 const hl = shikiHighlighter({ langs: [], themes: [], theme: 'mock-theme' });
 
@@ -35,5 +36,22 @@ describe('shikiHighlighter (mocked engine)', () => {
     expect(container.querySelector('.vaneui-md-shiki')).toBeNull();
     expect(container.querySelector('pre')).toBeInTheDocument();
     expect(container.textContent).toContain('fn main() {}');
+  });
+
+  it('drops the line breaks at the end of the code and keeps the others', () => {
+    const md = ['```ts', '', 'a', '', 'b', '', '', '```'].join('\n');
+    const { container } = render(<Md content={md} highlight={hl} />);
+    expect(container.querySelector('pre.shiki code')?.textContent).toBe('\na\n\nb');
+  });
+
+  it('trims 80,000 blank lines before the last line in well under a second', () => {
+    const code = `${'\n'.repeat(80000)}x\n`;
+    for (const language of ['ts', 'rust']) {
+      const start = performance.now();
+      // Under a watchdog: a pattern that rescans the run from every line break takes seconds here.
+      const element = runWithTimeout(() => hl(code, language), 1000);
+      expect(performance.now() - start).toBeLessThan(500);
+      expect(render(<>{element}</>).container.textContent).toBe(code.slice(0, -1));
+    }
   });
 });

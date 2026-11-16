@@ -1,4 +1,5 @@
 import React from "react";
+import { ComponentKeys } from "@vaneui/ui";
 import type { SanitizePolicy } from "./sanitize";
 
 export interface ComponentSpec {
@@ -20,38 +21,205 @@ const MAX_DEPTH = 16;
 
 const SHORTHAND_HEAD = /^[A-Z]/;
 
-// Props on a vaneui-fence component come from author-supplied YAML. Strip the
-// handful that could inject markup or behavior when the content is untrusted:
-// dangerouslySetInnerHTML, event handlers, and ref cannot be legitimately
-// expressed in YAML-authored content, and URL-bearing props must not carry
-// script-executing protocols. This is an always-on floor; a configurable
-// policy can tighten it further.
-const URL_PROPS = new Set(["href", "src", "poster", "action", "formAction"]);
-const DANGEROUS_PROTOCOL = /^\s*(?:javascript|vbscript):/i;
-const NON_IMAGE_DATA_URL = /^\s*data:(?!image\/)/i;
-const URL_SCHEME = /^\s*([a-z][a-z0-9+.-]*:)/i;
+// Props on a vaneui-fence component come from author-supplied YAML. Two levels
+// decide what reaches the component:
+//
+// 1. The always-on floor. Nothing a fence can express may run script or inject
+//    markup: `tag` is honoured only for an allow-list of inert elements;
+//    `dangerouslySetInnerHTML`, `ref`, `srcDoc`, `httpEquiv` and every `on*`
+//    prop are dropped in any spelling; URL-bearing props must not carry a
+//    script-executing protocol, read the way a browser reads the URL. Every
+//    other prop passes, because an app's own registry components take props
+//    this package cannot know.
+// 2. Allow-list mode (`SanitizePolicy.knownPropsOnly`, on in
+//    `strictSanitizePolicy`) for untrusted content: only known props pass.
 
-function isSafeUrl(value: unknown, policy?: SanitizePolicy): boolean {
-  if (typeof value !== "string") return true;
-  if (DANGEROUS_PROTOCOL.test(value) || NON_IMAGE_DATA_URL.test(value)) return false;
-  if (policy?.allowedProtocols) {
-    const match = URL_SCHEME.exec(value);
-    // Scheme-less (relative) URLs are always allowed; a scheme must be listed.
-    if (match && !policy.allowedProtocols.includes(match[1].toLowerCase())) return false;
+/**
+ * Element names the `tag` prop may take: text, heading, list, sectioning,
+ * table and phrasing elements, none of which runs script, loads a resource by
+ * itself or submits data. A policy's `allowedTags` replaces this list.
+ */
+const SAFE_TAGS: ReadonlySet<string> = new Set([
+  // Sectioning and grouping
+  "div", "p", "section", "article", "aside", "header", "footer", "main", "nav", "address", "hgroup", "search",
+  "blockquote", "figure", "figcaption", "pre", "hr", "details", "summary",
+  // Headings
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  // Lists
+  "ul", "ol", "li", "dl", "dt", "dd", "menu",
+  // Tables
+  "table", "caption", "colgroup", "col", "thead", "tbody", "tfoot", "tr", "th", "td",
+  // Phrasing
+  "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "del", "dfn", "em", "i", "ins", "kbd", "mark", "q",
+  "rp", "rt", "ruby", "s", "samp", "small", "span", "strong", "sub", "sup", "time", "u", "var", "wbr",
+  // Images
+  "img", "picture",
+]);
+
+/**
+ * Elements that run script, embed another document, add styles or change how
+ * the page loads and resolves URLs. Never honoured as a `tag`, whatever a
+ * policy's `allowedTags` lists.
+ */
+const NEVER_TAGS: ReadonlySet<string> = new Set([
+  "script", "style", "iframe", "frame", "frameset", "object", "embed", "applet", "link", "meta", "base", "template",
+  "noscript", "slot", "portal", "fencedframe", "html", "head", "body", "title", "svg", "math",
+]);
+
+/** Props dropped in any spelling, compared by `normalizeName`. */
+const NEVER_PROPS: ReadonlySet<string> = new Set(["dangerouslysetinnerhtml", "ref", "srcdoc", "httpequiv"]);
+
+/**
+ * Attributes that pass in allow-list mode besides the `@vaneui/ui` boolean
+ * props, `children`, `text` and `aria-*`: the content attributes the default
+ * registry components take, a few inert layout and text attributes, and the
+ * functional booleans of `Link`, `NavLink`, `Alert` and `Button`.
+ */
+const KNOWN_ATTRIBUTES: readonly string[] = [
+  "href", "src", "alt", "title", "value", "max",
+  "colSpan", "rowSpan", "scope", "width", "height", "target", "rel", "start", "reversed", "lang", "dir",
+  "external", "active", "polite", "loading",
+];
+
+/** `target` values that pass in allow-list mode: a named target could load the link into a frame of the host page. */
+const SAFE_TARGETS: ReadonlySet<string> = new Set(["_blank", "_self", "_parent", "_top"]);
+
+const ARIA_ATTRIBUTE = /^aria-[a-z]+$/;
+
+/**
+ * URL-bearing attributes, by normalized name (so `formAction`, `formaction`
+ * and `xlink:href` all match).
+ */
+const URL_PROPS: ReadonlySet<string> = new Set([
+  "href", "src", "srcset", "imagesrcset", "poster", "action", "formaction", "xlinkhref", "ping", "cite", "background",
+  "data", "codebase", "manifest", "longdesc", "lowsrc", "dynsrc",
+]);
+
+/** URL attributes that hold a list, and what separates its entries. The value is checked as a whole and entry by entry. */
+const URL_LIST_SEPARATORS: ReadonlyMap<string, RegExp> = new Map([
+  ["srcset", /,/],
+  ["imagesrcset", /,/],
+  ["ping", /[\t\n\f\r ]/],
+]);
+
+/**
+ * Characters a browser removes from a URL before it reads the scheme (leading
+ * control characters and spaces, tabs and newlines anywhere), plus the other
+ * control, whitespace and zero-width characters. Removing more than a browser
+ * does can only make a harmless URL look like it has a scheme, never hide one.
+ */
+const URL_IGNORED = /[\u0000- \u007f-\u009f\s\u200b-\u200d\u2060\ufeff]+/g;
+const URL_SCHEME = /^([a-z][a-z0-9+.-]*):/i;
+const IMAGE_DATA_URL = /^data:image\//i;
+const SCRIPT_SCHEMES: ReadonlySet<string> = new Set(["javascript:", "vbscript:"]);
+
+/**
+ * Lower case, letters and digits only, so `srcDoc`, `srcdoc`, `SRCDOC` and
+ * `http-equiv` compare equal to the React prop name. HTML attribute names are
+ * case-insensitive, and React passes an unknown lower-case name through.
+ */
+const normalizeName = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** A prop the floor always drops. `on*` follows React, which treats any such name as an event handler slot. */
+function isNeverProp(key: string): boolean {
+  if (key === "__proto__") return true;
+  const name = normalizeName(key);
+  return NEVER_PROPS.has(name) || (name.length > 2 && name.startsWith("on"));
+}
+
+/** The element name a `tag` value may render as (lower case), or `undefined` when it must be dropped. */
+function safeTag(value: unknown, policy?: SanitizePolicy): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const name = value.toLowerCase();
+  if (NEVER_TAGS.has(name)) return undefined;
+  const allowed = policy?.allowedTags ? policy.allowedTags.includes(name) : SAFE_TAGS.has(name);
+  return allowed ? name : undefined;
+}
+
+let knownProps: ReadonlySet<string> | undefined;
+
+/** Prop names that pass in allow-list mode, built on first use. */
+function knownPropNames(): ReadonlySet<string> {
+  if (!knownProps) {
+    const names = new Set<string>(["children", "text", ...KNOWN_ATTRIBUTES]);
+    for (const group of Object.values(ComponentKeys) as readonly (readonly string[])[]) {
+      for (const key of group) names.add(key);
+    }
+    knownProps = names;
   }
+  return knownProps;
+}
+
+/** Allow-list mode: whether a prop other than `tag` passes. */
+function isKnownProp(key: string, value: unknown, policy: SanitizePolicy): boolean {
+  if (policy.allowedProps?.includes(key)) return true;
+  if (key === "children" || key === "text") return true;
+  if (!knownPropNames().has(key) && !ARIA_ATTRIBUTE.test(key)) return false;
+  // Attribute values are text, numbers or booleans; React would stringify anything else.
+  if (typeof value === "function" || (typeof value === "object" && value !== null)) return false;
+  if (key === "target") return SAFE_TARGETS.has(String(value).toLowerCase());
   return true;
 }
 
+/** One URL: no script-executing scheme, no `data:` other than an image, and a scheme the policy allows. */
+function isSafeUrl(url: string, policy?: SanitizePolicy): boolean {
+  const compact = url.replace(URL_IGNORED, "");
+  const match = URL_SCHEME.exec(compact);
+  // Scheme-less (relative) URLs are always allowed.
+  if (!match) return true;
+  const scheme = `${match[1].toLowerCase()}:`;
+  if (SCRIPT_SCHEMES.has(scheme)) return false;
+  if (scheme === "data:" && !IMAGE_DATA_URL.test(compact)) return false;
+  // With a policy, a scheme must be listed.
+  return !policy?.allowedProtocols || policy.allowedProtocols.includes(scheme);
+}
+
+/**
+ * Whether the value of a URL-bearing prop may pass. Numbers, booleans and
+ * `null` are not URLs. An array or object is read as the string an attribute
+ * would get, so `[javascript:...]` cannot slip through as a list.
+ */
+function isSafeUrlValue(name: string, value: unknown, policy?: SanitizePolicy): boolean {
+  let text: string;
+  if (typeof value === "string") {
+    text = value;
+  } else if (typeof value === "object" && value !== null) {
+    try {
+      text = String(value);
+    } catch {
+      return false;
+    }
+  } else {
+    return true;
+  }
+  if (!isSafeUrl(text, policy)) return false;
+  const separator = URL_LIST_SEPARATORS.get(name);
+  return !separator || text.split(separator).every((url) => isSafeUrl(url, policy));
+}
+
+/**
+ * The props of a `vaneui`-fence component that may reach it. Applies the
+ * always-on floor, then the optional `policy` (see `SanitizePolicy`). Returns
+ * a new object; `tag` comes back as a lower-case element name.
+ */
 export function sanitizeSpecProps(
   props: Record<string, unknown>,
   policy?: SanitizePolicy,
 ): Record<string, unknown> {
   const safe: Record<string, unknown> = {};
+  const allowListMode = policy?.knownPropsOnly === true;
   for (const [key, value] of Object.entries(props)) {
-    if (key === "dangerouslySetInnerHTML" || key === "ref") continue;
-    if (/^on[A-Z]/.test(key)) continue;
+    if (isNeverProp(key)) continue;
     if (policy?.blockedProps?.includes(key)) continue;
-    if (URL_PROPS.has(key) && !isSafeUrl(value, policy)) continue;
+    if (key === "tag") {
+      if (allowListMode && !policy.allowedTags && !policy.allowedProps?.includes("tag")) continue;
+      const tag = safeTag(value, policy);
+      if (tag !== undefined) safe.tag = tag;
+      continue;
+    }
+    if (allowListMode && !isKnownProp(key, value, policy)) continue;
+    const name = normalizeName(key);
+    if (URL_PROPS.has(name) && !isSafeUrlValue(name, value, policy)) continue;
     safe[key] = value;
   }
   return safe;
@@ -92,12 +260,26 @@ export function expandShorthand(node: unknown): unknown {
   return Object.fromEntries(entries.map(([k, v]) => [k, expandShorthand(v)]));
 }
 
+/**
+ * The component a registry holds under `name`, or `undefined`. Only the
+ * registry's own entries count: a name from a fence can be `constructor`,
+ * `toString` or `__proto__`, which every plain object inherits, and those are
+ * not components.
+ */
+function registeredComponent(registry: ComponentRegistry, name: string): React.ElementType | undefined {
+  if (!Object.prototype.hasOwnProperty.call(registry, name)) return undefined;
+  const value: unknown = registry[name];
+  const renderable =
+    typeof value === "function" || (typeof value === "object" && value !== null) || (typeof value === "string" && value !== "");
+  return renderable ? (value as React.ElementType) : undefined;
+}
+
 export interface RenderSpecOptions {
   /** React key for this node (usually the positional index from the parent). */
   key?: React.Key;
   /** Recursion depth. Do not set this yourself. */
   depth?: number;
-  /** Optional policy that tightens the always-on sanitize floor. */
+  /** Optional policy on top of the always-on sanitize floor (see `SanitizePolicy`). */
   sanitize?: SanitizePolicy;
 }
 
@@ -120,7 +302,7 @@ export function renderSpec(
     return null;
   }
 
-  const Component = registry[obj.component];
+  const Component = registeredComponent(registry, obj.component);
   if (!Component) return null;
 
   const { component: _ignored, text, children, ...props } = obj;
@@ -139,8 +321,8 @@ export function renderSpec(
   }
 
   // Prefer the spec's own stable id as the React key; fall back to the
-  // positional key supplied by the parent. `id` stays in `props` so the
-  // rendered component still receives it.
+  // positional key supplied by the parent. `id` stays in `props`, so the
+  // rendered component still receives it unless the policy drops it.
   const reactKey = obj.id != null ? String(obj.id) : key;
   return React.createElement(Component, { ...safeProps, key: reactKey }, resolvedChildren);
 }

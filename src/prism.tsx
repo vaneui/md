@@ -2,6 +2,7 @@ import React from "react";
 import { Highlight, themes, type Language, type PrismTheme } from "prism-react-renderer";
 import type { HighlightFn } from "./renderContext";
 import type { MdPreset } from "./preset";
+import { trimTrailingNewlines } from "./trimNewlines";
 
 export interface PrismHighlighterOptions {
   /** A prism-react-renderer theme. Defaults to the built-in GitHub light theme. */
@@ -17,7 +18,7 @@ export function prismHighlighter(options: PrismHighlighterOptions = {}): Highlig
   const theme = options.theme ?? themes.github;
   return (code, language) => (
     <Highlight
-      code={code.replace(/\n+$/, "")}
+      code={trimTrailingNewlines(code)}
       language={(language ?? "text") as Language}
       theme={theme}
     >

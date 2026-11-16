@@ -3,6 +3,7 @@ import { createHighlighterCoreSync } from "shiki/core";
 import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 import type { HighlightFn } from "./renderContext";
 import type { MdPreset } from "./preset";
+import { trimTrailingNewlines } from "./trimNewlines";
 
 type SyncCoreOptions = Parameters<typeof createHighlighterCoreSync>[0];
 
@@ -40,7 +41,7 @@ export function shikiHighlighter(options: ShikiHighlighterOptions): HighlightFn 
   const themeName = options.theme ?? highlighter.getLoadedThemes()[0];
   const loadedLangs = new Set(highlighter.getLoadedLanguages());
   return (code, language) => {
-    const src = code.replace(/\n+$/, "");
+    const src = trimTrailingNewlines(code);
     if (!language || !loadedLangs.has(language)) return plain(src);
     const html = highlighter.codeToHtml(src, { lang: language, theme: themeName });
     return <div className="vaneui-md-shiki" dangerouslySetInnerHTML={{ __html: html }} />;

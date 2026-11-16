@@ -7,9 +7,18 @@ on:
       - prod
   pull_request:
 
+permissions:
+  contents: read
+
+# A new push to a branch or pull request replaces the run for the previous one.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -36,3 +45,8 @@ jobs:
 
       - name: Verify Package Contents
         run: npm pack --dry-run
+
+      # Same check the publish workflows run, so a broken exports map or type
+      # resolution fails the pull request instead of the release.
+      - name: Validate Package Exports and Types
+        run: npm run check:package
