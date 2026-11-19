@@ -46,3 +46,14 @@ for (const file of declarations) {
 }
 
 console.log(`generate-dual-types: ${declarations.length} .d.mts and ${declarations.length} .d.cts files`);
+
+// The `./styles` entry points at a CSS file, which TypeScript cannot read. Its `types`
+// conditions point at this empty module instead, so `import "@vaneui/md/styles"` in a
+// TypeScript file resolves. TypeScript 6 reports a side-effect import it cannot resolve as an
+// error (`noUncheckedSideEffectImports` is on by default).
+const styles = path.join(dist, "styles");
+fs.mkdirSync(styles, { recursive: true });
+for (const extension of [".d.mts", ".d.cts"]) {
+  fs.writeFileSync(path.join(styles, `index${extension}`), "export {};\n");
+}
+console.log("generate-dual-types: styles/index.d.mts and styles/index.d.cts");
