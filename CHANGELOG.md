@@ -8,6 +8,13 @@ the release commit.
 
 ## Unreleased
 
+## 1.4.1
+
+`2026-11-19`
+
+The stylesheet entry resolves for TypeScript, so a project on TypeScript 6 or later can import
+`@vaneui/md/styles` from a `.ts` or `.tsx` file.
+
 ### Fixed
 
 - `import "@vaneui/md/styles"` in a TypeScript file passes the type check on TypeScript 6 and
