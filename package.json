@@ -115,7 +115,17 @@
         "default": "./dist/prism.cjs"
       }
     },
-    "./styles": "./dist/styles/index.css"
+    "./styles": {
+      "import": {
+        "types": "./dist/styles/index.d.mts",
+        "default": "./dist/styles/index.css"
+      },
+      "require": {
+        "types": "./dist/styles/index.d.cts",
+        "default": "./dist/styles/index.css"
+      },
+      "default": "./dist/styles/index.css"
+    }
   },
   "scripts": {
     "clean": "rimraf dist",
