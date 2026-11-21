@@ -4,6 +4,8 @@ A React Markdown renderer that parses Markdown with Markdoc and renders every no
 
 `@vaneui/ui` is a peer dependency; this package does not render standalone.
 
+**[Guide](https://vaneui.com/docs/getting-started/markdown)** · **[VaneUI docs](https://vaneui.com/docs)** · **[Installation](https://vaneui.com/docs/getting-started/installation)** · **[vaneui.com](https://vaneui.com)**
+
 ## Installation
 
 ```bash
@@ -35,7 +37,7 @@ This is a **Markdown** document rendered with VaneUI components.
 }
 ```
 
-The host app must wrap this content in `@vaneui/ui`'s `ThemeProvider` and import one `@vaneui/ui` stylesheet (`import "@vaneui/ui/css"`), otherwise the output renders unstyled.
+The host app must wrap this content in `@vaneui/ui`'s `ThemeProvider` and import one `@vaneui/ui` stylesheet (`import "@vaneui/ui/css"`), otherwise the output renders unstyled. [Installation](https://vaneui.com/docs/getting-started/installation) on vaneui.com covers the prebuilt stylesheet and the Tailwind v4 setup.
 
 To get the document prose rhythm, import the styles once in your app (alongside your `@vaneui/ui` CSS):
 
@@ -187,7 +189,7 @@ import { defaultRegistry } from "@vaneui/md/registry";
 
 ### Shorthand form
 
-The component name and boolean flags go in the YAML key. The value is read by shape.
+The component name and boolean flags go in the YAML key. The flags are the component's own props, listed on its page in the [VaneUI docs](https://vaneui.com/docs). The value is read by shape.
 
 ````md
 ```vaneui
@@ -255,6 +257,8 @@ Slot keys mirror the renderer file names (`MdBlockquote` -> `mdBlockquote`, `MdF
 In client components, `Md` from `@vaneui/md/client` also inherits an outer `RendererThemeContext.Provider` (from the same entry). The `rendererTheme` prop wins over the provider. `Md` from `@vaneui/md` ignores the provider.
 
 The merge is group-aware for VaneUI's mutually-exclusive categories (size, appearance, variant, shape, border, and so on): setting any key in a group drops the package defaults for that group, so your intent wins over the built-in defaults.
+
+`rendererTheme` styles only what the Markdown renders. To change a component everywhere in the app (every `Card`, not only Markdown code blocks), set its defaults with `@vaneui/ui`'s `ThemeProvider`: see [Using ThemeProvider](https://vaneui.com/docs/customization/using-theme-provider).
 
 ## Customizing renderers: `config`
 
@@ -533,6 +537,13 @@ Three things behave differently after the move:
 - `@vaneui/md/styles` — the `.vaneui-md` prose-rhythm layer. It adds spacing rules built on VaneUI tokens; it does not re-bundle `@vaneui/ui` CSS. Import it alongside your VaneUI CSS.
 
 Every JavaScript entry is built as an ES module and as CommonJS, each with its own type declarations (`.d.mts` for `import`, `.d.cts` for `require`), so the types resolve under TypeScript's `node16`, `nodenext` and `bundler` module resolution.
+
+## Links
+
+- [Markdown rendering guide](https://vaneui.com/docs/getting-started/markdown) on vaneui.com
+- [VaneUI documentation](https://vaneui.com/docs)
+- [`@vaneui/ui` on npm](https://www.npmjs.com/package/@vaneui/ui)
+- [Changelog](https://github.com/vaneui/md/blob/main/CHANGELOG.md)
 
 ## Development
 

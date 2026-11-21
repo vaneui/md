@@ -8,6 +8,12 @@ the release commit.
 
 ## Unreleased
 
+### Changed
+
+- The README, which npm shows on the package page, links to the Markdown rendering guide, the
+  component docs, installation and `ThemeProvider` pages on vaneui.com. Before, it linked to
+  vaneui.com once, from the package name `@vaneui/ui`.
+
 ## 1.4.1
 
 `2026-11-19`
