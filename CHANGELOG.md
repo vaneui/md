@@ -8,6 +8,13 @@ the release commit.
 
 ## Unreleased
 
+## 1.4.2
+
+`2026-11-21`
+
+Documentation only: the README links to the guide and docs on vaneui.com. The code is the same
+as 1.4.1.
+
 ### Changed
 
 - The README, which npm shows on the package page, links to the Markdown rendering guide, the
