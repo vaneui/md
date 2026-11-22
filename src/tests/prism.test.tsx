@@ -15,6 +15,12 @@ describe('prismHighlighter', () => {
     expect(pre?.textContent).toContain('const x = 1;');
   });
 
+  it('makes the scrolling <pre> reachable from the keyboard', () => {
+    const md = ['```tsx', 'const x = 1;', '```'].join('\n');
+    const { container } = render(<Md content={md} highlight={prismHighlighter()} />);
+    expect(container.querySelector('pre')).toHaveAttribute('tabindex', '0');
+  });
+
   it('still renders the code text for an unknown language', () => {
     const md = ['```', 'just plain text', '```'].join('\n');
     const { container } = render(<Md content={md} highlight={prismHighlighter()} />);

@@ -35,6 +35,8 @@ describe('shikiHighlighter (mocked engine)', () => {
     const { container } = render(<Md content={md} highlight={hl} />);
     expect(container.querySelector('.vaneui-md-shiki')).toBeNull();
     expect(container.querySelector('pre')).toBeInTheDocument();
+    // The fallback scrolls sideways like Shiki's own <pre>, so it is focusable like it.
+    expect(container.querySelector('pre')).toHaveAttribute('tabindex', '0');
     expect(container.textContent).toContain('fn main() {}');
   });
 

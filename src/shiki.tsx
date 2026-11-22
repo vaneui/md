@@ -20,8 +20,10 @@ export interface ShikiHighlighterOptions {
   theme?: string;
 }
 
+// tabIndex matches the <pre> Shiki renders for a loaded language (tabindex="0"), so a
+// code block that scrolls sideways can be scrolled from the keyboard either way.
 const plain = (code: string): React.ReactNode => (
-  <pre style={{ margin: 0, overflowX: "auto", fontFamily: "monospace", fontSize: "0.875rem" }}>
+  <pre style={{ margin: 0, overflowX: "auto", fontFamily: "monospace", fontSize: "0.875rem" }} tabIndex={0}>
     <code>{code}</code>
   </pre>
 );
