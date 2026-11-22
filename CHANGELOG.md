@@ -8,6 +8,13 @@ the release commit.
 
 ## Unreleased
 
+## 1.4.3
+
+`2026-11-22`
+
+A code block from the Prism adapter, or from the Shiki adapter for a language it has not loaded,
+takes keyboard focus, so a keyboard user can scroll a wide one.
+
 ### Fixed
 
 - A code block rendered by `prismHighlighter`, or by `shikiHighlighter` for a language it has not
