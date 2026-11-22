@@ -23,7 +23,9 @@ export function prismHighlighter(options: PrismHighlighterOptions = {}): Highlig
       theme={theme}
     >
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
-        <pre className={className} style={{ ...style, margin: 0, overflowX: "auto" }}>
+        // tabIndex: a code block wider than its box scrolls sideways, and only a focusable
+        // scroll container can be scrolled from the keyboard (Shiki's own <pre> does the same).
+        <pre className={className} style={{ ...style, margin: 0, overflowX: "auto" }} tabIndex={0}>
           {tokens.map((line, i) => (
             <div key={i} {...getLineProps({ line })}>
               {line.map((token, key) => (

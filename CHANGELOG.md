@@ -8,6 +8,13 @@ the release commit.
 
 ## Unreleased
 
+### Fixed
+
+- A code block rendered by `prismHighlighter`, or by `shikiHighlighter` for a language it has not
+  loaded, scrolls sideways when a line is wider than the block, but its `<pre>` could not take
+  keyboard focus, so a keyboard user could not scroll it. The `<pre>` now has `tabIndex={0}`, as
+  the one Shiki renders for a loaded language already had.
+
 ## 1.4.2
 
 `2026-11-21`
